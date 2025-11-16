@@ -58,17 +58,8 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*jsonsche
 	s := &jsonschema.Schema{}
 	s.Type = valueType
 
-	comment := newComment(key)
-	if err := comment.Clean(); err != nil {
+	if err := updateSchmeaFromYamlComment(key, s); err != nil {
 		err := fmt.Errorf("failed to clean doc comment: %w", err)
-		if g.plan.StrictComments {
-			return nil, err
-		}
-		g.logger.Warn(err.Error())
-
-	}
-	if err := comment.Parse(s); err != nil {
-		err := fmt.Errorf("failed to parse jsonschema from comment: %w", err)
 		if g.plan.StrictComments {
 			return nil, err
 		}
@@ -87,17 +78,8 @@ func (g *Generator) buildSequenceNode(key *yaml.Node, value *yaml.Node) (*jsonsc
 
 	// Not all objects will have a yaml key node, only set key values if they exist
 	if key != nil {
-		comment := newComment(key)
-		if err := comment.Clean(); err != nil {
+		if err := updateSchmeaFromYamlComment(key, s); err != nil {
 			err := fmt.Errorf("failed to clean doc comment: %w", err)
-			if g.plan.StrictComments {
-				return nil, err
-			}
-			g.logger.Warn(err.Error())
-
-		}
-		if err := comment.Parse(s); err != nil {
-			err := fmt.Errorf("failed to parse jsonschema from comment: %w", err)
 			if g.plan.StrictComments {
 				return nil, err
 			}
@@ -116,17 +98,8 @@ func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*jsonsch
 
 	// Not all objects will have a yaml key node, only set key values if they exist
 	if key != nil {
-		comment := newComment(key)
-		if err := comment.Clean(); err != nil {
+		if err := updateSchmeaFromYamlComment(key, s); err != nil {
 			err := fmt.Errorf("failed to clean doc comment: %w", err)
-			if g.plan.StrictComments {
-				return nil, err
-			}
-			g.logger.Warn(err.Error())
-
-		}
-		if err := comment.Parse(s); err != nil {
-			err := fmt.Errorf("failed to parse jsonschema from comment: %w", err)
 			if g.plan.StrictComments {
 				return nil, err
 			}
