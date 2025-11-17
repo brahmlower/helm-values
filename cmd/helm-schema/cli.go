@@ -51,11 +51,13 @@ func GenerateCommand(logger *logrus.Logger) *cobra.Command {
 				logger.Debugf("%s: schema: starting generation", plan.ChartDir)
 				schema, err := internal.NewGenerator(logger, plan).Generate()
 				if err != nil {
-					return err
+					logger.Error(err.Error())
+					return nil
 				}
 
 				if err := plan.WriteSchema(schema); err != nil {
-					return err
+					logger.Error(err.Error())
+					return nil
 				}
 			}
 

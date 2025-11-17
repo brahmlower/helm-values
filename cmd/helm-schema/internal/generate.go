@@ -58,11 +58,15 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*jsonsche
 	s.Type = valueType
 
 	if err := updateSchmeaFromYamlComment(key, s); err != nil {
+		if cErr, ok := err.(*CommentError); ok {
+			cErr.Filepath = g.plan.ValuesFilePath()
+			cErr.RenderToLog(g.logger)
+		}
+
 		err := fmt.Errorf("doc comment error: %w", err)
 		if g.plan.StrictComments {
 			return nil, err
 		}
-		g.logger.Warnf("%s: schema: %s", g.plan.ChartDir, err.Error())
 	}
 
 	s.Title = key.Value
@@ -71,18 +75,22 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*jsonsche
 }
 
 // TODO: Finish handling sequences
-func (g *Generator) buildSequenceNode(key *yaml.Node, value *yaml.Node) (*jsonschema.Schema, error) {
+func (g *Generator) buildSequenceNode(key *yaml.Node, _ *yaml.Node) (*jsonschema.Schema, error) {
 	s := &jsonschema.Schema{}
 	s.Type = "array"
 
 	// Not all objects will have a yaml key node, only set key values if they exist
 	if key != nil {
 		if err := updateSchmeaFromYamlComment(key, s); err != nil {
+			if cErr, ok := err.(*CommentError); ok {
+				cErr.Filepath = g.plan.ValuesFilePath()
+				cErr.RenderToLog(g.logger)
+			}
+
 			err := fmt.Errorf("doc comment error: %w", err)
 			if g.plan.StrictComments {
 				return nil, err
 			}
-			g.logger.Warnf("%s: schema: %s", g.plan.ChartDir, err.Error())
 		}
 	}
 	s.Properties = make(map[string]*jsonschema.Schema, 0)
@@ -98,11 +106,15 @@ func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*jsonsch
 	// Not all objects will have a yaml key node, only set key values if they exist
 	if key != nil {
 		if err := updateSchmeaFromYamlComment(key, s); err != nil {
+			if cErr, ok := err.(*CommentError); ok {
+				cErr.Filepath = g.plan.ValuesFilePath()
+				cErr.RenderToLog(g.logger)
+			}
+
 			err := fmt.Errorf("doc comment error: %w", err)
 			if g.plan.StrictComments {
 				return nil, err
 			}
-			g.logger.Warnf("%s: schema: %s", g.plan.ChartDir, err.Error())
 		}
 	}
 	s.Properties = make(map[string]*jsonschema.Schema, 0)
