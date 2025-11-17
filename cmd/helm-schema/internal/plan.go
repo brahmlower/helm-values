@@ -52,7 +52,7 @@ func BuildPlan(fsys fs.FS, rootDir string, logger *logrus.Logger) ([]*Plan, erro
 			return nil
 		}
 
-		logger.Debugf("Found chart: %s", path)
+		logger.Infof("Found chart: %s", path)
 
 		plans = append(plans, &Plan{
 			FS:       fsys,
@@ -73,9 +73,17 @@ type Plan struct {
 	FS             fs.FS
 	ChartDir       string
 	StrictComments bool
-	OutputPath     string
+	SchemaFilePath string
 	Stdout         bool
 	DryRun         bool
+}
+
+func (p *Plan) LogIntent() {
+	p.Logger.Debugf("%s: plan: DryRun=%t", p.ChartDir, p.DryRun)
+	p.Logger.Debugf("%s: plan: StrictComments=%t", p.ChartDir, p.StrictComments)
+	p.Logger.Debugf("%s: plan: Stdout=%t", p.ChartDir, p.Stdout)
+	p.Logger.Debugf("%s: plan: ValuesFile=%s", p.ChartDir, p.ValuesFilePath())
+	p.Logger.Debugf("%s: plan: SchemaFile=%s", p.ChartDir, p.SchemaFilePath)
 }
 
 func (p *Plan) ChartFilePath() string {
@@ -87,11 +95,11 @@ func (p *Plan) ValuesFilePath() string {
 }
 
 func (p *Plan) SetSchemaFilename(filename string) {
-	p.OutputPath = fmt.Sprintf("%s/%s", p.ChartDir, filename)
+	p.SchemaFilePath = fmt.Sprintf("%s/%s", p.ChartDir, filename)
 }
 
 func (p *Plan) ReadValuesFile() ([]byte, error) {
-	p.Logger.Debugf("Reading values file from path: %s", p.ValuesFilePath())
+	p.Logger.Debugf("%s: schema: reading values file", p.ChartDir)
 	return fs.ReadFile(p.FS, p.ValuesFilePath())
 }
 
@@ -106,7 +114,7 @@ func (p *Plan) WriteSchema(schema *jsonschema.Schema) error {
 	}
 
 	// TODO: This will write to the wrong path
-	if p.OutputPath != "" && !p.DryRun {
+	if p.SchemaFilePath != "" && !p.DryRun {
 		return p.WriteToFile(string(s))
 	}
 
@@ -114,8 +122,8 @@ func (p *Plan) WriteSchema(schema *jsonschema.Schema) error {
 }
 
 func (p *Plan) WriteToFile(s string) error {
-	p.Logger.Debugf("Writing schema to file path: %s", p.OutputPath)
-	f, err := os.Create(p.OutputPath)
+	p.Logger.Debugf("%s: schema: writing schema file", p.ChartDir)
+	f, err := os.Create(p.SchemaFilePath)
 	if err != nil {
 		return err
 	}

@@ -26,7 +26,7 @@ func updateSchmeaFromYamlComment(node *yaml.Node, s *jsonschema.Schema) error {
 
 	err := yaml.Unmarshal([]byte(cleanedValue), s)
 	if err != nil {
-		return fmt.Errorf("failed to parse doc comment as yaml: %w", err)
+		return err
 	}
 
 	return nil

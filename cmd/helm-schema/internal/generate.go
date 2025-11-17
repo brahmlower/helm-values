@@ -58,11 +58,11 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*jsonsche
 	s.Type = valueType
 
 	if err := updateSchmeaFromYamlComment(key, s); err != nil {
-		err := fmt.Errorf("failed to clean doc comment: %w", err)
+		err := fmt.Errorf("doc comment error: %w", err)
 		if g.plan.StrictComments {
 			return nil, err
 		}
-		g.logger.Warn(err.Error())
+		g.logger.Warnf("%s: schema: %s", g.plan.ChartDir, err.Error())
 	}
 
 	s.Title = key.Value
@@ -78,11 +78,11 @@ func (g *Generator) buildSequenceNode(key *yaml.Node, value *yaml.Node) (*jsonsc
 	// Not all objects will have a yaml key node, only set key values if they exist
 	if key != nil {
 		if err := updateSchmeaFromYamlComment(key, s); err != nil {
-			err := fmt.Errorf("failed to clean doc comment: %w", err)
+			err := fmt.Errorf("doc comment error: %w", err)
 			if g.plan.StrictComments {
 				return nil, err
 			}
-			g.logger.Warn(err.Error())
+			g.logger.Warnf("%s: schema: %s", g.plan.ChartDir, err.Error())
 		}
 	}
 	s.Properties = make(map[string]*jsonschema.Schema, 0)
@@ -98,11 +98,11 @@ func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*jsonsch
 	// Not all objects will have a yaml key node, only set key values if they exist
 	if key != nil {
 		if err := updateSchmeaFromYamlComment(key, s); err != nil {
-			err := fmt.Errorf("failed to clean doc comment: %w", err)
+			err := fmt.Errorf("doc comment error: %w", err)
 			if g.plan.StrictComments {
 				return nil, err
 			}
-			g.logger.Warn(err.Error())
+			g.logger.Warnf("%s: schema: %s", g.plan.ChartDir, err.Error())
 		}
 	}
 	s.Properties = make(map[string]*jsonschema.Schema, 0)
@@ -157,5 +157,4 @@ func yamlTagToSchema(tag string) (string, error) {
 	default:
 		return "", fmt.Errorf("unsupported yaml tag: %s", tag)
 	}
-
 }

@@ -34,6 +34,7 @@ func GenerateCommand(logger *logrus.Logger) *cobra.Command {
 				return err
 			}
 
+			logger.Infof("Found %d charts", len(plans))
 			// Itterate through plan to set the logger and config
 			for _, plan := range plans {
 				plan.Logger = logger
@@ -42,11 +43,12 @@ func GenerateCommand(logger *logrus.Logger) *cobra.Command {
 				plan.DryRun = v.GetBool("dry-run")
 				plan.SetSchemaFilename(v.GetString("schema-file"))
 
-				logger.Debugf("Plan: %s", plan.ChartDir)
+				plan.LogIntent()
 			}
 
 			// Iterate through plans again, this time generating the schema
 			for _, plan := range plans {
+				logger.Debugf("%s: schema: starting generation", plan.ChartDir)
 				schema, err := internal.NewGenerator(logger, plan).Generate()
 				if err != nil {
 					return err
