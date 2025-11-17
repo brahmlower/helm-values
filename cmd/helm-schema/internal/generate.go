@@ -45,8 +45,7 @@ func (g *Generator) Generate() (*jsonschema.Schema, error) {
 	}
 	s.Schema = JsonSchemaURI
 
-	err = g.plan.WriteSchema(s)
-	return nil, err
+	return s, err
 }
 
 func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*jsonschema.Schema, error) {

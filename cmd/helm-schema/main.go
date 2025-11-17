@@ -1,14 +1,17 @@
 package main
 
 import (
-	"fmt"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	err := GenerateCommand().Execute()
+	logger := logrus.New()
+	logger.SetLevel(logrus.InfoLevel)
+
+	err := GenerateCommand(logger).Execute()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
