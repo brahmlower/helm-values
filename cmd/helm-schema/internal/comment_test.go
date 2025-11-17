@@ -35,6 +35,13 @@ const SETS_SCHEMA_WITH_MULTILINE_VALUE = `
 foo: bar
 `
 
+// const SETS_DESCRIPTION_TO_SECOND_DOC = `
+// # default: baz
+// # ---
+// # this is a description
+// foo: bar
+// `
+
 func TestNewClient(t *testing.T) {
 	var tests = []struct {
 		name          string
@@ -54,7 +61,7 @@ func TestNewClient(t *testing.T) {
 			document: COMMENT_MISSING_SPACE_PREFIX,
 			validate: func(tt *testing.T, s *jsonschema.Schema, err error) {
 				assert.NotNil(tt, err)
-				assert.ErrorContains(t, err, "expected doc comment to start with '# '")
+				assert.ErrorContains(t, err, "unexpected prefix")
 			},
 		},
 		{
@@ -62,7 +69,7 @@ func TestNewClient(t *testing.T) {
 			document: COMMENT_WITH_INVALID_YAML,
 			validate: func(tt *testing.T, s *jsonschema.Schema, err error) {
 				assert.NotNil(t, err)
-				assert.ErrorContains(t, err, "failed to parse doc comment as yaml")
+				assert.ErrorContains(t, err, "yaml: unmarshal errors")
 			},
 		},
 		{
@@ -89,6 +96,15 @@ func TestNewClient(t *testing.T) {
 				assert.Equal(tt, s.Default, "foo\nbar")
 			},
 		},
+		// {
+		// 	name:     "comment sets jsonschema description to second yaml doc",
+		// 	document: SETS_SCHEMA_WITH_MULTILINE_VALUE,
+		// 	validate: func(tt *testing.T, s *jsonschema.Schema, err error) {
+		// 		assert.NoError(tt, err)
+		// 		assert.Equal(tt, s.Default, "baz")
+		// 		assert.Equal(tt, s.Description, "this is a description")
+		// 	},
+		// },
 	}
 
 	for _, tc := range tests {

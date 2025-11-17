@@ -91,7 +91,6 @@ func updateSchmeaFromYamlComment(node *yaml.Node, s *jsonschema.Schema) error {
 
 	err := yaml.Unmarshal([]byte(cleanedValue), s)
 	if err != nil {
-		// err := fmt.Errorf("comment error: %w", err)
 		return NewCommentError(node, err)
 	}
 

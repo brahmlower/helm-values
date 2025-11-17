@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"helmschema/cmd/helm-schema/internal/jsonschema"
-	"io/fs"
 	"os"
+	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 )
 
-func BuildPlan(fsys fs.FS, rootDir string, logger *logrus.Logger) ([]*Plan, error) {
+func BuildPlan(rootDir string, logger *logrus.Logger) ([]*Plan, error) {
 	plans := []*Plan{}
-	err := fs.WalkDir(fsys, rootDir, func(path string, d os.DirEntry, err error) error {
+	err := filepath.WalkDir(rootDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -22,7 +22,7 @@ func BuildPlan(fsys fs.FS, rootDir string, logger *logrus.Logger) ([]*Plan, erro
 
 		logger.Tracef("Checking path: %s", path)
 
-		chartFileInfo, err := fs.Stat(fsys, fmt.Sprintf("%s/Chart.yaml", path))
+		chartFileInfo, err := os.Stat(fmt.Sprintf("%s/Chart.yaml", path))
 		if err != nil {
 			logger.
 				WithField("reason", "error").
@@ -37,7 +37,7 @@ func BuildPlan(fsys fs.FS, rootDir string, logger *logrus.Logger) ([]*Plan, erro
 			return nil
 		}
 
-		valuesFileInfo, err := fs.Stat(fsys, fmt.Sprintf("%s/Chart.yaml", path))
+		valuesFileInfo, err := os.Stat(fmt.Sprintf("%s/Chart.yaml", path))
 		if err != nil {
 			logger.
 				WithField("reason", "error").
@@ -55,7 +55,6 @@ func BuildPlan(fsys fs.FS, rootDir string, logger *logrus.Logger) ([]*Plan, erro
 		logger.Infof("Found chart: %s", path)
 
 		plans = append(plans, &Plan{
-			FS:       fsys,
 			ChartDir: path,
 		})
 
@@ -70,7 +69,6 @@ func BuildPlan(fsys fs.FS, rootDir string, logger *logrus.Logger) ([]*Plan, erro
 
 type Plan struct {
 	Logger         *logrus.Logger
-	FS             fs.FS
 	ChartDir       string
 	StrictComments bool
 	SchemaFilePath string
@@ -100,7 +98,7 @@ func (p *Plan) SetSchemaFilename(filename string) {
 
 func (p *Plan) ReadValuesFile() ([]byte, error) {
 	p.Logger.Debugf("%s: schema: reading values file", p.ChartDir)
-	return fs.ReadFile(p.FS, p.ValuesFilePath())
+	return os.ReadFile(p.ValuesFilePath())
 }
 
 func (p *Plan) WriteSchema(schema *jsonschema.Schema) error {

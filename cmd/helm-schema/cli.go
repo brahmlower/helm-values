@@ -2,7 +2,6 @@ package main
 
 import (
 	"helmschema/cmd/helm-schema/internal"
-	"os"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
@@ -27,9 +26,8 @@ func GenerateCommand(logger *logrus.Logger) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fsys := os.DirFS(chartDir)
 
-			plans, err := internal.BuildPlan(fsys, ".", logger)
+			plans, err := internal.BuildPlan(chartDir, logger)
 			if err != nil {
 				return err
 			}
