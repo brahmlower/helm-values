@@ -20,17 +20,17 @@ type Schema struct {
 	DynamicAnchor   string `json:"dynamicAnchor,omitempty" yaml:"dynamicAnchor,omitempty"`
 	DynamicRef      string `json:"dynamicRef,omitempty" yaml:"dynamicRef,omitempty"`
 
-	Type     string        `json:"type,omitempty" yaml:"type,omitempty"`
-	Constant []interface{} `json:"constant,omitempty" yaml:"constant,omitempty"`
-	Enum     []interface{} `json:"enum,omitempty" yaml:"enum,omitempty"`
+	Type     string `json:"type,omitempty" yaml:"type,omitempty"`
+	Constant []any  `json:"constant,omitempty" yaml:"constant,omitempty"`
+	Enum     []any  `json:"enum,omitempty" yaml:"enum,omitempty"`
 
-	// Not   *Schema   `json:"not,omitempty"`
+	Not   *Schema   `json:"not,omitempty"`
 	AllOf []*Schema `json:"allOf,omitempty" yaml:"allOf,omitempty"`
 	AnyOf []*Schema `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
 	OneOf []*Schema `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
-	// If    *Schema   `json:"if,omitempty"`
-	// Then  *Schema   `json:"then,omitempty"`
-	// Else  *Schema   `json:"else,omitempty"`
+	If    *Schema   `json:"if,omitempty"`
+	Then  *Schema   `json:"then,omitempty"`
+	Else  *Schema   `json:"else,omitempty"`
 
 	MinProperties         int                        `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
 	MaxProperties         int                        `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
@@ -39,24 +39,24 @@ type Schema struct {
 	PropertyNames         *Schema                    `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
 	RegexProperties       bool                       `json:"regexProperties,omitempty" yaml:"regexProperties,omitempty"`
 	PatternProperties     map[*regexp.Regexp]*Schema `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
-	AdditionalProperties  interface{}                `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
-	Dependencies          map[string]interface{}     `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
+	AdditionalProperties  any                        `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
+	Dependencies          map[string]any             `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
 	DependentRequired     map[string][]string        `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"`
 	DependentSchemas      map[string]*Schema         `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
 	UnevaluatedProperties *Schema                    `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
 
-	MinItems         int         `json:"minItems,omitempty" yaml:"minItems,omitempty"`
-	MaxItems         int         `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
-	UniqueItems      bool        `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
-	Items            interface{} `json:"items,omitempty" yaml:"items,omitempty"`
-	AdditionalItems  interface{} `json:"additionalItems,omitempty" yaml:"additionalItems,omitempty"`
-	PrefixItems      []*Schema   `json:"prefixItems,omitempty" yaml:"prefixItems,omitempty"`
-	Items2020        *Schema     `json:"items2020,omitempty" yaml:"items2020,omitempty"`
-	Contains         *Schema     `json:"contains,omitempty" yaml:"contains,omitempty"`
-	ContainsEval     bool        `json:"containsEval,omitempty" yaml:"containsEval,omitempty"`
-	MinContains      int         `json:"minContains,omitempty" yaml:"minContains,omitempty"`
-	MaxContains      int         `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`
-	UnevaluatedItems *Schema     `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
+	MinItems         int       `json:"minItems,omitempty" yaml:"minItems,omitempty"`
+	MaxItems         int       `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
+	UniqueItems      bool      `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
+	Items            any       `json:"items,omitempty" yaml:"items,omitempty"`
+	AdditionalItems  any       `json:"additionalItems,omitempty" yaml:"additionalItems,omitempty"`
+	PrefixItems      []*Schema `json:"prefixItems,omitempty" yaml:"prefixItems,omitempty"`
+	Items2020        *Schema   `json:"items2020,omitempty" yaml:"items2020,omitempty"`
+	Contains         *Schema   `json:"contains,omitempty" yaml:"contains,omitempty"`
+	ContainsEval     bool      `json:"containsEval,omitempty" yaml:"containsEval,omitempty"`
+	MinContains      int       `json:"minContains,omitempty" yaml:"minContains,omitempty"`
+	MaxContains      int       `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`
+	UnevaluatedItems *Schema   `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
 
 	MinLength       int            `json:"minLength,omitempty" yaml:"minLength,omitempty"`
 	MaxLength       int            `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
@@ -73,14 +73,14 @@ type Schema struct {
 	ExclusiveMaximum *big.Rat `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
 	MultipleOf       *big.Rat `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
 
-	Title       string        `json:"title,omitempty" yaml:"title,omitempty"`
-	Description string        `json:"description,omitempty" yaml:"description,omitempty"`
-	Default     interface{}   `json:"default,omitempty" yaml:"default,omitempty"`
-	Comment     string        `json:"comment,omitempty" yaml:"comment,omitempty"`
-	ReadOnly    bool          `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
-	WriteOnly   bool          `json:"writeOnly,omitempty" yaml:"writeOnly,omitempty"`
-	Examples    []interface{} `json:"examples,omitempty" yaml:"examples,omitempty"`
-	Deprecated  bool          `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Title       string `json:"title,omitempty" yaml:"title,omitempty"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Default     any    `json:"default,omitempty" yaml:"default,omitempty"`
+	Comment     string `json:"comment,omitempty" yaml:"comment,omitempty"`
+	ReadOnly    bool   `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
+	WriteOnly   bool   `json:"writeOnly,omitempty" yaml:"writeOnly,omitempty"`
+	Examples    []any  `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Deprecated  bool   `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 
 	// Extensions map[string]ExtSchema `json:"extensions,omitempty"`
 }
