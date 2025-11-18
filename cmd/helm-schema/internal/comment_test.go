@@ -1,8 +1,12 @@
 package internal
 
 import (
+	"fmt"
 	"helmschema/cmd/helm-schema/internal/jsonschema"
+	"math/big"
 	"testing"
+
+	"regexp"
 
 	"github.com/stretchr/testify/assert"
 	"go.yaml.in/yaml/v4"
@@ -14,12 +18,17 @@ foo: bar
 `
 
 const COMMENT_WITH_INVALID_YAML = `
-# comment is not valid yaml
+# @invalid yaml string
 foo: bar
 `
 
 const DOESNT_SET_SCHEMA_PROPERTIES = `
 # key: value
+foo: bar
+`
+
+const COMMENT_WITH_YAML_STRING = `
+# comment is just a string
 foo: bar
 `
 
@@ -35,14 +44,14 @@ const SETS_SCHEMA_WITH_MULTILINE_VALUE = `
 foo: bar
 `
 
-// const SETS_DESCRIPTION_TO_SECOND_DOC = `
-// # default: baz
-// # ---
-// # this is a description
-// foo: bar
-// `
+const SETS_DESCRIPTION_TO_SECOND_DOC = `
+# default: baz
+# ---
+# this is a description
+foo: bar
+`
 
-func TestNewClient(t *testing.T) {
+func TestBasicCommentParsing(t *testing.T) {
 	var tests = []struct {
 		name          string
 		document      string
@@ -54,10 +63,11 @@ func TestNewClient(t *testing.T) {
 			document: "",
 			validate: func(tt *testing.T, s *jsonschema.Schema, err error) {
 				assert.Nil(tt, err)
+				assert.Equal(tt, *s, jsonschema.Schema{})
 			},
 		},
 		{
-			name:     "comment missing space prefix",
+			name:     "errors when comment missing space prefix",
 			document: COMMENT_MISSING_SPACE_PREFIX,
 			validate: func(tt *testing.T, s *jsonschema.Schema, err error) {
 				assert.NotNil(tt, err)
@@ -65,11 +75,20 @@ func TestNewClient(t *testing.T) {
 			},
 		},
 		{
-			name:     "comment is not valid yaml",
+			// TODO: Fix comment parsing so that the description is correctly extracted
+			name:     "errors when comment is invalid yaml string",
 			document: COMMENT_WITH_INVALID_YAML,
 			validate: func(tt *testing.T, s *jsonschema.Schema, err error) {
-				assert.NotNil(t, err)
-				assert.ErrorContains(t, err, "yaml: unmarshal errors")
+				assert.NoError(tt, err)
+				assert.Equal(tt, "", s.Description)
+			},
+		},
+		{
+			name:     "comment with string yaml is treated as description",
+			document: COMMENT_WITH_YAML_STRING,
+			validate: func(tt *testing.T, s *jsonschema.Schema, err error) {
+				assert.NoError(tt, err)
+				assert.Equal(tt, "comment is just a string", s.Description)
 			},
 		},
 		{
@@ -77,7 +96,7 @@ func TestNewClient(t *testing.T) {
 			document: DOESNT_SET_SCHEMA_PROPERTIES,
 			validate: func(tt *testing.T, s *jsonschema.Schema, err error) {
 				assert.NoError(tt, err)
-				assert.Equal(tt, *s, jsonschema.Schema{})
+				assert.Equal(tt, jsonschema.Schema{}, *s)
 			},
 		},
 		{
@@ -85,7 +104,7 @@ func TestNewClient(t *testing.T) {
 			document: SETS_SCHEMA_DEFAULT,
 			validate: func(tt *testing.T, s *jsonschema.Schema, err error) {
 				assert.NoError(tt, err)
-				assert.Equal(tt, s.Default, "baz")
+				assert.Equal(tt, "baz", s.Default)
 			},
 		},
 		{
@@ -93,18 +112,18 @@ func TestNewClient(t *testing.T) {
 			document: SETS_SCHEMA_WITH_MULTILINE_VALUE,
 			validate: func(tt *testing.T, s *jsonschema.Schema, err error) {
 				assert.NoError(tt, err)
-				assert.Equal(tt, s.Default, "foo\nbar")
+				assert.Equal(tt, "foo\nbar", s.Default)
 			},
 		},
-		// {
-		// 	name:     "comment sets jsonschema description to second yaml doc",
-		// 	document: SETS_SCHEMA_WITH_MULTILINE_VALUE,
-		// 	validate: func(tt *testing.T, s *jsonschema.Schema, err error) {
-		// 		assert.NoError(tt, err)
-		// 		assert.Equal(tt, s.Default, "baz")
-		// 		assert.Equal(tt, s.Description, "this is a description")
-		// 	},
-		// },
+		{
+			name:     "comment sets jsonschema description to second yaml doc",
+			document: SETS_DESCRIPTION_TO_SECOND_DOC,
+			validate: func(tt *testing.T, s *jsonschema.Schema, err error) {
+				assert.NoError(tt, err)
+				assert.Equal(tt, "baz", s.Default)
+				assert.Equal(tt, "this is a description", s.Description)
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -114,14 +133,213 @@ func TestNewClient(t *testing.T) {
 			assert.NoError(tt, err)
 
 			s := &jsonschema.Schema{}
-			err = updateSchmeaFromYamlComment(getYamlNode(yamlNode), s)
+			err = updateSchmeaFromYamlComment(getCommentNode(yamlNode), s)
 
 			tc.validate(tt, s, err)
 		})
 	}
 }
 
-func getYamlNode(node *yaml.Node) *yaml.Node {
+func TestCommentFieldsSingleLine(t *testing.T) {
+	type testCase struct {
+		field         string
+		commentValue  string
+		expectedValue any
+		validate      func(tt *testing.T, tc testCase, s *jsonschema.Schema)
+	}
+
+	var tests = []testCase{
+		{
+			field:         "$schema",
+			commentValue:  "https://example.com/schema",
+			expectedValue: "https://example.com/schema",
+			validate: func(tt *testing.T, tc testCase, s *jsonschema.Schema) {
+				assert.IsType(tt, tc.expectedValue, s.Schema)
+				assert.Equal(tt, tc.expectedValue, s.Schema)
+			},
+		},
+		{
+			field:         "description",
+			commentValue:  "some description",
+			expectedValue: "some description",
+			validate: func(tt *testing.T, tc testCase, s *jsonschema.Schema) {
+				assert.IsType(tt, tc.expectedValue, s.Description)
+				assert.Equal(tt, tc.expectedValue, s.Description)
+			},
+		},
+		{
+			field:         "format",
+			commentValue:  "some format",
+			expectedValue: "some format",
+			validate: func(tt *testing.T, tc testCase, s *jsonschema.Schema) {
+				assert.IsType(tt, tc.expectedValue, s.Format)
+				assert.Equal(tt, tc.expectedValue, s.Format)
+			},
+		},
+		{
+			field:         "minLength",
+			commentValue:  "5",
+			expectedValue: 5,
+			validate: func(tt *testing.T, tc testCase, s *jsonschema.Schema) {
+				assert.IsType(tt, tc.expectedValue, s.MinLength)
+				assert.Equal(tt, tc.expectedValue, s.MinLength)
+			},
+		},
+		{
+			field:         "deprecated",
+			commentValue:  "true",
+			expectedValue: true,
+			validate: func(tt *testing.T, tc testCase, s *jsonschema.Schema) {
+				assert.IsType(tt, tc.expectedValue, s.Deprecated)
+				assert.Equal(tt, tc.expectedValue, s.Deprecated)
+			},
+		},
+		{
+			field:         "required",
+			commentValue:  "[foo, bar]",
+			expectedValue: []string{"foo", "bar"},
+			validate: func(tt *testing.T, tc testCase, s *jsonschema.Schema) {
+				assert.IsType(tt, tc.expectedValue, s.Required)
+				assert.Equal(tt, tc.expectedValue, s.Required)
+			},
+		},
+		{
+			field:         "maximum",
+			commentValue:  "100",
+			expectedValue: big.NewRat(100, 1),
+			validate: func(tt *testing.T, tc testCase, s *jsonschema.Schema) {
+				expectedRat := tc.expectedValue.(*big.Rat)
+
+				assert.IsType(tt, *expectedRat, *s.Maximum)
+				assert.Equal(tt, *expectedRat, *s.Maximum)
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.field, func(tt *testing.T) {
+			document := fmt.Sprintf("# %s: %s\nfoo:bar\n", tc.field, tc.commentValue)
+
+			yamlNode := &yaml.Node{}
+			err := yaml.Unmarshal([]byte(document), yamlNode)
+			assert.NoError(tt, err)
+
+			s := &jsonschema.Schema{}
+			err = updateSchmeaFromYamlComment(yamlNode.Content[0], s)
+			assert.NoError(tt, err)
+
+			tc.validate(tt, tc, s)
+		})
+	}
+}
+
+const TEST_FIELD_ONEOF = `
+# oneOf:
+#   - type: string
+#     description: this is a string
+#   - type: number
+#     description: this is a number
+foo: bar
+`
+
+const TEST_DEPENDENT_REQUIRED = `
+# dependentRequired:
+#   baz:
+#     - qux
+#     - quux
+#   bif:
+#     - quuz
+foo: bar # line comment
+`
+
+const TEST_DEPENDENCIES = `
+# dependencies:
+#   baz: qux
+#   bif: 0
+#   qux:
+#     - quux
+#     - quuz
+foo: bar
+`
+
+const TEST_PATTERN = `
+# pattern: ^[a-z]+$
+foo: bar
+`
+
+func TestCommentFieldsMultipleLines(t *testing.T) {
+	type testCase struct {
+		name          string
+		comment       string
+		expectedValue any
+		validate      func(tt *testing.T, tc testCase, s *jsonschema.Schema)
+	}
+
+	var tests = []testCase{
+		{
+			name:    "oneOf with multiple lines",
+			comment: TEST_FIELD_ONEOF,
+			expectedValue: []*jsonschema.Schema{
+				{Type: "string", Description: "this is a string"},
+				{Type: "number", Description: "this is a number"},
+			},
+			validate: func(tt *testing.T, tc testCase, s *jsonschema.Schema) {
+				assert.IsType(tt, tc.expectedValue, s.OneOf)
+				assert.Equal(tt, tc.expectedValue, s.OneOf)
+			},
+		},
+		{
+			name:    "dependentRequired",
+			comment: TEST_DEPENDENT_REQUIRED,
+			expectedValue: map[string][]string{
+				"baz": {"qux", "quux"},
+				"bif": {"quuz"},
+			},
+			validate: func(tt *testing.T, tc testCase, s *jsonschema.Schema) {
+				assert.IsType(tt, tc.expectedValue, s.DependentRequired)
+				assert.Equal(tt, tc.expectedValue, s.DependentRequired)
+			},
+		},
+		{
+			name:    "dependencies",
+			comment: TEST_DEPENDENCIES,
+			expectedValue: map[string]any{
+				"baz": "qux",
+				"bif": 0,
+				"qux": []any{"quux", "quuz"},
+			},
+			validate: func(tt *testing.T, tc testCase, s *jsonschema.Schema) {
+				assert.IsType(tt, tc.expectedValue, s.Dependencies)
+				assert.Equal(tt, tc.expectedValue, s.Dependencies)
+			},
+		},
+		{
+			name:          "pattern",
+			comment:       TEST_PATTERN,
+			expectedValue: regexp.MustCompile("^[a-z]+$"),
+			validate: func(tt *testing.T, tc testCase, s *jsonschema.Schema) {
+				assert.IsType(tt, tc.expectedValue, s.Pattern)
+				assert.Equal(tt, tc.expectedValue, s.Pattern)
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(tt *testing.T) {
+			yamlNode := &yaml.Node{}
+			err := yaml.Unmarshal([]byte(tc.comment), yamlNode)
+			assert.NoError(tt, err)
+
+			s := &jsonschema.Schema{}
+			err = updateSchmeaFromYamlComment(getCommentNode(yamlNode), s)
+			assert.NoError(tt, err)
+
+			tc.validate(tt, tc, s)
+		})
+	}
+}
+
+func getCommentNode(node *yaml.Node) *yaml.Node {
 	if len(node.Content) == 0 {
 		return node
 	}

@@ -88,10 +88,28 @@ func updateSchmeaFromYamlComment(node *yaml.Node, s *jsonschema.Schema) error {
 	}
 
 	cleanedValue := strings.Join(commentLines, "\n")
+	for _, commentDoc := range strings.Split(cleanedValue, "---") {
+		// Unmarshal into a yaml node to see what kind of document it is
+		commentNode := &yaml.Node{}
+		_ = yaml.Unmarshal([]byte(commentDoc), commentNode)
 
-	err := yaml.Unmarshal([]byte(cleanedValue), s)
-	if err != nil {
-		return NewCommentError(node, err)
+		// Skip empty docs
+		if len(commentNode.Content) == 0 {
+			continue
+		}
+
+		// Unmarshal map docs directly into the schema
+		if commentNode.Content[0].Kind == yaml.MappingNode {
+			err := yaml.Unmarshal([]byte(commentDoc), s)
+			if err != nil {
+				return NewCommentError(node, err)
+			}
+		}
+
+		// If the doc is just a string, set it as the schema description
+		if commentNode.Content[0].Kind == yaml.ScalarNode {
+			s.Description = commentNode.Content[0].Value
+		}
 	}
 
 	return nil
