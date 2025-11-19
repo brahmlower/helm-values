@@ -157,11 +157,11 @@ func yamlTagToSchema(tag string) (string, error) {
 	case "!!str":
 		return "string", nil
 	case "!!int":
-		return "integer", nil
-	case "!!bool":
-		return "boolean", nil
+		return "number", nil
 	case "!!float":
 		return "number", nil
+	case "!!bool":
+		return "boolean", nil
 	// case "!!array":
 	// 	return "array", nil
 	case "!!map":
