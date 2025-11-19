@@ -10,8 +10,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func BuildPlan(rootDir string, logger *logrus.Logger) ([]*Plan, error) {
-	plans := []*Plan{}
+func FindCharts(logger *logrus.Logger, rootDir string) ([]string, error) {
+	chartDirectories := []string{}
 	err := filepath.WalkDir(rootDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -54,51 +54,73 @@ func BuildPlan(rootDir string, logger *logrus.Logger) ([]*Plan, error) {
 
 		logger.Infof("Found chart: %s", path)
 
-		plans = append(plans, &Plan{
-			ChartDir: path,
-		})
-
+		chartDirectories = append(chartDirectories, path)
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return plans, nil
+	return chartDirectories, nil
+}
+
+func NewPlan(
+	chartRoot string,
+	stdout bool,
+	strictComments bool,
+	dryRun bool,
+) *Plan {
+	return &Plan{
+		chartRoot:      chartRoot,
+		stdout:         stdout,
+		strictComments: strictComments,
+		dryRun:         dryRun,
+	}
 }
 
 type Plan struct {
-	Logger         *logrus.Logger
-	ChartDir       string
-	StrictComments bool
-	SchemaFilePath string
-	Stdout         bool
-	DryRun         bool
+	chartRoot      string
+	strictComments bool
+	stdout         bool
+	dryRun         bool
 }
 
-func (p *Plan) LogIntent() {
-	p.Logger.Debugf("%s: plan: DryRun=%t", p.ChartDir, p.DryRun)
-	p.Logger.Debugf("%s: plan: StrictComments=%t", p.ChartDir, p.StrictComments)
-	p.Logger.Debugf("%s: plan: Stdout=%t", p.ChartDir, p.Stdout)
-	p.Logger.Debugf("%s: plan: ValuesFile=%s", p.ChartDir, p.ValuesFilePath())
-	p.Logger.Debugf("%s: plan: SchemaFile=%s", p.ChartDir, p.SchemaFilePath)
+func (p *Plan) LogIntent(logger *logrus.Logger) {
+	logger.Debugf("%s: plan: DryRun=%t", p.chartRoot, p.dryRun)
+	logger.Debugf("%s: plan: StrictComments=%t", p.chartRoot, p.strictComments)
+	logger.Debugf("%s: plan: Stdout=%t", p.chartRoot, p.stdout)
+	logger.Debugf("%s: plan: ChartRoot=%s", p.chartRoot, p.chartRoot)
+	logger.Debugf("%s: plan: ChartFile=%s", p.chartRoot, p.ChartFilePath())
+	logger.Debugf("%s: plan: ValuesFile=%s", p.chartRoot, p.ValuesFilePath())
+	logger.Debugf("%s: plan: SchemaFile=%s", p.chartRoot, p.SchemaFilePath())
+}
+
+func (p *Plan) ChartRoot() string {
+	return p.chartRoot
 }
 
 func (p *Plan) ChartFilePath() string {
-	return fmt.Sprintf("%s/Chart.yaml", p.ChartDir)
+	return fmt.Sprintf("%s/Chart.yaml", p.chartRoot)
 }
 
 func (p *Plan) ValuesFilePath() string {
-	return fmt.Sprintf("%s/values.yaml", p.ChartDir)
+	return fmt.Sprintf("%s/values.yaml", p.chartRoot)
 }
 
-func (p *Plan) SetSchemaFilename(filename string) {
-	p.SchemaFilePath = fmt.Sprintf("%s/%s", p.ChartDir, filename)
+func (p *Plan) SchemaFilePath() string {
+	return fmt.Sprintf("%s/values.schema.json", p.chartRoot)
 }
 
-func (p *Plan) ReadValuesFile() ([]byte, error) {
-	p.Logger.Debugf("%s: schema: reading values file", p.ChartDir)
-	return os.ReadFile(p.ValuesFilePath())
+func (p *Plan) StdOut() bool {
+	return p.stdout
+}
+
+func (p *Plan) StrictComments() bool {
+	return p.strictComments
+}
+
+func (p *Plan) DryRun() bool {
+	return p.dryRun
 }
 
 func (p *Plan) WriteSchema(schema *jsonschema.Schema) error {
@@ -107,12 +129,11 @@ func (p *Plan) WriteSchema(schema *jsonschema.Schema) error {
 		return err
 	}
 
-	if p.Stdout {
+	if p.stdout {
 		p.writeToStdout(string(s))
 	}
 
-	// TODO: This will write to the wrong path
-	if p.SchemaFilePath != "" && !p.DryRun {
+	if !p.dryRun {
 		return p.WriteToFile(string(s))
 	}
 
@@ -120,8 +141,8 @@ func (p *Plan) WriteSchema(schema *jsonschema.Schema) error {
 }
 
 func (p *Plan) WriteToFile(s string) error {
-	p.Logger.Debugf("%s: schema: writing schema file", p.ChartDir)
-	f, err := os.Create(p.SchemaFilePath)
+	// p.logger.Debugf("%s: schema: writing schema file", p.chartDir)
+	f, err := os.Create(p.SchemaFilePath())
 	if err != nil {
 		return err
 	}

@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"helmschema/cmd/helm-schema/internal/jsonschema"
+	"os"
 
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
@@ -24,7 +25,8 @@ func NewGenerator(logger *logrus.Logger, plan *Plan) *Generator {
 }
 
 func (g *Generator) Generate() (*jsonschema.Schema, error) {
-	f, err := g.plan.ReadValuesFile()
+	g.logger.Debugf("%s: schema: reading values file", g.plan.ChartRoot())
+	f, err := os.ReadFile(g.plan.ValuesFilePath())
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +66,7 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*jsonsche
 		}
 
 		err := fmt.Errorf("doc comment error: %w", err)
-		if g.plan.StrictComments {
+		if g.plan.StrictComments() {
 			return nil, err
 		}
 	}
@@ -88,7 +90,7 @@ func (g *Generator) buildSequenceNode(key *yaml.Node, _ *yaml.Node) (*jsonschema
 			}
 
 			err := fmt.Errorf("doc comment error: %w", err)
-			if g.plan.StrictComments {
+			if g.plan.StrictComments() {
 				return nil, err
 			}
 		}
@@ -112,7 +114,7 @@ func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*jsonsch
 			}
 
 			err := fmt.Errorf("doc comment error: %w", err)
-			if g.plan.StrictComments {
+			if g.plan.StrictComments() {
 				return nil, err
 			}
 		}

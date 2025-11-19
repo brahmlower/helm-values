@@ -39,7 +39,7 @@ func (c *SchemaConfig) DryRun() bool {
 }
 
 func (c *SchemaConfig) LogLevel() (logrus.Level, error) {
-	return logrus.ParseLevel(c.GetString("telemetry.loglevel"))
+	return logrus.ParseLevel(c.GetString("log-level"))
 }
 
 func (c *SchemaConfig) UpdateLogger(logger *logrus.Logger) error {
