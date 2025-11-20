@@ -61,6 +61,11 @@ func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig) error {
 		plans = append(plans, plan)
 	}
 
+	staticPaths, err := docs.StaticTemplates()
+	if err != nil {
+		return err
+	}
+
 	// Iterate through plans again, this time generating the docs
 	for _, plan := range plans {
 		logger.Debugf("%s: docs: starting generation", plan.Chart().Details.Name)
@@ -84,8 +89,7 @@ func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig) error {
 		if err != nil {
 			return err
 		}
-		extraTemplates = append(extraTemplates, "templates/md.valuesTable.gotmpl")
-		extraTemplates = append(extraTemplates, "templates/rst.valuesTable.gotmpl")
+		extraTemplates = append(staticPaths, extraTemplates...)
 
 		logger.Debugf(
 			"%s: docs: loading template: %s",
@@ -100,10 +104,6 @@ func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig) error {
 		if err != nil {
 			return err
 		}
-		// rootFS := root.FS()
-		// f, err := rootFS.Open("Users/brahm.lower/development/helm-kiwix/charts/kiwix/README.md.gotmpl")
-		// fmt.Printf("f: %v\n", f)
-		// fmt.Printf("err: %s\n", err.Error())
 
 		layeredFs := docs.NewLayeredFS(
 			docs.TemplateFS,
