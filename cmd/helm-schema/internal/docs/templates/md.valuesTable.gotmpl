@@ -1,0 +1,12 @@
+
+{{- define "md.valuesTable" }}
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+  {{- range .Values }}
+    {{- "\n| "}}{{ .Key }}
+    {{- " | "}}{{ .Type }}
+    {{- " | "}}{{ .Default }}
+    {{- " | "}}{{ .Description }}
+    {{- " | "}}
+  {{- end }}
+{{- end }}

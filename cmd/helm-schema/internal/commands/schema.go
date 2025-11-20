@@ -2,6 +2,7 @@ package commands
 
 import (
 	"helmschema/cmd/helm-schema/internal"
+	"helmschema/cmd/helm-schema/internal/charts"
 	"helmschema/cmd/helm-schema/internal/config"
 
 	"github.com/sirupsen/logrus"
@@ -34,17 +35,17 @@ func generateSchema(logger *logrus.Logger, cfg *config.SchemaConfig) error {
 		return err
 	}
 
-	charts, err := internal.FindCharts(logger, chartDir)
+	chartsFound, err := charts.Search(logger, chartDir)
 	if err != nil {
 		return err
 	}
-	logger.Infof("Found %d charts", len(charts))
+	logger.Infof("Found %d charts", len(chartsFound))
 
 	// Itterate through plan to set the logger and config
 	plans := []*internal.Plan{}
-	for _, chartRoot := range charts {
+	for _, chart := range chartsFound {
 		plan := internal.NewPlan(
-			chartRoot,
+			chart,
 			cfg.StdOut(),
 			cfg.Strict(),
 			cfg.DryRun(),
@@ -55,14 +56,14 @@ func generateSchema(logger *logrus.Logger, cfg *config.SchemaConfig) error {
 
 	// Iterate through plans again, this time generating the schema
 	for _, plan := range plans {
-		logger.Debugf("%s: schema: starting generation", plan.ChartRoot())
+		logger.Debugf("%s: schema: starting generation", plan.Chart().Details.Name)
 		schema, err := internal.NewGenerator(logger, plan).Generate()
 		if err != nil {
 			logger.Error(err.Error())
 			return nil
 		}
 
-		if err := plan.WriteSchema(schema); err != nil {
+		if err := plan.WriteSchema(logger, schema); err != nil {
 			logger.Error(err.Error())
 			return nil
 		}

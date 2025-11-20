@@ -25,8 +25,7 @@ func NewGenerator(logger *logrus.Logger, plan *Plan) *Generator {
 }
 
 func (g *Generator) Generate() (*jsonschema.Schema, error) {
-	g.logger.Debugf("%s: schema: reading values file", g.plan.ChartRoot())
-	f, err := os.ReadFile(g.plan.ValuesFilePath())
+	f, err := os.ReadFile(g.plan.chart.ValuesFilePath())
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +60,7 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*jsonsche
 
 	if err := updateSchmeaFromYamlComment(key, s); err != nil {
 		if cErr, ok := err.(*CommentError); ok {
-			cErr.Filepath = g.plan.ValuesFilePath()
+			cErr.Filepath = g.plan.chart.ValuesFilePath()
 			cErr.RenderToLog(g.logger)
 		}
 
@@ -85,7 +84,7 @@ func (g *Generator) buildSequenceNode(key *yaml.Node, _ *yaml.Node) (*jsonschema
 	if key != nil {
 		if err := updateSchmeaFromYamlComment(key, s); err != nil {
 			if cErr, ok := err.(*CommentError); ok {
-				cErr.Filepath = g.plan.ValuesFilePath()
+				cErr.Filepath = g.plan.chart.ValuesFilePath()
 				cErr.RenderToLog(g.logger)
 			}
 
@@ -109,7 +108,7 @@ func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*jsonsch
 	if key != nil {
 		if err := updateSchmeaFromYamlComment(key, s); err != nil {
 			if cErr, ok := err.(*CommentError); ok {
-				cErr.Filepath = g.plan.ValuesFilePath()
+				cErr.Filepath = g.plan.chart.ValuesFilePath()
 				cErr.RenderToLog(g.logger)
 			}
 

@@ -39,7 +39,16 @@ func (c *DocsConfig) DryRun() bool {
 }
 
 func (c *DocsConfig) LogLevel() (logrus.Level, error) {
-	return logrus.ParseLevel(c.GetString("telemetry.loglevel"))
+	return logrus.ParseLevel(c.GetString("log-level"))
+}
+
+func (c *DocsConfig) ExtraTemplates() ([]string, error) {
+	path, err := filepath.Abs(c.GetString("extra-templates"))
+	if err != nil {
+		return nil, err
+	}
+
+	return filepath.Glob(path)
 }
 
 func (c *DocsConfig) UpdateLogger(logger *logrus.Logger) error {
@@ -76,4 +85,8 @@ func (c *DocsConfig) BindFlags(cmd *cobra.Command) {
 	cmd.Flags().String("log-level", "warn", "log level (debug, info, warn, error, fatal, panic)")
 	c.BindPFlag("log-level", cmd.Flags().Lookup("log-level"))
 	c.BindEnv("log-level")
+
+	cmd.Flags().String("extra-templates", "", "path to extra templates directory")
+	c.BindPFlag("extra-templates", cmd.Flags().Lookup("extra-templates"))
+	c.BindEnv("extra-templates")
 }
