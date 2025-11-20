@@ -36,13 +36,13 @@ Flags:
 ## Docs Generation
 
 ```
-helm spec docs
+helm values docs
 ```
 
 or
 
 ```
-helm spec docs ./my-chart.values.yaml
+helm values docs ./my-chart.values.yaml
 ```
 
 Options:

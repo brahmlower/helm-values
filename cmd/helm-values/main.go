@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"helmschema/cmd/helm-schema/internal/commands"
+	"helmschema/cmd/helm-values/internal/commands"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

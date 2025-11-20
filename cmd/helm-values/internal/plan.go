@@ -3,8 +3,8 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
-	"helmschema/cmd/helm-schema/internal/charts"
-	"helmschema/cmd/helm-schema/internal/jsonschema"
+	"helmschema/cmd/helm-values/internal/charts"
+	"helmschema/cmd/helm-values/internal/jsonschema"
 	"os"
 
 	"github.com/sirupsen/logrus"

@@ -1,8 +1,8 @@
 package docs
 
 import (
-	"helmschema/cmd/helm-schema/internal/charts"
-	"helmschema/cmd/helm-schema/internal/jsonschema"
+	"helmschema/cmd/helm-values/internal/charts"
+	"helmschema/cmd/helm-values/internal/jsonschema"
 )
 
 // type ValuesTable struct {

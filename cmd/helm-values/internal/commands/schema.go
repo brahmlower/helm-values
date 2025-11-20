@@ -1,9 +1,9 @@
 package commands
 
 import (
-	"helmschema/cmd/helm-schema/internal"
-	"helmschema/cmd/helm-schema/internal/charts"
-	"helmschema/cmd/helm-schema/internal/config"
+	"helmschema/cmd/helm-values/internal"
+	"helmschema/cmd/helm-values/internal/charts"
+	"helmschema/cmd/helm-values/internal/config"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

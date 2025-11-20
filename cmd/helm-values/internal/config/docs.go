@@ -43,7 +43,12 @@ func (c *DocsConfig) LogLevel() (logrus.Level, error) {
 }
 
 func (c *DocsConfig) ExtraTemplates() ([]string, error) {
-	path, err := filepath.Abs(c.GetString("extra-templates"))
+	et := c.GetString("extra-templates")
+	if et == "" {
+		return nil, nil
+	}
+
+	path, err := filepath.Abs(et)
 	if err != nil {
 		return nil, err
 	}

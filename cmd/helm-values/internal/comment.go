@@ -2,7 +2,7 @@ package internal
 
 import (
 	"fmt"
-	"helmschema/cmd/helm-schema/internal/jsonschema"
+	"helmschema/cmd/helm-values/internal/jsonschema"
 	"strings"
 
 	"github.com/sirupsen/logrus"
