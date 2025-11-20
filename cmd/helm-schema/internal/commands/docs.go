@@ -9,6 +9,7 @@ import (
 	"helmschema/cmd/helm-schema/internal/config"
 	"helmschema/cmd/helm-schema/internal/docs"
 	"helmschema/cmd/helm-schema/internal/jsonschema"
+	"os"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -83,6 +84,8 @@ func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig) error {
 		if err != nil {
 			return err
 		}
+		extraTemplates = append(extraTemplates, "templates/md.valuesTable.gotmpl")
+		extraTemplates = append(extraTemplates, "templates/rst.valuesTable.gotmpl")
 
 		logger.Debugf(
 			"%s: docs: loading template: %s",
@@ -93,8 +96,23 @@ func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig) error {
 			logger.Debugf("%s: docs: loading extra template: %s", plan.Chart().Details.Name, extraTemplate)
 		}
 
+		root, err := os.OpenRoot("/")
+		if err != nil {
+			return err
+		}
+		// rootFS := root.FS()
+		// f, err := rootFS.Open("Users/brahm.lower/development/helm-kiwix/charts/kiwix/README.md.gotmpl")
+		// fmt.Printf("f: %v\n", f)
+		// fmt.Printf("err: %s\n", err.Error())
+
+		layeredFs := docs.NewLayeredFS(
+			docs.TemplateFS,
+			root.FS(),
+		)
+
 		t, err := docs.NewTemplator(
 			logger,
+			layeredFs,
 			plan.Chart().Details.Name,
 			plan.ReadmeTemplateFilePath(),
 			extraTemplates,

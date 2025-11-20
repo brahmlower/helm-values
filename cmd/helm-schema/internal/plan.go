@@ -123,23 +123,21 @@ func (p *Plan) WriteSchema(logger *logrus.Logger, schema *jsonschema.Schema) err
 }
 
 func (p *Plan) WriteReadme(logger *logrus.Logger, s string) error {
+	if !p.DryRun() {
+		logger.Debugf("%s: docs: opening readme file", p.Chart().Details.Name)
+		f, err := os.Create(p.ReadmeFilePath())
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		if _, err = f.Write([]byte(s)); err != nil {
+			return err
+		}
+	}
+
 	if p.StdOut() {
 		fmt.Println(s)
-	}
-
-	if p.DryRun() {
-		return nil
-	}
-
-	logger.Debugf("%s: docs: opening readme file", p.Chart().Details.Name)
-	f, err := os.Create(p.ReadmeFilePath())
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	if _, err = f.Write([]byte(s)); err != nil {
-		return err
 	}
 
 	return nil

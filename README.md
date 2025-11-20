@@ -53,5 +53,12 @@ Usage:
   helm-values docs [flags]
 
 Flags:
-  -h, --help                 help for docs
+      --chart-dir string         path to the chart directory
+      --dry-run                  don't write changes to disk
+      --extra-templates string   path to extra templates directory
+  -h, --help                     help for docs
+      --log-level string         log level (debug, info, warn, error, fatal, panic) (default "warn")
+      --schema-file string       path to the schema-file file (default "values.schema.json")
+      --stdout                   write to stdout
+      --strict                   fail on doc comment parsing errors
 ```

@@ -2,7 +2,7 @@
 {{- define "md.valuesTable" }}
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-  {{- range .Values }}
+  {{- range .ValuesTable }}
     {{- "\n| "}}{{ .Key }}
     {{- " | "}}{{ .Type }}
     {{- " | "}}{{ .Default }}
