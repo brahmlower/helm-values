@@ -1,12 +1,18 @@
 
 {{- define "md.valuesTable" }}
+{{ $cwKey := add (maxLen (rowSelect .ValuesTable "Key")) 1 }}
+{{ $cwType := add (maxLen (rowSelect .ValuesTable "Type")) 1 }}
+{{ $cwDefault := add (maxLen (rowSelect .ValuesTable "Default")) 1 }}
+{{ $cwDescription := add (maxLen (rowSelect .ValuesTable "Description")) 1 }}
+
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-  {{- range .ValuesTable }}
-    {{- "\n| "}}{{ .Key }}
-    {{- " | "}}{{ .Type }}
-    {{- " | "}}{{ .Default }}
-    {{- " | "}}{{ .Description }}
-    {{- " | "}}
-  {{- end }}
+{{- range .ValuesTable }}
+{{- "\n" }}
+{{- printf "| %s" (rpad .Key " " $cwKey) }}
+{{- printf "| %s" (rpad .Type " " $cwType) }}
+{{- printf "| %s" (rpad .Default " " $cwDefault) }}
+{{- printf "| %s" (rpad .Description " " $cwDescription) }}
+{{- "|" }}
+{{- end }}
 {{- end }}

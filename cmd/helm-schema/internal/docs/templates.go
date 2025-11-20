@@ -21,8 +21,15 @@ func NewTemplator(logger *logrus.Logger, fsys fs.FS, chartName string, path stri
 		paths[i] = strings.TrimPrefix(p, "/")
 	}
 
+	funcMap := sprig.FuncMap()
+	funcMap["lpad"] = lpad
+	funcMap["rpad"] = rpad
+	funcMap["maxLen"] = maxLen
+	funcMap["rowSelect"] = rowSelect
+	funcMap["mdRow"] = mdRow
+
 	t, err := template.New(filepath.Base(path)).
-		Funcs(sprig.FuncMap()).
+		Funcs(funcMap).
 		ParseFS(fsys, paths...)
 	if err != nil {
 		return nil, err
