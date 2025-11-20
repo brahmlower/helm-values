@@ -1,5 +1,5 @@
 
-# Helm Schema
+# Helm Values
 
 A helm plugin for generating schema for chart values.
 
