@@ -62,3 +62,40 @@ Flags:
       --stdout                   write to stdout
       --strict                   fail on doc comment parsing errors
 ```
+
+## Development Roadmap
+
+Features inspired by [helm-schema](https://github.com/dadav/helm-schema)
+and [helm-docs](https://github.com/norwoodj/helm-docs).
+
+- [ ] Schema Generation
+  - [ ] Check/validate values file
+  - [ ] Write to non-default location
+  - [ ] Write to stdout
+  - [ ] Update values file with yaml-schema reference
+  - [ ] Set examples from comments
+  - [ ] Json-Schema Draft 6 support?
+  - [ ] Json-Schema Draft 7 support?
+  - [ ] Support declaring and using yaml anchors in doc comments
+  - [ ] Support declaring root level attributes
+  - [ ] Root level one-of/any-of/all-of
+  - [ ] Requirement: Changes to values.yaml don't violate yamllint checks
+  - [ ] Requirement: helm lint checks
+- [ ] Docs Generation
+  - [ ] Mardown & ReStructured Text support
+  - [ ] Render custom and builtin templates
+  - [ ] Support rich template customization
+    - [ ] Sprig functions
+  - [ ] Template: Table of Contents
+  - [ ] Template: Chart Values
+    - [ ] Support "Deprecated" indicator
+    - [ ] Values render order
+      - [ ] Alphabetical
+      - [ ] Preserved
+  - [ ] Template: Chart Dependencies (defined in Chart.yaml)
+  - [ ] "NoCreateDefault" flag to require existing gotmpl
+  - [ ] TODO: markdown/rst escaping
+  - [ ] TODO: Detect recursive templates
+- [ ] Helm v3 Plugin support
+- [ ] Helm v4 Plugin support
+- [ ] Pre-Commit Hook support
