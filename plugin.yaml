@@ -9,3 +9,7 @@ config:
 runtimeConfig:
   platformCommand:
     - command: ${HELM_PLUGIN_DIR}/helm-values
+
+# legacy metadata, needed for artifacthub
+description:
+  Schema and docs generator for Helm values
