@@ -3,6 +3,8 @@
 
 A helm plugin for generating schema for chart values.
 
+[![Tests](https://github.com/brahmlower/helm-values/actions/workflows/tests.yaml/badge.svg)](https://github.com/brahmlower/helm-values/actions/workflows/tests.yaml)
+
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/helm-values)](https://artifacthub.io/packages/search?repo=helm-values)
 
 ## Schema Generation
