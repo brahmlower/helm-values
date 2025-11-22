@@ -24,4 +24,4 @@ tasks:
       - mkdir -p dist
       - cp helm-values dist/helm-values
       - cp plugin.yaml dist/plugin.yaml
-      - helm plugin package ./dist
+      - helm plugin package ./dist --sign=false

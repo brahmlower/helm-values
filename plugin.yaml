@@ -8,7 +8,38 @@ config:
   shortHelp: Schema and docs generator for Helm values
 runtimeConfig:
   platformCommand:
-    - command: ${HELM_PLUGIN_DIR}/helm-values
+    - os: darwin
+      command: ${HELM_PLUGIN_DIR}/helm-values
+    - os: linux
+      command: ${HELM_PLUGIN_DIR}/helm-values
+    - os: windows
+      command: ${HELM_PLUGIN_DIR}/helm-values.exe
+  platformHooks: # Configure plugin lifecycle hooks based on the platform
+    install: # Install lifecycle commands
+      - os: darwin
+        arch: arm64
+        command: echo "hello world"
+      - os: darwin
+        arch: x86
+        command: ${HELM_PLUGIN_DIR}/helm-values
+      - os: linux
+        arch: arm64
+        command: ${HELM_PLUGIN_DIR}/helm-values
+      - os: linux
+        arch: i386
+        command: ${HELM_PLUGIN_DIR}/helm-values
+      - os: linux
+        arch: x86
+        command: ${HELM_PLUGIN_DIR}/helm-values
+      - os: windows
+        arch: arm64
+        command: ${HELM_PLUGIN_DIR}/helm-values.exe
+      - os: windows
+        arch: i386
+        command: ${HELM_PLUGIN_DIR}/helm-values.exe
+      - os: windows
+        arch: x86
+        command: ${HELM_PLUGIN_DIR}/helm-values.exe
 
 # legacy metadata, needed for artifacthub
 description:

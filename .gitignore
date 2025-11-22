@@ -1,3 +1,5 @@
 /helm-values
-/dist
 *.tgz
+*.tgz.prov
+# Added by goreleaser init:
+dist/

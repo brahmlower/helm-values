@@ -1,0 +1,17 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v6
+
+      - name: Install taskfile
+        run: sudo snap install task --classic
+
+      - name: Package Helm chart
+        run: task build:plugin
