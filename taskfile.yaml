@@ -1,0 +1,21 @@
+version: '3'
+
+tasks:
+  build:bin:
+    desc: Build production binary
+    cmds:
+      - go build -o helm-values ./cmd/helm-values
+
+  test:
+    desc: Run unit tests
+    cmds:
+      - go test ./cmd/helm-values/...
+
+  build:plugin:
+    desc: Build helm plugin
+    cmds:
+      - task: build:bin
+      - mkdir -p dist
+      - cp helm-values dist/helm-values
+      - cp plugin.yaml dist/plugin.yaml
+      - helm plugin package ./dist

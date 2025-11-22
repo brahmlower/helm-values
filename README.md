@@ -96,6 +96,6 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
   - [ ] "NoCreateDefault" flag to require existing gotmpl
   - [ ] TODO: markdown/rst escaping
   - [ ] TODO: Detect recursive templates
-- [ ] Helm v3 Plugin support
-- [ ] Helm v4 Plugin support
+- [ ] Helm v3 Plugin support (probably won't do)
+- [x] Helm v4 Plugin support
 - [ ] Pre-Commit Hook support
