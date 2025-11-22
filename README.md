@@ -74,8 +74,8 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
 
 - [ ] Schema Generation
   - [ ] Check/validate values file
-  - [ ] Write to non-default location
-  - [ ] Write to stdout
+  - [x] Write to non-default location
+  - [x] Write to stdout
   - [ ] Update values file with yaml-schema reference
   - [ ] Set examples from comments
   - [ ] Json-Schema Draft 6 support?
@@ -87,7 +87,7 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
   - [ ] Requirement: helm lint checks
 - [ ] Docs Generation
   - [ ] Mardown & ReStructured Text support
-  - [ ] Render custom and builtin templates
+  - [x] Render custom and builtin templates
   - [ ] Support rich template customization
     - [ ] Sprig functions
   - [ ] Template: Table of Contents
