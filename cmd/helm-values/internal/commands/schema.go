@@ -44,12 +44,7 @@ func generateSchema(logger *logrus.Logger, cfg *config.SchemaConfig) error {
 	// Itterate through plan to set the logger and config
 	plans := []*internal.Plan{}
 	for _, chart := range chartsFound {
-		plan := internal.NewPlan(
-			chart,
-			cfg.StdOut(),
-			cfg.Strict(),
-			cfg.DryRun(),
-		)
+		plan := internal.NewPlan(nil, cfg, chart)
 		plan.LogIntent(logger)
 		plans = append(plans, plan)
 	}

@@ -51,12 +51,7 @@ func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig) error {
 	// Itterate through plan to set the logger and config
 	plans := []*internal.Plan{}
 	for _, chart := range chartsFound {
-		plan := internal.NewPlan(
-			chart,
-			cfg.StdOut(),
-			cfg.Strict(),
-			cfg.DryRun(),
-		)
+		plan := internal.NewPlan(cfg, nil, chart)
 		plan.LogIntent(logger)
 		plans = append(plans, plan)
 	}
@@ -85,19 +80,29 @@ func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig) error {
 			ValuesTable: schemaProperties(schema, []string{}),
 		}
 
+		for _, p := range staticPaths {
+			logger.Debugf("%s: docs: collecting static template: %s", plan.Chart().Details.Name, p)
+		}
 		extraTemplates, err := cfg.ExtraTemplates()
 		if err != nil {
 			return err
 		}
+		for _, extraTemplate := range extraTemplates {
+			logger.Debugf("%s: docs: collecting extra template: %s", plan.Chart().Details.Name, extraTemplate)
+		}
 		extraTemplates = append(staticPaths, extraTemplates...)
 
-		logger.Debugf(
-			"%s: docs: loading template: %s",
-			plan.Chart().Details.Name,
-			plan.ReadmeTemplateFilePath(),
-		)
-		for _, extraTemplate := range extraTemplates {
-			logger.Debugf("%s: docs: loading extra template: %s", plan.Chart().Details.Name, extraTemplate)
+		if !plan.DocsUseDefault() {
+			logger.Debugf(
+				"%s: docs: collecting template: %s",
+				plan.Chart().Details.Name,
+				plan.DocsChartReadmeTemplate(),
+			)
+		} else {
+			logger.Debugf(
+				"%s: docs: using builtin default template",
+				plan.Chart().Details.Name,
+			)
 		}
 
 		root, err := os.OpenRoot("/")
@@ -105,25 +110,31 @@ func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig) error {
 			return err
 		}
 
-		layeredFs := docs.NewLayeredFS(
-			docs.TemplateFS,
-			root.FS(),
-		)
+		layeredFs := docs.NewLayeredFS(docs.TemplateFS, root.FS())
 
-		t, err := docs.NewTemplator(
-			logger,
-			layeredFs,
-			plan.Chart().Details.Name,
-			plan.ReadmeTemplateFilePath(),
-			extraTemplates,
-		)
+		markup, err := plan.DocsMarkup()
+		if err != nil {
+			return err
+		}
+
+		opts := []docs.BuilderOpt{
+			docs.WithExtraPaths(extraTemplates),
+			docs.WithUseDefault(plan.DocsUseDefault()),
+			docs.WithMarkup(markup),
+		}
+		if !plan.DocsUseDefault() {
+			opts = append(opts, docs.WithCustomTemplate(plan.DocsChartReadmeTemplate()))
+		}
+
+		builder := docs.NewTemplateBuilder(opts...)
+		t, err := builder.Build(layeredFs)
 		if err != nil {
 			return err
 		}
 
 		buf := new(bytes.Buffer)
 		logger.Debugf("%s: docs: rendering readme file", plan.Chart().Details.Name)
-		err = t.Render(buf, table)
+		err = t.Execute(buf, table)
 		if err != nil {
 			return err
 		}

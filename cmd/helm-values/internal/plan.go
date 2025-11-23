@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"helmschema/cmd/helm-values/internal/charts"
+	"helmschema/cmd/helm-values/internal/config"
+	"helmschema/cmd/helm-values/internal/docs"
 	"helmschema/cmd/helm-values/internal/jsonschema"
 	"os"
 
@@ -11,36 +13,39 @@ import (
 )
 
 func NewPlan(
+	docsCfg *config.DocsConfig,
+	schemaCfg *config.SchemaConfig,
 	chart *charts.Chart,
-	stdout bool,
-	strictComments bool,
-	dryRun bool,
 ) *Plan {
 	return &Plan{
-		chart:          chart,
-		stdout:         stdout,
-		strictComments: strictComments,
-		dryRun:         dryRun,
+		chart:     chart,
+		docsCfg:   docsCfg,
+		schemaCfg: schemaCfg,
 	}
 }
 
 type Plan struct {
-	strictComments bool
-	stdout         bool
-	dryRun         bool
-	chart          *charts.Chart
+	docsCfg   *config.DocsConfig
+	schemaCfg *config.SchemaConfig
+	chart     *charts.Chart
 }
 
 func (p *Plan) LogIntent(logger *logrus.Logger) {
-	logger.Debugf("%s: plan: DryRun=%t", p.chart.Details.Name, p.dryRun)
-	logger.Debugf("%s: plan: StrictComments=%t", p.chart.Details.Name, p.strictComments)
-	logger.Debugf("%s: plan: Stdout=%t", p.chart.Details.Name, p.stdout)
+	logger.Debugf("%s: plan: DryRun=%t", p.chart.Details.Name, p.DryRun())
+	logger.Debugf("%s: plan: StrictComments=%t", p.chart.Details.Name, p.StrictComments())
+	logger.Debugf("%s: plan: Stdout=%t", p.chart.Details.Name, p.StdOut())
+	if p.docsCfg != nil {
+		markup, err := p.DocsMarkup()
+		logger.Debugf("%s: plan: UseDefault=%t", p.chart.Details.Name, p.DocsUseDefault())
+		logger.Debugf("%s: plan: Markup=%s (error: %v)", p.chart.Details.Name, markup, err)
+		logger.Debugf("%s: plan: Template=%s", p.chart.Details.Name, p.docsCfg.Template())
+		logger.Debugf("%s: plan: Output=%v", p.chart.Details.Name, p.DocsOutputPath())
+	}
 	logger.Debugf("%s: plan chart: root=%s", p.chart.Details.Name, p.chart.RootPath())
 	logger.Debugf("%s: plan chart: ChartFile=%s", p.chart.Details.Name, p.chart.ChartFilePath())
 	logger.Debugf("%s: plan chart: ValuesFile=%s", p.chart.Details.Name, p.chart.ValuesFilePath())
 	logger.Debugf("%s: plan chart: SchemaFile=%s", p.chart.Details.Name, p.chart.SchemaFilePath())
-	logger.Debugf("%s: plan chart: ReadmeMdTemplate=%s", p.chart.Details.Name, p.chart.ReadmeMdTemplateFilePath())
-	logger.Debugf("%s: plan chart: ReadmeRstTemplate=%s", p.chart.Details.Name, p.chart.ReadmeRstTemplateFilePath())
+	logger.Debugf("%s: plan chart: ReadmeTemplate=%s", p.chart.Details.Name, p.DocsChartReadmeTemplate())
 }
 
 func (p *Plan) Chart() *charts.Chart {
@@ -48,49 +53,108 @@ func (p *Plan) Chart() *charts.Chart {
 }
 
 func (p *Plan) StdOut() bool {
-	return p.stdout
+	if p.docsCfg != nil {
+		return p.docsCfg.StdOut()
+	}
+	if p.schemaCfg != nil {
+		return p.schemaCfg.StdOut()
+	}
+	panic("no configs set")
 }
 
 func (p *Plan) StrictComments() bool {
-	return p.strictComments
+	if p.docsCfg != nil {
+		return p.docsCfg.Strict()
+	}
+	if p.schemaCfg != nil {
+		return p.schemaCfg.Strict()
+	}
+	panic("no configs set")
 }
 
 func (p *Plan) DryRun() bool {
-	return p.dryRun
+	if p.docsCfg != nil {
+		return p.docsCfg.DryRun()
+	}
+	if p.schemaCfg != nil {
+		return p.schemaCfg.DryRun()
+	}
+	panic("no configs set")
 }
 
-func (p *Plan) ReadmeFilePath() string {
-	if p.GenerateMarkdown() {
-		return p.chart.ReadmeMdFilePath()
+func (p *Plan) DocsChartReadmeTemplate() string {
+	if _, err := os.Stat(p.chart.ReadmeMdTemplateFilePath()); err == nil {
+		return p.chart.ReadmeMdTemplateFilePath()
+	}
+	if _, err := os.Stat(p.chart.ReadmeRstTemplateFilePath()); err == nil {
+		return p.chart.ReadmeRstTemplateFilePath()
+	}
+	return ""
+}
+
+func (p *Plan) DocsMarkup() (docs.Markup, error) {
+	markup, set, err := p.docsCfg.Markup()
+	if err != nil {
+		return "", err
+	}
+	if set {
+		return markup, nil
 	}
 
-	if p.GenerateRst() {
+	if p.DocsUseDefault() {
+		return docs.Markdown, nil
+	}
+
+	// If a template was specified, infer the markup type from that
+	if tmpl := p.docsCfg.Template(); tmpl != "" {
+		return docs.MarkupFromPath(tmpl)
+	}
+
+	// If there's a readme template in the chart, infer the markup type from that
+	if tmpl := p.DocsChartReadmeTemplate(); tmpl != "" {
+		return docs.MarkupFromPath(tmpl)
+	}
+
+	return "", fmt.Errorf("unable to infer markup type")
+}
+
+func (p *Plan) DocsUseDefault() bool {
+	// If the user explicitly sets use-default, use that value
+	if p.docsCfg.IsSet("use-default") {
+		return p.docsCfg.GetBool("use-default")
+	}
+
+	// If a custom template file was set, use that
+	if p.docsCfg.Template() != "" {
+		return false
+	}
+
+	// If a custom template file is present, use that
+	if p.DocsChartReadmeTemplate() != "" {
+		return false
+	}
+
+	return true
+}
+
+func (p *Plan) DocsOutputPath() string {
+	if p.docsCfg.IsSet("output") {
+		return p.docsCfg.GetString("output")
+	}
+
+	docType, err := p.DocsMarkup()
+	if err != nil {
+		panic(err)
+	}
+
+	if docType == docs.Markdown {
+		return p.chart.ReadmeMdFilePath()
+	}
+	if docType == docs.ReStructuredText {
 		return p.chart.ReadmeRstFilePath()
 	}
 
 	panic("no readme template found")
-}
-
-func (p *Plan) ReadmeTemplateFilePath() string {
-	if p.GenerateMarkdown() {
-		return p.chart.ReadmeMdTemplateFilePath()
-	}
-
-	if p.GenerateRst() {
-		return p.chart.ReadmeRstTemplateFilePath()
-	}
-
-	panic("no readme template found")
-}
-
-func (p *Plan) GenerateMarkdown() bool {
-	_, err := os.Stat(p.chart.ReadmeMdTemplateFilePath())
-	return err == nil
-}
-
-func (p *Plan) GenerateRst() bool {
-	_, err := os.Stat(p.chart.ReadmeRstTemplateFilePath())
-	return err == nil
 }
 
 func (p *Plan) WriteSchema(logger *logrus.Logger, schema *jsonschema.Schema) error {
@@ -99,11 +163,11 @@ func (p *Plan) WriteSchema(logger *logrus.Logger, schema *jsonschema.Schema) err
 		return err
 	}
 
-	if p.stdout {
+	if p.StdOut() {
 		fmt.Println(string(s))
 	}
 
-	if p.dryRun {
+	if p.DryRun() {
 		return nil
 	}
 
@@ -124,8 +188,8 @@ func (p *Plan) WriteSchema(logger *logrus.Logger, schema *jsonschema.Schema) err
 
 func (p *Plan) WriteReadme(logger *logrus.Logger, s string) error {
 	if !p.DryRun() {
-		logger.Debugf("%s: docs: opening readme file", p.Chart().Details.Name)
-		f, err := os.Create(p.ReadmeFilePath())
+		logger.Debugf("%s: docs: writing output file", p.Chart().Details.Name)
+		f, err := os.Create(p.DocsOutputPath())
 		if err != nil {
 			return err
 		}

@@ -1,0 +1,10 @@
+
+{{- define "rst.header" }}
+{{ repeat (len .Raw.Chart.Details.Name) "=" }}
+{{ .Raw.Chart.Details.Name }}
+{{ repeat (len .Raw.Chart.Details.Name) "=" }}
+{{- end }}
+
+{{- define "rst.description" }}
+{{ .Raw.Chart.Details.Description }}
+{{- end }}

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"helmschema/cmd/helm-values/internal/docs"
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
@@ -56,6 +57,21 @@ func (c *DocsConfig) ExtraTemplates() ([]string, error) {
 	return filepath.Glob(path)
 }
 
+func (c *DocsConfig) Template() string {
+	return c.GetString("template")
+}
+
+func (c *DocsConfig) Markup() (docs.Markup, bool, error) {
+	if !c.IsSet("markup") {
+		return "", false, nil
+	}
+	markup, err := docs.MarkupFromString(c.GetString("markup"))
+	if err != nil {
+		return "", true, err
+	}
+	return markup, true, nil
+}
+
 func (c *DocsConfig) UpdateLogger(logger *logrus.Logger) error {
 	level, err := c.LogLevel()
 	if err != nil {
@@ -91,7 +107,23 @@ func (c *DocsConfig) BindFlags(cmd *cobra.Command) {
 	c.BindPFlag("log-level", cmd.Flags().Lookup("log-level"))
 	c.BindEnv("log-level")
 
-	cmd.Flags().String("extra-templates", "", "path to extra templates directory")
+	cmd.Flags().String("markup", "markdown", "markup language (markdown, restructuredtext)")
+	c.BindPFlag("markup", cmd.Flags().Lookup("markup"))
+	c.BindEnv("markup")
+
+	cmd.Flags().Bool("use-default", true, "uses default template unless a custom template is present")
+	c.BindPFlag("use-default", cmd.Flags().Lookup("use-default"))
+	c.BindEnv("use-default")
+
+	cmd.Flags().String("output", "", "path to output (defaults to README.md or README.rst based on markup)")
+	c.BindPFlag("output", cmd.Flags().Lookup("output"))
+	c.BindEnv("output")
+
+	cmd.Flags().String("template", "", "path to template (defaults to README.md.tmpl or README.rst.tmpl based on markup)")
+	c.BindPFlag("template", cmd.Flags().Lookup("template"))
+	c.BindEnv("template")
+
+	cmd.Flags().String("extra-templates", "", "glob path to extra templates")
 	c.BindPFlag("extra-templates", cmd.Flags().Lookup("extra-templates"))
 	c.BindEnv("extra-templates")
 }

@@ -66,5 +66,6 @@ func (p *Chart) ReadmeRstTemplateFilePath() string {
 }
 
 type ChartDetails struct {
-	Name string `yaml:"name"`
+	Name        string `yaml:"name"`
+	Description string `yaml:"description"`
 }

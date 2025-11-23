@@ -9,5 +9,5 @@ import (
 var TemplateFS embed.FS
 
 func StaticTemplates() ([]string, error) {
-	return fs.Glob(TemplateFS, "templates/*.gotmpl")
+	return fs.Glob(TemplateFS, "templates/**/*.gotmpl")
 }
