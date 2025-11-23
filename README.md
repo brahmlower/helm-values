@@ -3,10 +3,21 @@
 
 A helm plugin for generating schema and docs for chart values.
 
-[![Tests](https://github.com/brahmlower/helm-values/actions/workflows/tests.yaml/badge.svg)](https://github.com/brahmlower/helm-values/actions/workflows/tests.yaml)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/helm-values)](https://artifacthub.io/packages/search?repo=helm-values)
+[![Tests](https://github.com/brahmlower/helm-values/actions/workflows/tests.yaml/badge.svg)](https://github.com/brahmlower/helm-values/actions/workflows/tests.yaml)
 
-## TL;DR Getting Started
+- [Getting Started](#getting-started)
+- [Generate Schema](#generate-schema)
+- [Generate Docs](#generate-docs)
+- [Template API](#template-api)
+  - [Built-In Templates](#built-in-templates)
+  - [Extra Templates](#extra-templates)
+  - [Template Context](#template-context)
+  - [Sprig Functions](#sprig-functions)
+  - [Additional Functions](#additional-functions)
+- [Development Roadmap](#development-roadmap)
+
+## Getting Started
 
 Install the plugin:
 
@@ -27,7 +38,7 @@ helm values docs ./path/to/my/chart
 ```
 
 
-## Schema Generation
+## Generate Schema
 
 ```
 helm values schema
@@ -51,7 +62,7 @@ Flags:
       --strict               fail on doc comment parsing errors
 ```
 
-## Docs Generation
+## Generate Docs
 
 ```
 helm values docs
@@ -82,6 +93,98 @@ Flags:
 ## Template API
 
 Markdown and ReStructuredText are supported.
+
+### Built-In Templates
+
+Built-in template names are prefixed with the markup language they support (eg: `md`, `rst`) and are provided the full [TemplateContext](#template-context) for flexibility when being overwritten (see [extra templates](#extra-templates)).
+
+> [!NOTE]
+> Parity between markup languages is best effort, but is not guaranteed.
+
+- `md.header`
+
+  Document title using the chart name declared in Chart.yaml
+
+- `md.description`
+
+  Subtitle description using the description declared in Chart.yaml
+
+- `md.valuesTable`
+
+  Produces a table of values with columns for Key, Type, Default, Description.
+
+  No multiline support.
+
+- `rst.header`
+
+  Document title using the chart name declared in Chart.yaml
+
+- `rst.description`
+
+  Subtitle description using the description declared in Chart.yaml
+
+- `rst.valuesTable`
+
+  Produces a table of values with columns for Key, Type, Default, Description.
+
+  No multiline support.
+
+### Extra Templates
+
+Built-in templates can be overwritten by including extra template files!
+
+For example, the default `md.header` template can be overwritten by defining a template with the same name:
+
+```
+{{- define "md.header" }}
+# {{ .Raw.Chart.Details.Name }} - A chart by me 😎
+{{- end }}
+```
+
+Now generate the docs and include the extra template file:
+
+```
+helm values docs --extra-templates ./readme-helpers.tmpl
+```
+
+Docs generation uses the custom template rather than the builtin.
+
+```
+$ head -n 2 README.md
+
+# MyChart - A chart by me 😎
+```
+
+### Template Context
+
+> [!IMPORTANT]
+> This project is under very active development. These are likely to change at any point.
+
+The `TemplateContext` and related sub-structures are defined as follows:
+
+```go
+type TemplateContext struct {
+	Raw         *RawContext
+	ValuesTable []ValuesRow
+}
+
+type RawContext struct {
+	Chart  *charts.Chart
+	Values *jsonschema.Schema
+}
+
+type ChartDetails struct {
+	Name        string
+	Description string
+}
+
+type ValuesRow struct {
+	Key         string
+	Type        string
+	Default     string
+	Description string
+}
+```
 
 ### Sprig Functions
 
@@ -120,96 +223,6 @@ maxLen "hello" "foo" "kubernetes"
 ```
 
 The above produces `10`
-
-### Template Context
-
-> [!IMPORTANT]
-> This project is under very active development. These are likely to change at any point.
-
-The `TemplateContext` and related sub-structures are defined as follows:
-
-```go
-type ValuesRow struct {
-	Key         string
-	Type        string
-	Default     string
-	Description string
-}
-
-type RawContext struct {
-	Chart  *charts.Chart
-	Values *jsonschema.Schema
-}
-
-type TemplateContext struct {
-	Raw         *RawContext
-	ValuesTable []ValuesRow
-}
-
-type ChartDetails struct {
-	Name        string
-	Description string
-}
-```
-
-### Template Definitions
-
-Template names are prefixed with the markup language they support. Built-in templates generally take the full [TemplateContext](#template-context) to give maximum flexibility to those who want to [override templates](#overriding-templates).
-
-> [!NOTE]
-> Parity between markup languages is maintaned as best as possible, but is not guaranteed.
-
-- `md.header`
-
-  Document title using the chart name declared in Chart.yaml
-
-- `md.description`
-
-  Subtitle description using the description declared in Chart.yaml
-
-- `md.valuesTable`
-
-  Produces a table of values with columns for Key, Type, Default, Description.
-  No multiline support.
-
-- `rst.header`
-
-  Document title using the chart name declared in Chart.yaml
-
-- `rst.description`
-
-  Subtitle description using the description declared in Chart.yaml
-
-- `rst.valuesTable`
-
-  Produces a table of values with columns for Key, Type, Default, Description.
-  No multiline support.
-
-### Overriding Templates
-
-Built-in templates can be overwritten (in part or in full) by including extra template files!
-
-For example, the default `md.header` template can be overwritten by defining a template with the same name:
-
-```
-{{- define "md.header" }}
-# {{ .Raw.Chart.Details.Name }} - A chart by me 😎
-{{- end }}
-```
-
-Now generate the docs and include the extra template file:
-
-```
-helm values docs --extra-templates ./readme-helpers.tmpl
-```
-
-Docs generation uses the custom template rather than the builtin.
-
-```
-$ head -n 2 README.md
-
-# MyChart - A chart by me 😎
-```
 
 ## Development Roadmap
 
