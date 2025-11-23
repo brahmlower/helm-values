@@ -86,10 +86,11 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
   - [ ] Requirement: Changes to values.yaml don't violate yamllint checks
   - [ ] Requirement: helm lint checks
 - [ ] Docs Generation
-  - [ ] Mardown & ReStructured Text support
+  - [x] Mardown & ReStructured Text support
   - [x] Render custom and builtin templates
   - [ ] Support rich template customization
-    - [ ] Sprig functions
+    - [x] Sprig functions
+    - [ ] Helpers for table generation
   - [ ] Template: Table of Contents
   - [ ] Template: Chart Values
     - [ ] Support "Deprecated" indicator
