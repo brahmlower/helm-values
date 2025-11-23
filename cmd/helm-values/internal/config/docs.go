@@ -107,7 +107,7 @@ func (c *DocsConfig) BindFlags(cmd *cobra.Command) {
 	c.BindPFlag("log-level", cmd.Flags().Lookup("log-level"))
 	c.BindEnv("log-level")
 
-	cmd.Flags().String("markup", "markdown", "markup language (markdown, restructuredtext)")
+	cmd.Flags().String("markup", "", "markup language (md, markdown, rst, restructuredtext)")
 	c.BindPFlag("markup", cmd.Flags().Lookup("markup"))
 	c.BindEnv("markup")
 
