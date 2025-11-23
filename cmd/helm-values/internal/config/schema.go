@@ -1,8 +1,6 @@
 package config
 
 import (
-	"path/filepath"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -16,10 +14,6 @@ func NewSchemaConfig() *SchemaConfig {
 
 type SchemaConfig struct {
 	*viper.Viper
-}
-
-func (c *SchemaConfig) ChartDir() (string, error) {
-	return filepath.Abs(c.GetString("chart-dir"))
 }
 
 func (c *SchemaConfig) SchemaFile() string {
@@ -53,10 +47,6 @@ func (c *SchemaConfig) UpdateLogger(logger *logrus.Logger) error {
 }
 
 func (c *SchemaConfig) BindFlags(cmd *cobra.Command) {
-	cmd.Flags().String("chart-dir", "", "path to the chart directory")
-	c.BindPFlag("chart-dir", cmd.Flags().Lookup("chart-dir"))
-	c.BindEnv("chart-dir")
-
 	cmd.Flags().String("schema-file", "values.schema.json", "path to the schema-file file")
 	c.BindPFlag("schema-file", cmd.Flags().Lookup("schema-file"))
 	c.BindEnv("schema-file")

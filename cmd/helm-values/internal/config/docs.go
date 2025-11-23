@@ -19,10 +19,6 @@ type DocsConfig struct {
 	*viper.Viper
 }
 
-func (c *DocsConfig) ChartDir() (string, error) {
-	return filepath.Abs(c.GetString("chart-dir"))
-}
-
 func (c *DocsConfig) SchemaFile() string {
 	return c.GetString("schema-file")
 }
@@ -83,10 +79,6 @@ func (c *DocsConfig) UpdateLogger(logger *logrus.Logger) error {
 }
 
 func (c *DocsConfig) BindFlags(cmd *cobra.Command) {
-	cmd.Flags().String("chart-dir", "", "path to the chart directory")
-	c.BindPFlag("chart-dir", cmd.Flags().Lookup("chart-dir"))
-	c.BindEnv("chart-dir")
-
 	cmd.Flags().String("schema-file", "values.schema.json", "path to the schema-file file")
 	c.BindPFlag("schema-file", cmd.Flags().Lookup("schema-file"))
 	c.BindEnv("schema-file")

@@ -13,14 +13,14 @@ func Schema(logger *logrus.Logger) *cobra.Command {
 	cfg := config.NewSchemaConfig()
 
 	cmd := &cobra.Command{
-		Use:   "schema",
+		Use:   "schema [flags] chart_dir [...chart_dir]",
 		Short: "Generate values schema",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cfg.UpdateLogger(logger); err != nil {
 				return err
 			}
 
-			return generateSchema(logger, cfg)
+			return generateSchema(logger, cfg, args)
 		},
 	}
 
@@ -29,13 +29,8 @@ func Schema(logger *logrus.Logger) *cobra.Command {
 	return cmd
 }
 
-func generateSchema(logger *logrus.Logger, cfg *config.SchemaConfig) error {
-	chartDir, err := cfg.ChartDir()
-	if err != nil {
-		return err
-	}
-
-	chartsFound, err := charts.Search(logger, chartDir)
+func generateSchema(logger *logrus.Logger, cfg *config.SchemaConfig, chartDirs []string) error {
+	chartsFound, err := charts.Search(logger, chartDirs)
 	if err != nil {
 		return err
 	}

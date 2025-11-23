@@ -20,14 +20,15 @@ func Docs(logger *logrus.Logger) *cobra.Command {
 	cfg := config.NewDocsConfig()
 
 	cmd := &cobra.Command{
-		Use:   "docs",
+		Use:   "docs [flags] chart_dir [...chart_dir]",
 		Short: "Generate values docs",
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cfg.UpdateLogger(logger); err != nil {
 				return err
 			}
 
-			return generateDocs(logger, cfg)
+			return generateDocs(logger, cfg, args)
 		},
 	}
 
@@ -36,13 +37,8 @@ func Docs(logger *logrus.Logger) *cobra.Command {
 	return cmd
 }
 
-func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig) error {
-	chartDir, err := cfg.ChartDir()
-	if err != nil {
-		return err
-	}
-
-	chartsFound, err := charts.Search(logger, chartDir)
+func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig, chartDirs []string) error {
+	chartsFound, err := charts.Search(logger, chartDirs)
 	if err != nil {
 		return err
 	}
