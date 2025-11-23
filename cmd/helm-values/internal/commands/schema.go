@@ -34,7 +34,6 @@ func generateSchema(logger *logrus.Logger, cfg *config.SchemaConfig, chartDirs [
 	if err != nil {
 		return err
 	}
-	logger.Infof("Found %d charts", len(chartsFound))
 
 	// Itterate through plan to set the logger and config
 	plans := []*internal.Plan{}
@@ -46,17 +45,20 @@ func generateSchema(logger *logrus.Logger, cfg *config.SchemaConfig, chartDirs [
 
 	// Iterate through plans again, this time generating the schema
 	for _, plan := range plans {
-		logger.Debugf("%s: schema: starting generation", plan.Chart().Details.Name)
+		logger.Infof("schema: %s: starting generation", plan.Chart().Details.Name)
 		schema, err := internal.NewGenerator(logger, plan).Generate()
 		if err != nil {
 			logger.Error(err.Error())
 			return nil
 		}
 
+		logger.Debugf("schema: %s: writing output", plan.Chart().Details.Name)
 		if err := plan.WriteSchema(logger, schema); err != nil {
 			logger.Error(err.Error())
 			return nil
 		}
+
+		logger.Infof("schema: %s: finished", plan.Chart().Details.Name)
 	}
 
 	return nil

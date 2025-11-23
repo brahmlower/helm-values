@@ -42,7 +42,6 @@ func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig, chartDirs []str
 	if err != nil {
 		return err
 	}
-	logger.Infof("Found %d charts", len(chartsFound))
 
 	// Itterate through plan to set the logger and config
 	plans := []*internal.Plan{}
@@ -59,9 +58,9 @@ func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig, chartDirs []str
 
 	// Iterate through plans again, this time generating the docs
 	for _, plan := range plans {
-		logger.Debugf("%s: docs: starting generation", plan.Chart().Details.Name)
+		logger.Infof("docs: %s: starting generation", plan.Chart().Details.Name)
 
-		logger.Debugf("%s: docs: reading values file", plan.Chart().Details.Name)
+		logger.Debugf("docs: %s: reading values file", plan.Chart().Details.Name)
 		schema, err := internal.NewGenerator(logger, plan).Generate()
 		if err != nil {
 			logger.Error(err.Error())
@@ -77,26 +76,26 @@ func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig, chartDirs []str
 		}
 
 		for _, p := range staticPaths {
-			logger.Debugf("%s: docs: collecting static template: %s", plan.Chart().Details.Name, p)
+			logger.Debugf("docs: %s: collecting static template: %s", plan.Chart().Details.Name, p)
 		}
 		extraTemplates, err := cfg.ExtraTemplates()
 		if err != nil {
 			return err
 		}
 		for _, extraTemplate := range extraTemplates {
-			logger.Debugf("%s: docs: collecting extra template: %s", plan.Chart().Details.Name, extraTemplate)
+			logger.Debugf("docs: %s: collecting extra template: %s", plan.Chart().Details.Name, extraTemplate)
 		}
 		extraTemplates = append(staticPaths, extraTemplates...)
 
 		if !plan.DocsUseDefault() {
 			logger.Debugf(
-				"%s: docs: collecting template: %s",
+				"docs: %s: collecting template: %s",
 				plan.Chart().Details.Name,
 				plan.DocsChartReadmeTemplate(),
 			)
 		} else {
 			logger.Debugf(
-				"%s: docs: using builtin default template",
+				"docs: %s: using builtin default template",
 				plan.Chart().Details.Name,
 			)
 		}
@@ -129,15 +128,18 @@ func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig, chartDirs []str
 		}
 
 		buf := new(bytes.Buffer)
-		logger.Debugf("%s: docs: rendering readme file", plan.Chart().Details.Name)
+		logger.Debugf("docs: %s: rendering template", plan.Chart().Details.Name)
 		err = t.Execute(buf, table)
 		if err != nil {
 			return err
 		}
 
+		logger.Debugf("docs: %s: writing output", plan.Chart().Details.Name)
 		if err := plan.WriteReadme(logger, buf.String()); err != nil {
 			return err
 		}
+
+		logger.Infof("docs: %s: finished", plan.Chart().Details.Name)
 	}
 
 	return nil

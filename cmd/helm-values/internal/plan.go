@@ -31,21 +31,21 @@ type Plan struct {
 }
 
 func (p *Plan) LogIntent(logger *logrus.Logger) {
-	logger.Debugf("%s: plan: DryRun=%t", p.chart.Details.Name, p.DryRun())
-	logger.Debugf("%s: plan: StrictComments=%t", p.chart.Details.Name, p.StrictComments())
-	logger.Debugf("%s: plan: Stdout=%t", p.chart.Details.Name, p.StdOut())
+	logger.Debugf("plan: %s: DryRun=%t", p.chart.Details.Name, p.DryRun())
+	logger.Debugf("plan: %s: StrictComments=%t", p.chart.Details.Name, p.StrictComments())
+	logger.Debugf("plan: %s: Stdout=%t", p.chart.Details.Name, p.StdOut())
 	if p.docsCfg != nil {
 		markup, err := p.DocsMarkup()
-		logger.Debugf("%s: plan: UseDefault=%t", p.chart.Details.Name, p.DocsUseDefault())
-		logger.Debugf("%s: plan: Markup=%s (error: %v)", p.chart.Details.Name, markup, err)
-		logger.Debugf("%s: plan: Template=%s", p.chart.Details.Name, p.docsCfg.Template())
-		logger.Debugf("%s: plan: Output=%v", p.chart.Details.Name, p.DocsOutputPath())
+		logger.Debugf("plan: %s: UseDefault=%t", p.chart.Details.Name, p.DocsUseDefault())
+		logger.Debugf("plan: %s: Markup=%s (error: %v)", p.chart.Details.Name, markup, err)
+		logger.Debugf("plan: %s: Template=%s", p.chart.Details.Name, p.docsCfg.Template())
+		logger.Debugf("plan: %s: Output=%v", p.chart.Details.Name, p.DocsOutputPath())
 	}
-	logger.Debugf("%s: plan chart: root=%s", p.chart.Details.Name, p.chart.RootPath())
-	logger.Debugf("%s: plan chart: ChartFile=%s", p.chart.Details.Name, p.chart.ChartFilePath())
-	logger.Debugf("%s: plan chart: ValuesFile=%s", p.chart.Details.Name, p.chart.ValuesFilePath())
-	logger.Debugf("%s: plan chart: SchemaFile=%s", p.chart.Details.Name, p.chart.SchemaFilePath())
-	logger.Debugf("%s: plan chart: ReadmeTemplate=%s", p.chart.Details.Name, p.DocsChartReadmeTemplate())
+	logger.Debugf("plan: %s: ChartRoot=%s", p.chart.Details.Name, p.chart.RootPath())
+	logger.Debugf("plan: %s: ChartFile=%s", p.chart.Details.Name, p.chart.ChartFilePath())
+	logger.Debugf("plan: %s: ChartValuesFile=%s", p.chart.Details.Name, p.chart.ValuesFilePath())
+	logger.Debugf("plan: %s: ChartSchemaFile=%s", p.chart.Details.Name, p.chart.SchemaFilePath())
+	logger.Debugf("plan: %s: ChartReadmeTemplate=%s", p.chart.Details.Name, p.DocsChartReadmeTemplate())
 }
 
 func (p *Plan) Chart() *charts.Chart {
@@ -171,7 +171,6 @@ func (p *Plan) WriteSchema(logger *logrus.Logger, schema *jsonschema.Schema) err
 		return nil
 	}
 
-	logger.Infof("%s: schema: writing schema file", p.chart.Details.Name)
 	f, err := os.Create(p.chart.SchemaFilePath())
 	if err != nil {
 		return err
@@ -188,7 +187,6 @@ func (p *Plan) WriteSchema(logger *logrus.Logger, schema *jsonschema.Schema) err
 
 func (p *Plan) WriteReadme(logger *logrus.Logger, s string) error {
 	if !p.DryRun() {
-		logger.Debugf("%s: docs: writing output file", p.Chart().Details.Name)
 		f, err := os.Create(p.DocsOutputPath())
 		if err != nil {
 			return err
