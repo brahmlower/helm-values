@@ -1,7 +1,7 @@
 apiVersion: v1
 type: cli/v1
 name: values
-version: "0.0.1-rc1"
+version: "0.0.1"
 runtime: subprocess
 sourceURL: https://github.com/brahmlower/helm-values
 config:
