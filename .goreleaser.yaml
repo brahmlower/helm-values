@@ -16,7 +16,8 @@ before:
     - go generate ./...
 
 builds:
-  - main: ./cmd/helm-values
+  - id: helm-values
+    main: ./cmd/helm-values
     env:
       - CGO_ENABLED=0
     goos:
@@ -25,7 +26,7 @@ builds:
       - darwin
 
 archives:
-  - format: tgz
+  - formats: [tar.gz]
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .ProjectName }}_
@@ -38,8 +39,11 @@ archives:
     format_overrides:
       - goos: windows
         formats: [zip]
-    files:
-      - plugin.yaml
+    # files:
+    #   - plugin.yaml
+
+checksum:
+  name_template: checksums.txt
 
 changelog:
   sort: asc
