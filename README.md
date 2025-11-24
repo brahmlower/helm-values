@@ -255,7 +255,7 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
       - [ ] Alphabetical
       - [ ] Preserved
   - [ ] Template: Chart Dependencies (defined in Chart.yaml)
-  - [ ] "NoCreateDefault" flag to require existing gotmpl
+  - [x] "UseDefault=false" flag to require existing gotmpl
   - [ ] TODO: markdown/rst escaping
   - [ ] TODO: Detect recursive templates
 - [ ] Helm v3 Plugin support (probably won't do)
