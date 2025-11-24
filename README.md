@@ -19,10 +19,10 @@ A helm plugin for generating schema and docs for chart values.
 
 ## Getting Started
 
-Install the plugin:
+Install the plugin: <sub>(signed packages coming soon)</sub>
 
 ```
-helm plugin install https://github.com/brahmlower/helm-values
+helm plugin install https://github.com/brahmlower/helm-values --verify=false
 ```
 
 Generate your values shcmea:
