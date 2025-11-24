@@ -53,8 +53,10 @@ changelog:
       - "^test:"
 
 release:
-  footer: >-
+  # Repo in which the release will be created.
+  # Default: extracted from the origin remote URL or empty if its private hosted.
+  github:
+    owner: brahmlower
+    name: helm-values
 
-    ---
-
-    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
+  draft: true
