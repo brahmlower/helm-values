@@ -40,10 +40,6 @@ helm values docs ./path/to/my/chart
 
 ## Generate Schema
 
-```
-helm values schema
-```
-
 Options:
 
 ```
@@ -64,11 +60,8 @@ Flags:
 
 ## Generate Docs
 
-```
-helm values docs
-```
-
 Options:
+
 ```
 Generate values docs
 

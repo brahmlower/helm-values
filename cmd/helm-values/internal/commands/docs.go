@@ -51,10 +51,6 @@ func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig, chartDirs []str
 		plan.LogIntent(logger)
 
 		if _, _, err := plan.DocsTargetTemplate(); err != nil {
-			// logger.Errorf(
-			// 	"plan: %s: Disallowing default template, but no custom template was found",
-			// 	plan.Chart().Details.Name,
-			// )
 			return fmt.Errorf("default template disallowed, but no template found in chart %s", plan.Chart().RootPath())
 		}
 		plans = append(plans, plan)
