@@ -1,7 +1,7 @@
 apiVersion: v1
 type: cli/v1
 name: values
-version: "0.0.1"
+version: "0.0.1-rc1"
 runtime: subprocess
 sourceURL: https://github.com/brahmlower/helm-values
 config:
@@ -18,28 +18,28 @@ runtimeConfig:
     install: # Install lifecycle commands
       - os: darwin
         arch: arm64
-        command: echo "hello world"
+        command: ${HELM_PLUGIN_DIR}/install-binary.sh
       - os: darwin
         arch: x86
-        command: ${HELM_PLUGIN_DIR}/helm-values
+        command: ${HELM_PLUGIN_DIR}/install-binary.sh
       - os: linux
         arch: arm64
-        command: ${HELM_PLUGIN_DIR}/helm-values
+        command: ${HELM_PLUGIN_DIR}/install-binary.sh
       - os: linux
         arch: i386
-        command: ${HELM_PLUGIN_DIR}/helm-values
+        command: ${HELM_PLUGIN_DIR}/install-binary.sh
       - os: linux
         arch: x86
-        command: ${HELM_PLUGIN_DIR}/helm-values
+        command: ${HELM_PLUGIN_DIR}/install-binary.sh
       - os: windows
         arch: arm64
-        command: ${HELM_PLUGIN_DIR}/helm-values.exe
+        command: ${HELM_PLUGIN_DIR}/install-binary.sh
       - os: windows
         arch: i386
-        command: ${HELM_PLUGIN_DIR}/helm-values.exe
+        command: ${HELM_PLUGIN_DIR}/install-binary.sh
       - os: windows
         arch: x86
-        command: ${HELM_PLUGIN_DIR}/helm-values.exe
+        command: ${HELM_PLUGIN_DIR}/install-binary.sh
 
 # legacy metadata, needed for artifacthub
 description:
