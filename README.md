@@ -3,6 +3,7 @@
 
 A helm plugin for generating schema and docs for chart values.
 
+[![Release](https://img.shields.io/github/v/release/brahmlower/helm-values.svg?logo=github)](https://github.com/brahmlower/helm-values/releases)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/helm-values)](https://artifacthub.io/packages/search?repo=helm-values)
 [![Tests](https://github.com/brahmlower/helm-values/actions/workflows/tests.yaml/badge.svg)](https://github.com/brahmlower/helm-values/actions/workflows/tests.yaml)
 
@@ -83,7 +84,139 @@ Flags:
       --use-default              uses default template unless a custom template is present (default true)
 ```
 
-## Template API
+## Schema Comments
+
+This plugin simplifies schema markup in the values.yaml comments.
+
+The header comments are used as the description by default. Multiline values are supported. This comment will be treated as markdown.
+
+```yaml
+# The foo configuration for my app.
+foo: qux
+```
+
+<details>
+<summary>Resulting jsonschema:</summary>
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "foo": {
+      "type": "string",
+      "title": "foo",
+      "description": "The foo configuration for my app",
+      "default": "qux"
+    },
+  }
+}
+```
+</details><br>
+
+If the header comment is parsable as yaml a yaml object, it will be treated as the schema configuration.
+
+```yaml
+# type: string
+# minLength: 3
+# maxLength: 5
+# examples:
+#   - foo
+#   - bar
+#   - bax
+# description: The foo configuration for my app.
+foo: qux
+```
+
+<details>
+<summary>Resulting jsonschema:</summary>
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "foo": {
+      "type": "string",
+      "title": "foo",
+      "minLength": 3,
+      "maxLength": 5,
+      "examples": ["foo", "bar", "baz"],
+      "description": "The foo configuration for my app",
+      "default": "qux"
+    },
+  }
+}
+```
+</details><br>
+
+The description can be provided in a second yaml document in the header comment for improved readability. This is especially helpful for multiline descriptions.
+
+```yaml
+# type: string
+# minLength: 3
+# maxLength: 5
+# examples: [foo, bar, baz]
+# ---
+# The foo configuration for my app.
+#
+# Only allows [metasyntactic variable][1] names up to length 5 (excluding quuux, etc).
+# Used for XYZ purposes in this fictionalized app.
+#
+# [1]: https://en.wikipedia.org/wiki/Metasyntactic_variable "metasyntactic variable"
+foo: qux
+```
+
+<details>
+<summary>Resulting jsonschema:</summary>
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "foo": {
+      "type": "string",
+      "title": "foo",
+      "minLength": 3,
+      "maxLength": 5,
+      "examples": ["foo", "bar", "baz"],
+      "description": "The foo configuration for my app.\n\nOnly allows [metasyntactic variable][1] names up to length 5 (excluding quuux, etc).\nUsed for XYZ purposes in this fictionalized app.\n\n[1]: https://en.wikipedia.org/wiki/Metasyntactic_variable \"metasyntactic variable\"",
+      "default": "qux"
+    },
+  }
+}
+```
+</details><br>
+
+The $ref and $schema properties work too, however any other jsonschema properties will be ignored (including descriptions):
+
+```yaml
+# $ref: https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.34.0/_definitions.json#/definitions/io.k8s.api.core.v1.ResourceRequirements
+# ---
+# Container resources only, recommended 1tb mem, 1,000,000 cpu
+resources: {}
+```
+
+<details>
+<summary>Resulting jsonschema:</summary>
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "resources": {
+      "title": "resources",
+      "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.34.0/_definitions.json#/definitions/io.k8s.api.core.v1.ResourceRequirements"
+    },
+  }
+}
+```
+</details><br>
+
+
+## Docs Templating API
 
 Markdown and ReStructuredText are supported.
 
@@ -235,6 +368,8 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
   - [ ] Root level one-of/any-of/all-of
   - [ ] Requirement: Changes to values.yaml don't violate yamllint checks
   - [ ] Requirement: helm lint checks
+  - [ ] Warn on undocumented values property
+  - [ ] Warn on ignored jsonschema property (in cases of $ref/$schema usage)
 - [ ] Docs Generation
   - [x] Mardown & ReStructured Text support
   - [x] Render custom and builtin templates
