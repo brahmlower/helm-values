@@ -42,5 +42,6 @@ runtimeConfig:
         command: ${HELM_PLUGIN_DIR}/install-binary.sh
 
 # legacy metadata, needed for artifacthub
+usage: Schema and docs generator for Helm values
 description:
   Schema and docs generator for Helm values
