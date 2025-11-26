@@ -10,7 +10,8 @@ A helm plugin for generating schema and docs for chart values.
 - [Getting Started](#getting-started)
 - [Generate Schema](#generate-schema)
 - [Generate Docs](#generate-docs)
-- [Template API](#template-api)
+- [Schema Comments](#schema-comments)
+- [Docs Template API](#docs-templating-api)
   - [Built-In Templates](#built-in-templates)
   - [Extra Templates](#extra-templates)
   - [Template Context](#template-context)
@@ -114,7 +115,7 @@ foo: qux
 ```
 </details><br>
 
-If the header comment is parsable as yaml a yaml object, it will be treated as the schema configuration.
+If the header comment is parsable as a yaml object, it will be treated as the schema configuration.
 
 ```yaml
 # type: string
@@ -150,7 +151,7 @@ foo: qux
 ```
 </details><br>
 
-The description can be provided in a second yaml document in the header comment for improved readability. This is especially helpful for multiline descriptions.
+Within the header comment, the description can be provided in a second yaml document for improved readability. This is especially helpful for detailed descriptions.
 
 ```yaml
 # type: string
@@ -189,7 +190,7 @@ foo: qux
 ```
 </details><br>
 
-The $ref and $schema properties work too, however any other jsonschema properties will be ignored (including descriptions):
+The `$ref` and `$schema` properties work too, however any other jsonschema properties will be ignored (including descriptions):
 
 ```yaml
 # $ref: https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.34.0/_definitions.json#/definitions/io.k8s.api.core.v1.ResourceRequirements
