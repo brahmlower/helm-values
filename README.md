@@ -55,7 +55,6 @@ Flags:
       --dry-run              don't write changes to disk
   -h, --help                 help for schema
       --log-level string     log level (debug, info, warn, error, fatal, panic) (default "warn")
-      --schema-file string   path to the schema-file file (default "values.schema.json")
       --stdout               write to stdout
       --strict               fail on doc comment parsing errors
 ```
@@ -78,7 +77,6 @@ Flags:
       --log-level string         log level (debug, info, warn, error, fatal, panic) (default "warn")
       --markup string            markup language (md, markdown, rst, restructuredtext)
       --output string            path to output (defaults to README.md or README.rst based on markup)
-      --schema-file string       path to the schema-file file (default "values.schema.json")
       --stdout                   write to stdout
       --strict                   fail on doc comment parsing errors
       --template string          path to template (defaults to README.md.tmpl or README.rst.tmpl based on markup)

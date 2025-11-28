@@ -19,10 +19,6 @@ type DocsConfig struct {
 	*viper.Viper
 }
 
-func (c *DocsConfig) SchemaFile() string {
-	return c.GetString("schema-file")
-}
-
 func (c *DocsConfig) StdOut() bool {
 	return c.GetBool("stdout")
 }
@@ -79,10 +75,6 @@ func (c *DocsConfig) UpdateLogger(logger *logrus.Logger) error {
 }
 
 func (c *DocsConfig) BindFlags(cmd *cobra.Command) {
-	cmd.Flags().String("schema-file", "values.schema.json", "path to the schema-file file")
-	c.BindPFlag("schema-file", cmd.Flags().Lookup("schema-file"))
-	c.BindEnv("schema-file")
-
 	cmd.Flags().Bool("stdout", false, "write to stdout")
 	c.BindPFlag("stdout", cmd.Flags().Lookup("stdout"))
 	c.BindEnv("stdout")
