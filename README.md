@@ -48,15 +48,15 @@ Options:
 Generate values schema
 
 Usage:
-  helm-values schema [flags]
+  helm-values schema [flags] chart_dir [...chart_dir]
 
 Flags:
-      --chart-dir string     path to the chart directory
-      --dry-run              don't write changes to disk
-  -h, --help                 help for schema
-      --log-level string     log level (debug, info, warn, error, fatal, panic) (default "warn")
-      --stdout               write to stdout
-      --strict               fail on doc comment parsing errors
+      --dry-run            don't write changes to disk
+  -h, --help               help for schema
+      --log-level string   log level (debug, info, warn, error, fatal, panic) (default "warn")
+      --stdout             write to stdout
+      --strict             fail on doc comment parsing errors
+      --write-modeline     write modeline to values file (default true)
 ```
 
 ## Generate Docs
@@ -67,10 +67,9 @@ Options:
 Generate values docs
 
 Usage:
-  helm-values docs [flags]
+  helm-values docs [flags] chart_dir [...chart_dir]
 
 Flags:
-      --chart-dir string         path to the chart directory
       --dry-run                  don't write changes to disk
       --extra-templates string   glob path to extra templates
   -h, --help                     help for docs
