@@ -357,7 +357,7 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
   - [ ] Check/validate values file
   - [x] Write to non-default location
   - [x] Write to stdout
-  - [ ] Update values file with yaml-schema modeline
+  - [x] Update values file with yaml-schema modeline
   - [ ] Set examples from comments
   - [ ] Json-Schema Draft 6 support?
   - [ ] Json-Schema Draft 7 support?
