@@ -8,7 +8,10 @@ import (
 	"helmschema/cmd/helm-values/internal/config"
 	"helmschema/cmd/helm-values/internal/docs"
 	"helmschema/cmd/helm-values/internal/jsonschema"
+	"io"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -55,6 +58,9 @@ func (p *Plan) LogIntent(logger *logrus.Logger) {
 		logger.Debugf("plan: %s: Output=%s (error: %v)", p.chart.Details.Name, outputPath, err)
 	}
 	// todo: schema configs
+	if p.schemaCfg != nil {
+		logger.Debugf("plan: %s: WriteModeline=%t", p.chart.Details.Name, p.schemaCfg.WriteModeline())
+	}
 }
 
 func (p *Plan) Chart() *charts.Chart {
@@ -203,6 +209,56 @@ func (p *Plan) WriteSchema(logger *logrus.Logger, schema *jsonschema.Schema) err
 	defer f.Close()
 
 	_, err = f.WriteString(string(s))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+const YAML_MODELINE = "yaml-language-server"
+const MODELINE_PARAM = "$schema="
+
+func (p *Plan) renderedModeline() string {
+	return fmt.Sprintf(
+		"# %s: %s%s\n",
+		YAML_MODELINE,
+		MODELINE_PARAM,
+		filepath.Base(p.chart.SchemaFilePath()),
+	)
+}
+
+func (p *Plan) WriteSchemaModeline(logger *logrus.Logger) error {
+	valuesFilePath := p.chart.ValuesFilePath()
+
+	if p.DryRun() {
+		logger.Infof("schema: %s: dry-run enabled, skipping modeline write to %s", p.chart.Details.Name, valuesFilePath)
+		return nil
+	}
+
+	f, err := os.OpenFile(valuesFilePath, os.O_RDONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	contentB, err := io.ReadAll(f)
+	if err != nil {
+		return err
+	}
+	content := string(contentB)
+	var updatedContent string
+
+	modelineStart := strings.Index(content, fmt.Sprintf("# %s:", YAML_MODELINE))
+	if modelineStart == -1 {
+		// write an extra newline when inserting the modeline for the first time
+		updatedContent = p.renderedModeline() + "\n" + content
+	} else {
+		eolIdx := strings.Index(content[modelineStart:], "\n")
+		updatedContent = content[:modelineStart] + p.renderedModeline() + content[modelineStart+eolIdx+1:]
+	}
+
+	err = os.WriteFile(p.chart.ValuesFilePath(), []byte(updatedContent), 0644)
 	if err != nil {
 		return err
 	}

@@ -58,6 +58,16 @@ func generateSchema(logger *logrus.Logger, cfg *config.SchemaConfig, chartDirs [
 			return nil
 		}
 
+		if cfg.WriteModeline() {
+			logger.Debugf("schema: %s: writing modeline", plan.Chart().Details.Name)
+			if err := plan.WriteSchemaModeline(logger); err != nil {
+				logger.Error(err.Error())
+				return nil
+			}
+		} else {
+			logger.Debugf("schema: %s: skipping modeline write", plan.Chart().Details.Name)
+		}
+
 		logger.Infof("schema: %s: finished", plan.Chart().Details.Name)
 	}
 

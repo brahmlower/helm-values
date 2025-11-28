@@ -32,6 +32,10 @@ func (c *SchemaConfig) DryRun() bool {
 	return c.GetBool("dry-run")
 }
 
+func (c *SchemaConfig) WriteModeline() bool {
+	return c.GetBool("write-modeline")
+}
+
 func (c *SchemaConfig) LogLevel() (logrus.Level, error) {
 	return logrus.ParseLevel(c.GetString("log-level"))
 }
@@ -66,4 +70,8 @@ func (c *SchemaConfig) BindFlags(cmd *cobra.Command) {
 	cmd.Flags().String("log-level", "warn", "log level (debug, info, warn, error, fatal, panic)")
 	c.BindPFlag("log-level", cmd.Flags().Lookup("log-level"))
 	c.BindEnv("log-level")
+
+	cmd.Flags().Bool("write-modeline", true, "write modeline to values file")
+	c.BindPFlag("write-modeline", cmd.Flags().Lookup("write-modeline"))
+	c.BindEnv("write-modeline")
 }
