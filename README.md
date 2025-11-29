@@ -364,9 +364,8 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
   - [ ] Support declaring and using yaml anchors in doc comments
   - [ ] Support declaring root level attributes
   - [ ] Root level one-of/any-of/all-of
-  - [ ] Requirement: Changes to values.yaml don't violate yamllint checks
-  - [ ] Requirement: helm lint checks
-  - [ ] Warn on undocumented values property
+  - [x] Requirement: helm lint checks
+  - [x] Warn on undocumented values property
   - [ ] Warn on ignored jsonschema property (in cases of $ref/$schema usage)
 - [ ] Docs Generation
   - [x] Mardown & ReStructured Text support

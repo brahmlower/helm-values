@@ -37,7 +37,6 @@ type Schema struct {
 	Required              []string                   `json:"required,omitempty" yaml:"required,omitempty"`
 	Properties            map[string]*Schema         `json:"properties,omitempty" yaml:"properties,omitempty"`
 	PropertyNames         *Schema                    `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
-	RegexProperties       bool                       `json:"regexProperties,omitempty" yaml:"regexProperties,omitempty"`
 	PatternProperties     map[*regexp.Regexp]*Schema `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
 	AdditionalProperties  any                        `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
 	Dependencies          map[string]any             `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
@@ -51,9 +50,7 @@ type Schema struct {
 	Items            any       `json:"items,omitempty" yaml:"items,omitempty"`
 	AdditionalItems  any       `json:"additionalItems,omitempty" yaml:"additionalItems,omitempty"`
 	PrefixItems      []*Schema `json:"prefixItems,omitempty" yaml:"prefixItems,omitempty"`
-	Items2020        *Schema   `json:"items2020,omitempty" yaml:"items2020,omitempty"`
 	Contains         *Schema   `json:"contains,omitempty" yaml:"contains,omitempty"`
-	ContainsEval     bool      `json:"containsEval,omitempty" yaml:"containsEval,omitempty"`
 	MinContains      int       `json:"minContains,omitempty" yaml:"minContains,omitempty"`
 	MaxContains      int       `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`
 	UnevaluatedItems *Schema   `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
@@ -83,4 +80,12 @@ type Schema struct {
 	Deprecated  bool   `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 
 	// Extensions map[string]ExtSchema `json:"extensions,omitempty"`
+}
+
+func (s *Schema) WalkProperties(fn func(keyPath []*Schema, schema *Schema), keyPath ...*Schema) {
+	fn(keyPath, s)
+
+	for _, k := range s.Properties {
+		k.WalkProperties(fn, append(keyPath, s)...)
+	}
 }

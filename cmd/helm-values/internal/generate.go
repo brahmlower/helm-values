@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"helmschema/cmd/helm-values/internal/jsonschema"
 	"os"
+	"strings"
 
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
@@ -46,6 +47,23 @@ func (g *Generator) Generate() (*jsonschema.Schema, error) {
 	}
 	s.Schema = JsonSchemaURI
 
+	s.WalkProperties(func(keyPath []*jsonschema.Schema, schema *jsonschema.Schema) {
+		if !isDocumented(append(keyPath, schema)) {
+			if schema.Title == "" {
+				return
+			}
+
+			keyValues := []string{}
+			for _, k := range append(keyPath, schema) {
+				if k.Title == "" {
+					continue
+				}
+				keyValues = append(keyValues, k.Title)
+			}
+			g.logger.Warnf("undocumented value: %s", strings.Join(keyValues, "."))
+		}
+	})
+
 	return s, err
 }
 
@@ -57,6 +75,7 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*jsonsche
 
 	s := &jsonschema.Schema{}
 	s.Type = valueType
+	s.Title = key.Value
 
 	if err := updateSchmeaFromYamlComment(key, s); err != nil {
 		if cErr, ok := err.(*CommentError); ok {
@@ -82,6 +101,7 @@ func (g *Generator) buildSequenceNode(key *yaml.Node, _ *yaml.Node) (*jsonschema
 
 	// Not all objects will have a yaml key node, only set key values if they exist
 	if key != nil {
+		s.Title = key.Value
 		if err := updateSchmeaFromYamlComment(key, s); err != nil {
 			if cErr, ok := err.(*CommentError); ok {
 				cErr.Filepath = g.plan.chart.ValuesFilePath()
@@ -106,6 +126,8 @@ func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*jsonsch
 
 	// Not all objects will have a yaml key node, only set key values if they exist
 	if key != nil {
+		s.Title = key.Value
+
 		if err := updateSchmeaFromYamlComment(key, s); err != nil {
 			if cErr, ok := err.(*CommentError); ok {
 				cErr.Filepath = g.plan.chart.ValuesFilePath()
@@ -170,4 +192,20 @@ func yamlTagToSchema(tag string) (string, error) {
 	default:
 		return "", fmt.Errorf("unsupported yaml tag: %s", tag)
 	}
+}
+
+func isDocumented(schemaPath []*jsonschema.Schema) bool {
+	if schemaPath[len(schemaPath)-1].Description != "" {
+		// fmt.Printf("Description found: %s\n", schemaPath[len(schemaPath)-1].Description)
+		return true
+	}
+
+	for _, s := range schemaPath {
+		if s.Ref != "" {
+			// fmt.Printf("Ref found: %s\n", schemaPath[len(schemaPath)-1].Ref)
+			return true
+		}
+	}
+
+	return false
 }

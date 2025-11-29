@@ -110,6 +110,14 @@ func updateSchmeaFromYamlComment(node *yaml.Node, s *jsonschema.Schema) error {
 		if commentNode.Content[0].Kind == yaml.ScalarNode {
 			s.Description = commentNode.Content[0].Value
 		}
+		// If the doc is just a string but has a colon in it, which results
+		// in it being yaml parsed as a doc with a single key/value whose
+		// key likely has some spaces in it
+		if commentNode.Content[0].Kind == yaml.MappingNode &&
+			len(commentNode.Content[0].Content) == 2 &&
+			strings.Count(commentNode.Content[0].Content[0].Value, " ") > 1 {
+			s.Description = commentDoc
+		}
 	}
 
 	return nil
