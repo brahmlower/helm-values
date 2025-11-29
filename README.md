@@ -353,36 +353,44 @@ The above produces `10`
 Features inspired by [helm-schema](https://github.com/dadav/helm-schema)
 and [helm-docs](https://github.com/norwoodj/helm-docs).
 
-- [ ] Schema Generation
-  - [ ] Check/validate values file
-  - [x] Write to non-default location
-  - [x] Write to stdout
-  - [x] Update values file with yaml-schema modeline
-  - [ ] Set examples from comments
-  - [ ] Json-Schema Draft 6 support?
-  - [ ] Json-Schema Draft 7 support?
-  - [ ] Support declaring and using yaml anchors in doc comments
-  - [ ] Support declaring root level attributes
-  - [ ] Root level one-of/any-of/all-of
-  - [x] Requirement: helm lint checks
-  - [x] Warn on undocumented values property
-  - [ ] Warn on ignored jsonschema property (in cases of $ref/$schema usage)
-- [ ] Docs Generation
-  - [x] Mardown & ReStructured Text support
-  - [x] Render custom and builtin templates
-  - [ ] Support rich template customization
-    - [x] Sprig functions
+- 0.0.2
+  - [ ] Schema Generation
+    - [x] Check/validate values file
+    - [x] Write to non-default location
+    - [x] Write to stdout
+    - [x] Update values file with yaml-schema modeline
+    - [x] Requirement: helm lint checks
+    - [x] Warn on undocumented values property
+  - [ ] Docs Generation
+    - [x] Mardown & ReStructured Text support
+    - [x] Render custom and builtin templates
+    - [ ] Support rich template customization
+      - [x] Sprig functions
+    - [x] "UseDefault=false" flag to require existing gotmpl
+  - [x] Helm v4 Plugin support
+- 0.1.0
+  - [ ] Schema Generation
+    - [ ] Set examples from comments
+    - [ ] Warn on ignored jsonschema property (in cases of $ref/$schema usage)
+  - [ ] Docs Generation
+    - [ ] Template: Table of Contents
     - [ ] Helpers for table generation
-  - [ ] Template: Table of Contents
-  - [ ] Template: Chart Values
+- 0.2.0
+  - [ ] Pre-Commit Hook support
+  - [ ] Schema Generation
+    - [ ] Json-Schema Draft 7 support?
+    - [ ] Support declaring root level attributes
+    - [ ] Objects defined in Definitions sections
+  - [ ] Docs Generation
     - [ ] Support "Deprecated" indicator
-    - [ ] Values render order
-      - [ ] Alphabetical
-      - [ ] Preserved
+    - [ ] Template: Chart Values
+      - [ ] Values render order (alpha/grouped/preserved)
+- 0.3.0
+  - [ ] Schema Generation
+    - [ ] Support declaring and using yaml anchors in doc comments
+    - [ ] Root level one-of/any-of/all-of
+  - [ ] Docs Generation
+    - [ ] TODO: Detect recursive templates
+    - [ ] TODO: markdown/rst escaping
+- 0.4.0
   - [ ] Template: Chart Dependencies (defined in Chart.yaml)
-  - [x] "UseDefault=false" flag to require existing gotmpl
-  - [ ] TODO: markdown/rst escaping
-  - [ ] TODO: Detect recursive templates
-- [ ] Helm v3 Plugin support (probably won't do)
-- [x] Helm v4 Plugin support
-- [ ] Pre-Commit Hook support
