@@ -86,7 +86,7 @@ Flags:
 
 This plugin simplifies schema markup in the values.yaml comments.
 
-The header comments are used as the description by default. Multiline values are supported. This comment will be treated as markdown.
+Comments are used as the field description by default. Multiline values are supported.
 
 ```yaml
 # The foo configuration for my app.

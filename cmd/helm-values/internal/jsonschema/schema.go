@@ -1,7 +1,6 @@
 package jsonschema
 
 import (
-	"math/big"
 	"regexp"
 )
 
@@ -32,8 +31,8 @@ type Schema struct {
 	Then  *Schema   `json:"then,omitempty"`
 	Else  *Schema   `json:"else,omitempty"`
 
-	MinProperties         int                        `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
-	MaxProperties         int                        `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
+	MinProperties         int64                      `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
+	MaxProperties         int64                      `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
 	Required              []string                   `json:"required,omitempty" yaml:"required,omitempty"`
 	Properties            map[string]*Schema         `json:"properties,omitempty" yaml:"properties,omitempty"`
 	PropertyNames         *Schema                    `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
@@ -44,31 +43,29 @@ type Schema struct {
 	DependentSchemas      map[string]*Schema         `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
 	UnevaluatedProperties *Schema                    `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
 
-	MinItems         int       `json:"minItems,omitempty" yaml:"minItems,omitempty"`
-	MaxItems         int       `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
+	MinItems         int64     `json:"minItems,omitempty" yaml:"minItems,omitempty"`
+	MaxItems         int64     `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
 	UniqueItems      bool      `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
 	Items            any       `json:"items,omitempty" yaml:"items,omitempty"`
 	AdditionalItems  any       `json:"additionalItems,omitempty" yaml:"additionalItems,omitempty"`
 	PrefixItems      []*Schema `json:"prefixItems,omitempty" yaml:"prefixItems,omitempty"`
 	Contains         *Schema   `json:"contains,omitempty" yaml:"contains,omitempty"`
-	MinContains      int       `json:"minContains,omitempty" yaml:"minContains,omitempty"`
-	MaxContains      int       `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`
+	MinContains      int64     `json:"minContains,omitempty" yaml:"minContains,omitempty"`
+	MaxContains      int64     `json:"maxContains,omitempty" yaml:"maxContains,omitempty"`
 	UnevaluatedItems *Schema   `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
 
-	MinLength       int            `json:"minLength,omitempty" yaml:"minLength,omitempty"`
-	MaxLength       int            `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
-	Pattern         *regexp.Regexp `json:"pattern,omitempty" yaml:"pattern,omitempty"`
-	ContentEncoding string         `json:"contentEncoding,omitempty" yaml:"contentEncoding,omitempty"`
+	MinLength        int64          `json:"minLength,omitempty" yaml:"minLength,omitempty"`
+	MaxLength        int64          `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
+	Pattern          *regexp.Regexp `json:"pattern,omitempty" yaml:"pattern,omitempty"`
+	ContentEncoding  string         `json:"contentEncoding,omitempty" yaml:"contentEncoding,omitempty"`
+	ContentMediaType string         `json:"contentMediaType,omitempty" yaml:"contentMediaType,omitempty"`
+	ContentSchema    *Schema        `json:"contentSchema,omitempty" yaml:"contentSchema,omitempty"`
 
-	ContentMediaType string `json:"contentMediaType,omitempty" yaml:"contentMediaType,omitempty"`
-
-	ContentSchema *Schema `json:"contentSchema,omitempty" yaml:"contentSchema,omitempty"`
-
-	Minimum          *big.Rat `json:"minimum,omitempty" yaml:"minimum,omitempty"`
-	ExclusiveMinimum *big.Rat `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
-	Maximum          *big.Rat `json:"maximum,omitempty" yaml:"maximum,omitempty"`
-	ExclusiveMaximum *big.Rat `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
-	MultipleOf       *big.Rat `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
+	Minimum          int64 `json:"minimum,omitempty" yaml:"minimum,omitempty"`
+	ExclusiveMinimum int64 `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
+	Maximum          int64 `json:"maximum,omitempty" yaml:"maximum,omitempty"`
+	ExclusiveMaximum int64 `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
+	MultipleOf       int64 `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
 
 	Title       string `json:"title,omitempty" yaml:"title,omitempty"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`

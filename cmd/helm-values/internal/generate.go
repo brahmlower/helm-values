@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"helmschema/cmd/helm-values/internal/comment"
 	"helmschema/cmd/helm-values/internal/jsonschema"
 	"os"
 	"strings"
@@ -73,12 +74,15 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*jsonsche
 		return nil, err
 	}
 
-	s := &jsonschema.Schema{}
-	s.Type = valueType
-	s.Title = key.Value
+	extraNodes := []*yaml.Node{}
+	extraNodes = append(extraNodes, comment.KeyValueNodes("type", valueType)...)
+	extraNodes = append(extraNodes, comment.KeyValueNodes("title", key.Value)...)
+	extraNodes = append(extraNodes, comment.KeyValueNodes("default", value.Value)...)
 
-	if err := updateSchmeaFromYamlComment(key, s); err != nil {
-		if cErr, ok := err.(*CommentError); ok {
+	s := &jsonschema.Schema{}
+
+	if err := comment.ToSchema(s, key, extraNodes); err != nil {
+		if cErr, ok := err.(*comment.CommentError); ok {
 			cErr.Filepath = g.plan.chart.ValuesFilePath()
 			cErr.RenderToLog(g.logger)
 		}
@@ -89,21 +93,22 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*jsonsche
 		}
 	}
 
-	s.Title = key.Value
-	s.Default = value.Value
 	return s, nil
 }
 
 // TODO: Finish handling sequences
 func (g *Generator) buildSequenceNode(key *yaml.Node, _ *yaml.Node) (*jsonschema.Schema, error) {
+	extraNodes := []*yaml.Node{}
+	extraNodes = append(extraNodes, comment.KeyValueNodes("type", "array")...)
+
 	s := &jsonschema.Schema{}
-	s.Type = "array"
 
 	// Not all objects will have a yaml key node, only set key values if they exist
 	if key != nil {
-		s.Title = key.Value
-		if err := updateSchmeaFromYamlComment(key, s); err != nil {
-			if cErr, ok := err.(*CommentError); ok {
+		extraNodes = append(extraNodes, comment.KeyValueNodes("title", key.Value)...)
+
+		if err := comment.ToSchema(s, key, extraNodes); err != nil {
+			if cErr, ok := err.(*comment.CommentError); ok {
 				cErr.Filepath = g.plan.chart.ValuesFilePath()
 				cErr.RenderToLog(g.logger)
 			}
@@ -114,22 +119,23 @@ func (g *Generator) buildSequenceNode(key *yaml.Node, _ *yaml.Node) (*jsonschema
 			}
 		}
 	}
-	s.Properties = make(map[string]*jsonschema.Schema, 0)
 
 	return s, nil
 }
 
 func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*jsonschema.Schema, error) {
+	extraNodes := []*yaml.Node{}
+	extraNodes = append(extraNodes, comment.KeyValueNodes("type", "object")...)
+	extraNodes = append(extraNodes, comment.KeyValueNodes("additionalProperties", "false")...)
+
 	s := &jsonschema.Schema{}
-	s.AdditionalProperties = false
-	s.Type = "object"
 
 	// Not all objects will have a yaml key node, only set key values if they exist
 	if key != nil {
-		s.Title = key.Value
+		extraNodes = append(extraNodes, comment.KeyValueNodes("title", key.Value)...)
 
-		if err := updateSchmeaFromYamlComment(key, s); err != nil {
-			if cErr, ok := err.(*CommentError); ok {
+		if err := comment.ToSchema(s, key, extraNodes); err != nil {
+			if cErr, ok := err.(*comment.CommentError); ok {
 				cErr.Filepath = g.plan.chart.ValuesFilePath()
 				cErr.RenderToLog(g.logger)
 			}
@@ -169,6 +175,8 @@ func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*jsonsch
 			return nil, fmt.Errorf("unsupported yaml type: %v", childValue.Kind)
 		}
 
+		fmt.Printf("Adding property: %s = %#v\n", childKey.Value, childValueSchema)
+
 		s.Properties[childKey.Value] = childValueSchema
 	}
 
@@ -196,13 +204,11 @@ func yamlTagToSchema(tag string) (string, error) {
 
 func isDocumented(schemaPath []*jsonschema.Schema) bool {
 	if schemaPath[len(schemaPath)-1].Description != "" {
-		// fmt.Printf("Description found: %s\n", schemaPath[len(schemaPath)-1].Description)
 		return true
 	}
 
 	for _, s := range schemaPath {
 		if s.Ref != "" {
-			// fmt.Printf("Ref found: %s\n", schemaPath[len(schemaPath)-1].Ref)
 			return true
 		}
 	}

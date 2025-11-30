@@ -1,7 +1,6 @@
 package docs
 
 import (
-	"fmt"
 	"io/fs"
 )
 
@@ -46,6 +45,5 @@ func (l *LayeredFS) ReadFile(name string) ([]byte, error) {
 		}
 	}
 
-	fmt.Printf("ReadFile error: %v, %s\n", lastErr, name)
 	return nil, lastErr
 }

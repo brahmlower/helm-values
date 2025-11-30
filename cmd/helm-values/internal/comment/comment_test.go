@@ -1,9 +1,8 @@
-package internal
+package comment
 
 import (
 	"fmt"
 	"helmschema/cmd/helm-values/internal/jsonschema"
-	"math/big"
 	"testing"
 
 	"regexp"
@@ -133,7 +132,7 @@ func TestBasicCommentParsing(t *testing.T) {
 			assert.NoError(tt, err)
 
 			s := &jsonschema.Schema{}
-			err = updateSchmeaFromYamlComment(getCommentNode(yamlNode), s)
+			err = ToSchema(s, getCommentNode(yamlNode), nil)
 
 			tc.validate(tt, s, err)
 		})
@@ -206,12 +205,10 @@ func TestCommentFieldsSingleLine(t *testing.T) {
 		{
 			field:         "maximum",
 			commentValue:  "100",
-			expectedValue: big.NewRat(100, 1),
+			expectedValue: int64(100),
 			validate: func(tt *testing.T, tc testCase, s *jsonschema.Schema) {
-				expectedRat := tc.expectedValue.(*big.Rat)
-
-				assert.IsType(tt, *expectedRat, *s.Maximum)
-				assert.Equal(tt, *expectedRat, *s.Maximum)
+				assert.IsType(tt, tc.expectedValue, s.Maximum)
+				assert.Equal(tt, tc.expectedValue, s.Maximum)
 			},
 		},
 	}
@@ -225,7 +222,7 @@ func TestCommentFieldsSingleLine(t *testing.T) {
 			assert.NoError(tt, err)
 
 			s := &jsonschema.Schema{}
-			err = updateSchmeaFromYamlComment(yamlNode.Content[0], s)
+			err = ToSchema(s, yamlNode.Content[0], nil)
 			assert.NoError(tt, err)
 
 			tc.validate(tt, tc, s)
@@ -331,7 +328,7 @@ func TestCommentFieldsMultipleLines(t *testing.T) {
 			assert.NoError(tt, err)
 
 			s := &jsonschema.Schema{}
-			err = updateSchmeaFromYamlComment(getCommentNode(yamlNode), s)
+			err = ToSchema(s, getCommentNode(yamlNode), nil)
 			assert.NoError(tt, err)
 
 			tc.validate(tt, tc, s)
