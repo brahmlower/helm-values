@@ -59,6 +59,19 @@ Flags:
       --write-modeline     write modeline to values file (default true)
 ```
 
+> [!TIP]
+> The [redhat.vscode-yaml](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml)
+> extension (commonly used for validating yaml schema) renders tooltips as plaintext despite
+> descriptions containing markdown. (see the github issue [here](https://github.com/redhat-developer/vscode-yaml/issues/454)
+> for more details)
+>
+> As of Dec 2025, the extension will render the `markdownDescription` property as markdown. The following
+> `jq` line can be run to duplicate the description as a `markdownDescription` for optimal readability.
+>
+> ```
+> jq 'walk(if type == "object" and .description then . = . * {"markdownDescription": .description} else . end)' ./path/to/schema.values.yaml
+> ```
+
 ## Generate Docs
 
 Options:
