@@ -158,16 +158,19 @@ func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*jsonsch
 		case yaml.ScalarNode:
 			childValueSchema, err = g.buildScalarNode(childKey, childValue)
 			if err != nil {
+				g.logger.Debugf("Error building scalar node for key %s: %v", childKey.Value, err)
 				return nil, err
 			}
 		case yaml.SequenceNode:
 			childValueSchema, err = g.buildSequenceNode(childKey, childValue)
 			if err != nil {
+				g.logger.Debugf("Error building sequence node for key %s: %v", childKey.Value, err)
 				return nil, err
 			}
 		case yaml.MappingNode:
 			childValueSchema, err = g.buildMappingNode(childKey, childValue)
 			if err != nil {
+				g.logger.Debugf("Error building mapping node for key %s: %v", childKey.Value, err)
 				return nil, err
 			}
 		default:
@@ -197,6 +200,8 @@ func yamlTagToSchema(tag string) (string, error) {
 	// 	return "array", nil
 	case "!!map":
 		return "object", nil
+	case "!!null":
+		return "null", nil
 	default:
 		return "", fmt.Errorf("unsupported yaml tag: %s", tag)
 	}
