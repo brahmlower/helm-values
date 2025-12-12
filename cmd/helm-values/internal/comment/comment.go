@@ -45,11 +45,19 @@ func ToSchema(s *jsonschema.Schema, node *yaml.Node, extraNodes []*yaml.Node) er
 }
 
 func parseNodeComment(node *yaml.Node) ([]string, error) {
-	commentLines := strings.Split(node.HeadComment, "\n")
+	targetComment := node.HeadComment
+
+	// split the comment by double newline
+	parts := strings.Split(targetComment, "\n\n")
+	if len(parts) > 1 {
+		targetComment = parts[len(parts)-1]
+	}
+
+	commentLines := strings.Split(targetComment, "\n")
 	for i, line := range commentLines {
 		after, found := strings.CutPrefix(line, "# ")
 		if !found {
-			err := fmt.Errorf("unexpected prefix: %s", line)
+			err := fmt.Errorf("unexpected prefix: %s (%d of %d lines)", line, i, len(commentLines))
 			return nil, NewCommentError(node, err)
 		}
 		commentLines[i] = after
