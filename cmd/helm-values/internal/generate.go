@@ -178,8 +178,6 @@ func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*jsonsch
 			return nil, fmt.Errorf("unsupported yaml type: %v", childValue.Kind)
 		}
 
-		fmt.Printf("Adding property: %s = %#v\n", childKey.Value, childValueSchema)
-
 		s.Properties[childKey.Value] = childValueSchema
 	}
 
