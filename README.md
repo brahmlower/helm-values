@@ -388,6 +388,9 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
   - [ ] Docs Generation
     - [ ] Template: Table of Contents
     - [ ] Helpers for table generation
+  - [x] fixed bug with null values
+  - [x] fixed comment parsing with empty lines
+  - [x] fixed values rows not being in a consistent order
 - 0.2.0
   - [ ] Pre-Commit Hook support
   - [ ] Schema Generation

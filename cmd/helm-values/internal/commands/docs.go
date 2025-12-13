@@ -10,8 +10,10 @@ import (
 	"helmschema/cmd/helm-values/internal/docs"
 	"helmschema/cmd/helm-values/internal/jsonschema"
 	"os"
+	"sort"
 	"strings"
 
+	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -153,7 +155,10 @@ func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig, chartDirs []str
 func schemaProperties(schema *jsonschema.Schema, parents []string) []docs.ValuesRow {
 	rows := []docs.ValuesRow{}
 
-	for key, prop := range schema.Properties {
+	keys := lo.Keys(schema.Properties)
+	sort.Strings(keys)
+	for _, key := range keys {
+		prop := schema.Properties[key]
 		if prop.Ref != "" {
 			row := docs.ValuesRow{
 				Key:  strings.Join(append(parents, key), "."),

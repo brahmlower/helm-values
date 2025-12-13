@@ -5,10 +5,6 @@ import (
 	"helmschema/cmd/helm-values/internal/jsonschema"
 )
 
-// type ValuesTable struct {
-// 	Values []ValuesRow
-// }
-
 type ValuesRow struct {
 	Key         string
 	Type        string
