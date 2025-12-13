@@ -48,22 +48,10 @@ func (g *Generator) Generate() (*jsonschema.Schema, error) {
 	}
 	s.Schema = JsonSchemaURI
 
-	s.WalkProperties(func(keyPath []*jsonschema.Schema, schema *jsonschema.Schema) {
-		if !isDocumented(append(keyPath, schema)) {
-			if schema.Title == "" {
-				return
-			}
-
-			keyValues := []string{}
-			for _, k := range append(keyPath, schema) {
-				if k.Title == "" {
-					continue
-				}
-				keyValues = append(keyValues, k.Title)
-			}
-			g.logger.Warnf("undocumented value: %s", strings.Join(keyValues, "."))
-		}
-	})
+	s.WalkProperties(
+		g.warnUndocumentedValue,
+		g.warnUntypedValue,
+	)
 
 	return s, err
 }
@@ -75,7 +63,9 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*jsonsche
 	}
 
 	extraNodes := []*yaml.Node{}
-	extraNodes = append(extraNodes, comment.KeyValueNodes("type", valueType)...)
+	if valueType != "null" {
+		extraNodes = append(extraNodes, comment.KeyValueNodes("type", valueType)...)
+	}
 	extraNodes = append(extraNodes, comment.KeyValueNodes("title", key.Value)...)
 	extraNodes = append(extraNodes, comment.KeyValueNodes("default", value.Value)...)
 
@@ -217,4 +207,42 @@ func isDocumented(schemaPath []*jsonschema.Schema) bool {
 	}
 
 	return false
+}
+
+func (g *Generator) warnUndocumentedValue(keyPath []*jsonschema.Schema, schema *jsonschema.Schema) {
+	if !isDocumented(append(keyPath, schema)) {
+		if schema.Title == "" {
+			return
+		}
+
+		keyValues := []string{}
+		for _, k := range append(keyPath, schema) {
+			if k.Title == "" {
+				continue
+			}
+			keyValues = append(keyValues, k.Title)
+		}
+
+		g.logger.Warnf("value is undocumented: %s", strings.Join(keyValues, "."))
+	}
+}
+
+func (g *Generator) warnUntypedValue(keyPath []*jsonschema.Schema, schema *jsonschema.Schema) {
+	if schema.Title == "" {
+		return
+	}
+
+	if schema.Type != "" {
+		return
+	}
+
+	keyValues := []string{}
+	for _, k := range append(keyPath, schema) {
+		if k.Title == "" {
+			continue
+		}
+		keyValues = append(keyValues, k.Title)
+	}
+
+	g.logger.Warnf("value has no type: %s", strings.Join(keyValues, "."))
 }

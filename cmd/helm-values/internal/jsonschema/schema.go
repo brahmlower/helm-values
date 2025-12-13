@@ -79,10 +79,18 @@ type Schema struct {
 	// Extensions map[string]ExtSchema `json:"extensions,omitempty"`
 }
 
-func (s *Schema) WalkProperties(fn func(keyPath []*Schema, schema *Schema), keyPath ...*Schema) {
-	fn(keyPath, s)
+type NodeInspector func(keyPath []*Schema, schema *Schema)
+
+func (s *Schema) WalkProperties(fn ...NodeInspector) {
+	s.walkProperties(fn)
+}
+
+func (s *Schema) walkProperties(fns []NodeInspector, keyPath ...*Schema) {
+	for _, fn := range fns {
+		fn(keyPath, s)
+	}
 
 	for _, k := range s.Properties {
-		k.WalkProperties(fn, append(keyPath, s)...)
+		k.walkProperties(fns, append(keyPath, s)...)
 	}
 }
