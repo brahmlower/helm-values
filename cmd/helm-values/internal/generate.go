@@ -80,6 +80,8 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*jsonsche
 		err := fmt.Errorf("doc comment error: %w", err)
 		if g.plan.StrictComments() {
 			return nil, err
+		} else {
+			g.logger.Warn(err.Error())
 		}
 	}
 
