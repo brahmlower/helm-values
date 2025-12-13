@@ -12,7 +12,7 @@
 {{- printf "| %s" (rpad .Key " " $cwKey) }}
 {{- printf "| %s" (rpad .Type " " $cwType) }}
 {{- printf "| %s" (rpad .Default " " $cwDefault) }}
-{{- printf "| %s" (rpad .Description " " $cwDescription) }}
+{{- printf "| %s" (rpad (.Description | replace "\n" "<br>") " " $cwDescription) }}
 {{- "|" }}
 {{- end }}
 {{- end }}
