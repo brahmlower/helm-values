@@ -1,8 +1,10 @@
 package config
 
 import (
+	"fmt"
 	"helmschema/cmd/helm-values/internal/docs"
 	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -29,6 +31,10 @@ func (c *DocsConfig) Strict() bool {
 
 func (c *DocsConfig) DryRun() bool {
 	return c.GetBool("dry-run")
+}
+
+func (c *DocsConfig) ValuesOrder() (ValuesOrder, error) {
+	return NewValuesOrder(c.GetString("order"))
 }
 
 func (c *DocsConfig) LogLevel() (logrus.Level, error) {
@@ -95,6 +101,10 @@ func (c *DocsConfig) BindFlags(cmd *cobra.Command) {
 	c.BindPFlag("markup", cmd.Flags().Lookup("markup"))
 	c.BindEnv("markup")
 
+	cmd.Flags().String("order", "preserve", "order of values (preserve, alphabetical)")
+	c.BindPFlag("order", cmd.Flags().Lookup("order"))
+	c.BindEnv("order")
+
 	cmd.Flags().Bool("use-default", true, "uses default template unless a custom template is present")
 	c.BindPFlag("use-default", cmd.Flags().Lookup("use-default"))
 	c.BindEnv("use-default")
@@ -110,4 +120,22 @@ func (c *DocsConfig) BindFlags(cmd *cobra.Command) {
 	cmd.Flags().String("extra-templates", "", "glob path to extra templates")
 	c.BindPFlag("extra-templates", cmd.Flags().Lookup("extra-templates"))
 	c.BindEnv("extra-templates")
+}
+
+type ValuesOrder string
+
+const (
+	ValuesOrderAlphabetical ValuesOrder = "alphabetical"
+	ValuesOrderPreserve     ValuesOrder = "preserve"
+)
+
+func NewValuesOrder(orderStr string) (ValuesOrder, error) {
+	switch strings.ToLower(orderStr) {
+	case "alphabetical":
+		return ValuesOrderAlphabetical, nil
+	case "preserve":
+		return ValuesOrderPreserve, nil
+	default:
+		return "", fmt.Errorf("invalid values order: %s", orderStr)
+	}
 }

@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	om "github.com/elliotchance/orderedmap/v3"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"go.yaml.in/yaml/v4"
@@ -138,7 +139,7 @@ func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*jsonsch
 			}
 		}
 	}
-	s.Properties = make(map[string]*jsonschema.Schema, 0)
+	s.Properties = om.NewOrderedMap[string, *jsonschema.Schema]()
 
 	for _, child := range lo.Chunk(value.Content, 2) {
 		childKey := child[0]
@@ -170,7 +171,7 @@ func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*jsonsch
 			return nil, fmt.Errorf("unsupported yaml type: %v", childValue.Kind)
 		}
 
-		s.Properties[childKey.Value] = childValueSchema
+		s.Properties.Set(childKey.Value, childValueSchema)
 	}
 
 	return s, nil

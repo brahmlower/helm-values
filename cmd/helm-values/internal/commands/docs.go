@@ -10,10 +10,10 @@ import (
 	"helmschema/cmd/helm-values/internal/docs"
 	"helmschema/cmd/helm-values/internal/jsonschema"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 
-	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -41,6 +41,11 @@ func Docs(logger *logrus.Logger) *cobra.Command {
 
 func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig, chartDirs []string) error {
 	chartsFound, err := charts.Search(logger, chartDirs)
+	if err != nil {
+		return err
+	}
+
+	valuesOrder, err := cfg.ValuesOrder()
 	if err != nil {
 		return err
 	}
@@ -79,7 +84,7 @@ func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig, chartDirs []str
 				Chart:  plan.Chart(),
 				Values: schema,
 			},
-			ValuesTable: schemaProperties(schema, []string{}),
+			ValuesTable: schemaProperties(schema, valuesOrder, []string{}),
 		}
 
 		for _, p := range staticPaths {
@@ -152,13 +157,24 @@ func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig, chartDirs []str
 	return nil
 }
 
-func schemaProperties(schema *jsonschema.Schema, parents []string) []docs.ValuesRow {
+func schemaProperties(schema *jsonschema.Schema, order config.ValuesOrder, parents []string) []docs.ValuesRow {
 	rows := []docs.ValuesRow{}
 
-	keys := lo.Keys(schema.Properties)
-	sort.Strings(keys)
+	// Key order is preserved by default
+	keys := slices.Collect(schema.Properties.Keys())
+
+	// Sort keys alphabetically if requested
+	if order == config.ValuesOrderAlphabetical {
+		sort.Strings(keys)
+	}
+
 	for _, key := range keys {
-		prop := schema.Properties[key]
+		prop, ok := schema.Properties.Get(key)
+		if !ok {
+			// should be impossible
+			continue
+		}
+
 		if prop.Ref != "" {
 			row := docs.ValuesRow{
 				Key:  strings.Join(append(parents, key), "."),
@@ -178,7 +194,7 @@ func schemaProperties(schema *jsonschema.Schema, parents []string) []docs.Values
 		}
 
 		if prop.Type == "object" {
-			rows = append(rows, schemaProperties(prop, append(parents, key))...)
+			rows = append(rows, schemaProperties(prop, order, append(parents, key))...)
 			continue
 		}
 

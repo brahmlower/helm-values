@@ -56,6 +56,8 @@ func (p *Plan) LogIntent(logger *logrus.Logger) {
 		logger.Debugf("plan: %s: Markup=%s (error: %v)", p.chart.Details.Name, markup, err)
 		outputPath, err := p.DocsOutputPath()
 		logger.Debugf("plan: %s: Output=%s (error: %v)", p.chart.Details.Name, outputPath, err)
+		order, err := p.docsCfg.ValuesOrder()
+		logger.Debugf("plan: %s: ValuesOrder=%s (error: %v)", p.chart.Details.Name, order, err)
 	}
 	// todo: schema configs
 	if p.schemaCfg != nil {

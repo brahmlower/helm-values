@@ -2,6 +2,8 @@ package jsonschema
 
 import (
 	"regexp"
+
+	om "github.com/elliotchance/orderedmap/v3"
 )
 
 type Schema struct {
@@ -31,17 +33,17 @@ type Schema struct {
 	Then  *Schema   `json:"then,omitempty"`
 	Else  *Schema   `json:"else,omitempty"`
 
-	MinProperties         int64                      `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
-	MaxProperties         int64                      `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
-	Required              []string                   `json:"required,omitempty" yaml:"required,omitempty"`
-	Properties            map[string]*Schema         `json:"properties,omitempty" yaml:"properties,omitempty"`
-	PropertyNames         *Schema                    `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
-	PatternProperties     map[*regexp.Regexp]*Schema `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
-	AdditionalProperties  any                        `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
-	Dependencies          map[string]any             `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
-	DependentRequired     map[string][]string        `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"`
-	DependentSchemas      map[string]*Schema         `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
-	UnevaluatedProperties *Schema                    `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
+	MinProperties         int64                           `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
+	MaxProperties         int64                           `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
+	Required              []string                        `json:"required,omitempty" yaml:"required,omitempty"`
+	Properties            *om.OrderedMap[string, *Schema] `json:"properties,omitempty" yaml:"properties,omitempty"`
+	PropertyNames         *Schema                         `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
+	PatternProperties     map[*regexp.Regexp]*Schema      `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
+	AdditionalProperties  any                             `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
+	Dependencies          map[string]any                  `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
+	DependentRequired     map[string][]string             `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"`
+	DependentSchemas      map[string]*Schema              `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
+	UnevaluatedProperties *Schema                         `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
 
 	MinItems         int64     `json:"minItems,omitempty" yaml:"minItems,omitempty"`
 	MaxItems         int64     `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
@@ -90,7 +92,11 @@ func (s *Schema) walkProperties(fns []NodeInspector, keyPath ...*Schema) {
 		fn(keyPath, s)
 	}
 
-	for _, k := range s.Properties {
+	if s.Properties == nil {
+		return
+	}
+
+	for _, k := range s.Properties.AllFromFront() {
 		k.walkProperties(fns, append(keyPath, s)...)
 	}
 }
