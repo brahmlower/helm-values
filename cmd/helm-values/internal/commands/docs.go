@@ -188,9 +188,28 @@ func schemaProperties(schema *jsonschema.Schema, parents []string) []docs.Values
 			fmt.Printf("Error marshaling default value for key %s: %v\n", key, err)
 		}
 
+		typeValue := prop.Type
+		if len(prop.Enum) > 0 {
+			enumItems := make([]string, len(prop.Enum))
+			for i, enumItem := range prop.Enum {
+				enumBytes, err := json.Marshal(enumItem)
+				if err != nil {
+					// TODO: Handle this error better
+					continue
+				}
+				enumItems[i] = string(enumBytes)
+			}
+
+			typeValue = fmt.Sprintf(
+				"%s (enum)\n%s",
+				typeValue,
+				strings.Join(enumItems, ", "),
+			)
+		}
+
 		row := docs.ValuesRow{
 			Key:         strings.Join(append(parents, key), "."),
-			Type:        prop.Type,
+			Type:        typeValue,
 			Default:     string(defaultStr),
 			Description: prop.Description,
 		}

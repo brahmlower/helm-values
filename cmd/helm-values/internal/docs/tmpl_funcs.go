@@ -58,3 +58,7 @@ func mdRow(cols []string, colWidths []int64) string {
 
 	return fmt.Sprintf("| %s |", strings.Join(c, " | "))
 }
+
+func mdMultiline(s string) string {
+	return strings.ReplaceAll(s, "\n", "</br>")
+}

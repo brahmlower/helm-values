@@ -84,6 +84,7 @@ func (b *TemplateBuilder) Build(fsys fs.FS) (*template.Template, error) {
 	funcMap["maxLen"] = maxLen
 	funcMap["rowSelect"] = rowSelect
 	funcMap["mdRow"] = mdRow
+	funcMap["mdMultiline"] = mdMultiline
 
 	return template.New(b.TemplateName()).
 		Funcs(funcMap).
