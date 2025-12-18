@@ -1,7 +1,8 @@
-package schema
+package comments
 
 import (
 	"fmt"
+	"helmschema/pkg"
 	"testing"
 
 	"regexp"
@@ -54,20 +55,20 @@ func TestBasicCommentParsing(t *testing.T) {
 		name          string
 		document      string
 		expectedError string
-		validate      func(tt *testing.T, s *Schema, err error)
+		validate      func(tt *testing.T, s *pkg.JsonSchema, err error)
 	}{
 		{
 			name:     "empty document makes no changes",
 			document: "",
-			validate: func(tt *testing.T, s *Schema, err error) {
+			validate: func(tt *testing.T, s *pkg.JsonSchema, err error) {
 				assert.Nil(tt, err)
-				assert.Equal(tt, *s, Schema{})
+				assert.Equal(tt, *s, pkg.JsonSchema{})
 			},
 		},
 		{
 			name:     "errors when comment missing space prefix",
 			document: COMMENT_MISSING_SPACE_PREFIX,
-			validate: func(tt *testing.T, s *Schema, err error) {
+			validate: func(tt *testing.T, s *pkg.JsonSchema, err error) {
 				assert.NotNil(tt, err)
 				assert.ErrorContains(t, err, "unexpected prefix")
 			},
@@ -76,7 +77,7 @@ func TestBasicCommentParsing(t *testing.T) {
 			// TODO: Fix comment parsing so that the description is correctly extracted
 			name:     "errors when comment is invalid yaml string",
 			document: COMMENT_WITH_INVALID_YAML,
-			validate: func(tt *testing.T, s *Schema, err error) {
+			validate: func(tt *testing.T, s *pkg.JsonSchema, err error) {
 				assert.NoError(tt, err)
 				assert.Equal(tt, "", s.Description)
 			},
@@ -84,7 +85,7 @@ func TestBasicCommentParsing(t *testing.T) {
 		{
 			name:     "comment with string yaml is treated as description",
 			document: COMMENT_WITH_YAML_STRING,
-			validate: func(tt *testing.T, s *Schema, err error) {
+			validate: func(tt *testing.T, s *pkg.JsonSchema, err error) {
 				assert.NoError(tt, err)
 				assert.Equal(tt, "comment is just a string", s.Description)
 			},
@@ -92,15 +93,15 @@ func TestBasicCommentParsing(t *testing.T) {
 		{
 			name:     "comment has no jsonschema properties",
 			document: DOESNT_SET_SCHEMA_PROPERTIES,
-			validate: func(tt *testing.T, s *Schema, err error) {
+			validate: func(tt *testing.T, s *pkg.JsonSchema, err error) {
 				assert.NoError(tt, err)
-				assert.Equal(tt, Schema{}, *s)
+				assert.Equal(tt, pkg.JsonSchema{}, *s)
 			},
 		},
 		{
 			name:     "comment sets jsonschema field: default",
 			document: SETS_SCHEMA_DEFAULT,
-			validate: func(tt *testing.T, s *Schema, err error) {
+			validate: func(tt *testing.T, s *pkg.JsonSchema, err error) {
 				assert.NoError(tt, err)
 				assert.Equal(tt, "baz", s.Default)
 			},
@@ -108,7 +109,7 @@ func TestBasicCommentParsing(t *testing.T) {
 		{
 			name:     "comment sets jsonschema field w/ multiline value",
 			document: SETS_SCHEMA_WITH_MULTILINE_VALUE,
-			validate: func(tt *testing.T, s *Schema, err error) {
+			validate: func(tt *testing.T, s *pkg.JsonSchema, err error) {
 				assert.NoError(tt, err)
 				assert.Equal(tt, "foo\nbar", s.Default)
 			},
@@ -116,7 +117,7 @@ func TestBasicCommentParsing(t *testing.T) {
 		{
 			name:     "comment sets jsonschema description to second yaml doc",
 			document: SETS_DESCRIPTION_TO_SECOND_DOC,
-			validate: func(tt *testing.T, s *Schema, err error) {
+			validate: func(tt *testing.T, s *pkg.JsonSchema, err error) {
 				assert.NoError(tt, err)
 				assert.Equal(tt, "baz", s.Default)
 				assert.Equal(tt, "this is a description", s.Description)
@@ -130,8 +131,7 @@ func TestBasicCommentParsing(t *testing.T) {
 			err := yaml.Unmarshal([]byte(tc.document), yamlNode)
 			assert.NoError(tt, err)
 
-			s := &Schema{}
-			err = ToSchema(s, getCommentNode(yamlNode), nil)
+			s, err := Parse(getCommentNode(yamlNode), nil)
 
 			tc.validate(tt, s, err)
 		})
@@ -143,7 +143,7 @@ func TestCommentFieldsSingleLine(t *testing.T) {
 		field         string
 		commentValue  string
 		expectedValue any
-		validate      func(tt *testing.T, tc testCase, s *Schema)
+		validate      func(tt *testing.T, tc testCase, s *pkg.JsonSchema)
 	}
 
 	var tests = []testCase{
@@ -151,7 +151,7 @@ func TestCommentFieldsSingleLine(t *testing.T) {
 			field:         "$schema",
 			commentValue:  "https://example.com/schema",
 			expectedValue: "https://example.com/schema",
-			validate: func(tt *testing.T, tc testCase, s *Schema) {
+			validate: func(tt *testing.T, tc testCase, s *pkg.JsonSchema) {
 				assert.IsType(tt, tc.expectedValue, s.Schema)
 				assert.Equal(tt, tc.expectedValue, s.Schema)
 			},
@@ -160,7 +160,7 @@ func TestCommentFieldsSingleLine(t *testing.T) {
 			field:         "description",
 			commentValue:  "some description",
 			expectedValue: "some description",
-			validate: func(tt *testing.T, tc testCase, s *Schema) {
+			validate: func(tt *testing.T, tc testCase, s *pkg.JsonSchema) {
 				assert.IsType(tt, tc.expectedValue, s.Description)
 				assert.Equal(tt, tc.expectedValue, s.Description)
 			},
@@ -169,7 +169,7 @@ func TestCommentFieldsSingleLine(t *testing.T) {
 			field:         "format",
 			commentValue:  "some format",
 			expectedValue: "some format",
-			validate: func(tt *testing.T, tc testCase, s *Schema) {
+			validate: func(tt *testing.T, tc testCase, s *pkg.JsonSchema) {
 				assert.IsType(tt, tc.expectedValue, s.Format)
 				assert.Equal(tt, tc.expectedValue, s.Format)
 			},
@@ -178,7 +178,7 @@ func TestCommentFieldsSingleLine(t *testing.T) {
 			field:         "minLength",
 			commentValue:  "5",
 			expectedValue: 5,
-			validate: func(tt *testing.T, tc testCase, s *Schema) {
+			validate: func(tt *testing.T, tc testCase, s *pkg.JsonSchema) {
 				assert.IsType(tt, tc.expectedValue, s.MinLength)
 				assert.Equal(tt, tc.expectedValue, s.MinLength)
 			},
@@ -187,7 +187,7 @@ func TestCommentFieldsSingleLine(t *testing.T) {
 			field:         "deprecated",
 			commentValue:  "true",
 			expectedValue: true,
-			validate: func(tt *testing.T, tc testCase, s *Schema) {
+			validate: func(tt *testing.T, tc testCase, s *pkg.JsonSchema) {
 				assert.IsType(tt, tc.expectedValue, s.Deprecated)
 				assert.Equal(tt, tc.expectedValue, s.Deprecated)
 			},
@@ -196,7 +196,7 @@ func TestCommentFieldsSingleLine(t *testing.T) {
 			field:         "required",
 			commentValue:  "[foo, bar]",
 			expectedValue: []string{"foo", "bar"},
-			validate: func(tt *testing.T, tc testCase, s *Schema) {
+			validate: func(tt *testing.T, tc testCase, s *pkg.JsonSchema) {
 				assert.IsType(tt, tc.expectedValue, s.Required)
 				assert.Equal(tt, tc.expectedValue, s.Required)
 			},
@@ -205,7 +205,7 @@ func TestCommentFieldsSingleLine(t *testing.T) {
 			field:         "maximum",
 			commentValue:  "100",
 			expectedValue: int64(100),
-			validate: func(tt *testing.T, tc testCase, s *Schema) {
+			validate: func(tt *testing.T, tc testCase, s *pkg.JsonSchema) {
 				assert.IsType(tt, tc.expectedValue, s.Maximum)
 				assert.Equal(tt, tc.expectedValue, s.Maximum)
 			},
@@ -220,8 +220,7 @@ func TestCommentFieldsSingleLine(t *testing.T) {
 			err := yaml.Unmarshal([]byte(document), yamlNode)
 			assert.NoError(tt, err)
 
-			s := &Schema{}
-			err = ToSchema(s, yamlNode.Content[0], nil)
+			s, err := Parse(yamlNode.Content[0], nil)
 			assert.NoError(tt, err)
 
 			tc.validate(tt, tc, s)
@@ -268,18 +267,18 @@ func TestCommentFieldsMultipleLines(t *testing.T) {
 		name          string
 		comment       string
 		expectedValue any
-		validate      func(tt *testing.T, tc testCase, s *Schema)
+		validate      func(tt *testing.T, tc testCase, s *pkg.JsonSchema)
 	}
 
 	var tests = []testCase{
 		{
 			name:    "oneOf with multiple lines",
 			comment: TEST_FIELD_ONEOF,
-			expectedValue: []*Schema{
+			expectedValue: []*pkg.JsonSchema{
 				{Type: "string", Description: "this is a string"},
 				{Type: "number", Description: "this is a number"},
 			},
-			validate: func(tt *testing.T, tc testCase, s *Schema) {
+			validate: func(tt *testing.T, tc testCase, s *pkg.JsonSchema) {
 				assert.IsType(tt, tc.expectedValue, s.OneOf)
 				assert.Equal(tt, tc.expectedValue, s.OneOf)
 			},
@@ -291,7 +290,7 @@ func TestCommentFieldsMultipleLines(t *testing.T) {
 				"baz": {"qux", "quux"},
 				"bif": {"quuz"},
 			},
-			validate: func(tt *testing.T, tc testCase, s *Schema) {
+			validate: func(tt *testing.T, tc testCase, s *pkg.JsonSchema) {
 				assert.IsType(tt, tc.expectedValue, s.DependentRequired)
 				assert.Equal(tt, tc.expectedValue, s.DependentRequired)
 			},
@@ -304,7 +303,7 @@ func TestCommentFieldsMultipleLines(t *testing.T) {
 				"bif": 0,
 				"qux": []any{"quux", "quuz"},
 			},
-			validate: func(tt *testing.T, tc testCase, s *Schema) {
+			validate: func(tt *testing.T, tc testCase, s *pkg.JsonSchema) {
 				assert.IsType(tt, tc.expectedValue, s.Dependencies)
 				assert.Equal(tt, tc.expectedValue, s.Dependencies)
 			},
@@ -313,7 +312,7 @@ func TestCommentFieldsMultipleLines(t *testing.T) {
 			name:          "pattern",
 			comment:       TEST_PATTERN,
 			expectedValue: regexp.MustCompile("^[a-z]+$"),
-			validate: func(tt *testing.T, tc testCase, s *Schema) {
+			validate: func(tt *testing.T, tc testCase, s *pkg.JsonSchema) {
 				assert.IsType(tt, tc.expectedValue, s.Pattern)
 				assert.Equal(tt, tc.expectedValue, s.Pattern)
 			},
@@ -326,8 +325,7 @@ func TestCommentFieldsMultipleLines(t *testing.T) {
 			err := yaml.Unmarshal([]byte(tc.comment), yamlNode)
 			assert.NoError(tt, err)
 
-			s := &Schema{}
-			err = ToSchema(s, getCommentNode(yamlNode), nil)
+			s, err := Parse(getCommentNode(yamlNode), nil)
 			assert.NoError(tt, err)
 
 			tc.validate(tt, tc, s)

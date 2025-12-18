@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"helmschema/internal"
 	"helmschema/internal/charts"
+	"helmschema/pkg"
 	"helmschema/pkg/docs/templates"
 	"helmschema/pkg/schema"
 	"os"
@@ -48,18 +49,19 @@ func GenerateDocs(logger *logrus.Logger, cfg *Config, chartDirs []string) error 
 		logger.Infof("docs: %s: starting generation", plan.Chart().Details.Name)
 
 		logger.Debugf("docs: %s: reading values file", plan.Chart().Details.Name)
-		schema, err := schema.NewGenerator(logger, plan.SchemaPlan()).Generate()
+		jsonschema, err := schema.NewGenerator(logger, plan.SchemaPlan()).Generate()
 		if err != nil {
 			logger.Error(err.Error())
 			return nil
 		}
+		logger.Tracef("docs: %s: jsonschema properties: %+v", plan.Chart().Details.Name, jsonschema.Properties)
 
 		table := templates.TemplateContext{
 			Raw: &templates.RawContext{
 				Chart:  plan.Chart(),
-				Values: schema,
+				Values: jsonschema,
 			},
-			ValuesTable: schemaProperties(schema, cfg.Order, []string{}),
+			ValuesTable: schemaProperties(jsonschema, cfg.Order, []string{}),
 		}
 
 		for _, p := range staticPaths {
@@ -128,11 +130,11 @@ func GenerateDocs(logger *logrus.Logger, cfg *Config, chartDirs []string) error 
 	return nil
 }
 
-func schemaProperties(schema *schema.Schema, order ValuesOrder, parents []string) []templates.ValuesRow {
+func schemaProperties(jsonschema *pkg.JsonSchema, order ValuesOrder, parents []string) []templates.ValuesRow {
 	rows := []templates.ValuesRow{}
 
 	// Key order is preserved by default
-	keys := slices.Collect(schema.Properties.Keys())
+	keys := slices.Collect(jsonschema.Properties.Keys())
 
 	// Sort keys alphabetically if requested
 	if order == ValuesOrderAlphabetical {
@@ -140,7 +142,7 @@ func schemaProperties(schema *schema.Schema, order ValuesOrder, parents []string
 	}
 
 	for _, key := range keys {
-		prop, ok := schema.Properties.Get(key)
+		prop, ok := jsonschema.Properties.Get(key)
 		if !ok {
 			// should be impossible
 			continue

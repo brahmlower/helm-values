@@ -1,13 +1,14 @@
-package schema
+package comments
 
 import (
 	"fmt"
+	"helmschema/pkg"
 	"strings"
 
 	"go.yaml.in/yaml/v4"
 )
 
-func ToSchema(s *Schema, node *yaml.Node, extraNodes []*yaml.Node) error {
+func Parse(node *yaml.Node, extraNodes []*yaml.Node) (*pkg.JsonSchema, error) {
 	// new yaml map node to append the schema field nodes to
 	schemaMapNode := &yaml.Node{
 		Kind:    yaml.MappingNode,
@@ -17,7 +18,7 @@ func ToSchema(s *Schema, node *yaml.Node, extraNodes []*yaml.Node) error {
 	if node.HeadComment != "" {
 		commentDocs, err := parseNodeComment(node)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		for _, commentDoc := range commentDocs {
@@ -37,10 +38,13 @@ func ToSchema(s *Schema, node *yaml.Node, extraNodes []*yaml.Node) error {
 	// marshal to a string and subsequently unmarshal into the schema
 	fullSchema, err := yaml.Marshal(newDocumentNode(schemaMapNode))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return yaml.Unmarshal(fullSchema, s)
+	s := &pkg.JsonSchema{}
+	err = yaml.Unmarshal(fullSchema, s)
+
+	return s, err
 }
 
 func parseNodeComment(node *yaml.Node) ([]string, error) {

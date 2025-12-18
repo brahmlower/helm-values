@@ -2,6 +2,8 @@ package schema
 
 import (
 	"fmt"
+	"helmschema/pkg"
+	"helmschema/pkg/schema/comments"
 	"os"
 	"strings"
 
@@ -25,7 +27,7 @@ func NewGenerator(logger *logrus.Logger, plan *Plan) *Generator {
 	}
 }
 
-func (g *Generator) Generate() (*Schema, error) {
+func (g *Generator) Generate() (*pkg.JsonSchema, error) {
 	f, err := os.ReadFile(g.plan.chart.ValuesFilePath())
 	if err != nil {
 		return nil, err
@@ -46,6 +48,7 @@ func (g *Generator) Generate() (*Schema, error) {
 		return nil, err
 	}
 	s.Schema = JsonSchemaURI
+	g.logger.Tracef("schmea generator, properties: %+v", s.Properties)
 
 	s.WalkProperties(
 		g.warnUndocumentedValue,
@@ -55,7 +58,7 @@ func (g *Generator) Generate() (*Schema, error) {
 	return s, err
 }
 
-func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*Schema, error) {
+func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*pkg.JsonSchema, error) {
 	valueType, err := yamlTagToSchema(value.Tag)
 	if err != nil {
 		return nil, err
@@ -63,15 +66,14 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*Schema, 
 
 	extraNodes := []*yaml.Node{}
 	if valueType != "null" {
-		extraNodes = append(extraNodes, KeyValueNodes("type", valueType)...)
+		extraNodes = append(extraNodes, comments.KeyValueNodes("type", valueType)...)
 	}
-	extraNodes = append(extraNodes, KeyValueNodes("title", key.Value)...)
-	extraNodes = append(extraNodes, KeyValueNodes("default", value.Value)...)
+	extraNodes = append(extraNodes, comments.KeyValueNodes("title", key.Value)...)
+	extraNodes = append(extraNodes, comments.KeyValueNodes("default", value.Value)...)
 
-	s := &Schema{}
-
-	if err := ToSchema(s, key, extraNodes); err != nil {
-		if cErr, ok := err.(*CommentError); ok {
+	s, err := comments.Parse(key, extraNodes)
+	if err != nil {
+		if cErr, ok := err.(*comments.CommentError); ok {
 			cErr.Filepath = g.plan.chart.ValuesFilePath()
 			cErr.RenderToLog(g.logger)
 		}
@@ -88,45 +90,49 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*Schema, 
 }
 
 // TODO: Finish handling sequences
-func (g *Generator) buildSequenceNode(key *yaml.Node, _ *yaml.Node) (*Schema, error) {
+func (g *Generator) buildSequenceNode(key *yaml.Node, _ *yaml.Node) (*pkg.JsonSchema, error) {
 	extraNodes := []*yaml.Node{}
-	extraNodes = append(extraNodes, KeyValueNodes("type", "array")...)
-
-	s := &Schema{}
+	extraNodes = append(extraNodes, comments.KeyValueNodes("type", "array")...)
 
 	// Not all objects will have a yaml key node, only set key values if they exist
-	if key != nil {
-		extraNodes = append(extraNodes, KeyValueNodes("title", key.Value)...)
+	if key == nil {
+		s := &pkg.JsonSchema{}
+		s.Properties = om.NewOrderedMap[string, *pkg.JsonSchema]()
+		return s, nil
+	}
 
-		if err := ToSchema(s, key, extraNodes); err != nil {
-			if cErr, ok := err.(*CommentError); ok {
-				cErr.Filepath = g.plan.chart.ValuesFilePath()
-				cErr.RenderToLog(g.logger)
-			}
+	extraNodes = append(extraNodes, comments.KeyValueNodes("title", key.Value)...)
 
-			err := fmt.Errorf("doc comment error: %w", err)
-			if g.plan.StrictComments() {
-				return nil, err
-			}
+	s, err := comments.Parse(key, extraNodes)
+	if err != nil {
+		if cErr, ok := err.(*comments.CommentError); ok {
+			cErr.Filepath = g.plan.chart.ValuesFilePath()
+			cErr.RenderToLog(g.logger)
+		}
+
+		err := fmt.Errorf("doc comment error: %w", err)
+		if g.plan.StrictComments() {
+			return nil, err
 		}
 	}
 
 	return s, nil
 }
 
-func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*Schema, error) {
+func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*pkg.JsonSchema, error) {
 	extraNodes := []*yaml.Node{}
-	extraNodes = append(extraNodes, KeyValueNodes("type", "object")...)
-	extraNodes = append(extraNodes, KeyValueNodes("additionalProperties", "false")...)
-
-	s := &Schema{}
+	extraNodes = append(extraNodes, comments.KeyValueNodes("type", "object")...)
+	extraNodes = append(extraNodes, comments.KeyValueNodes("additionalProperties", "false")...)
 
 	// Not all objects will have a yaml key node, only set key values if they exist
+	s := &pkg.JsonSchema{}
 	if key != nil {
-		extraNodes = append(extraNodes, KeyValueNodes("title", key.Value)...)
+		extraNodes = append(extraNodes, comments.KeyValueNodes("title", key.Value)...)
 
-		if err := ToSchema(s, key, extraNodes); err != nil {
-			if cErr, ok := err.(*CommentError); ok {
+		var err error
+		s, err = comments.Parse(key, extraNodes)
+		if err != nil {
+			if cErr, ok := err.(*comments.CommentError); ok {
 				cErr.Filepath = g.plan.chart.ValuesFilePath()
 				cErr.RenderToLog(g.logger)
 			}
@@ -137,14 +143,14 @@ func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*Schema,
 			}
 		}
 	}
-	s.Properties = om.NewOrderedMap[string, *Schema]()
+	s.Properties = om.NewOrderedMap[string, *pkg.JsonSchema]()
 
 	for _, child := range lo.Chunk(value.Content, 2) {
 		childKey := child[0]
 		childValue := child[1]
 
 		var err error
-		var childValueSchema *Schema
+		var childValueSchema *pkg.JsonSchema
 		switch childValue.Kind {
 		case yaml.ScalarNode:
 			childValueSchema, err = g.buildScalarNode(childKey, childValue)
@@ -196,7 +202,7 @@ func yamlTagToSchema(tag string) (string, error) {
 	}
 }
 
-func isDocumented(schemaPath []*Schema) bool {
+func isDocumented(schemaPath []*pkg.JsonSchema) bool {
 	if schemaPath[len(schemaPath)-1].Description != "" {
 		return true
 	}
@@ -210,7 +216,7 @@ func isDocumented(schemaPath []*Schema) bool {
 	return false
 }
 
-func (g *Generator) warnUndocumentedValue(keyPath []*Schema, schema *Schema) {
+func (g *Generator) warnUndocumentedValue(keyPath []*pkg.JsonSchema, schema *pkg.JsonSchema) {
 	if !isDocumented(append(keyPath, schema)) {
 		if schema.Title == "" {
 			return
@@ -228,7 +234,7 @@ func (g *Generator) warnUndocumentedValue(keyPath []*Schema, schema *Schema) {
 	}
 }
 
-func (g *Generator) warnUntypedValue(keyPath []*Schema, schema *Schema) {
+func (g *Generator) warnUntypedValue(keyPath []*pkg.JsonSchema, schema *pkg.JsonSchema) {
 	if schema.Title == "" {
 		return
 	}

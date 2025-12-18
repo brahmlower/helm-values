@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"helmschema/internal/charts"
+	"helmschema/pkg"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -57,7 +58,7 @@ func (p *Plan) DryRun() bool {
 	return p.cfg.DryRun
 }
 
-func (p *Plan) WriteSchema(logger *logrus.Logger, schema *Schema) error {
+func (p *Plan) WriteSchema(logger *logrus.Logger, schema *pkg.JsonSchema) error {
 	s, err := json.MarshalIndent(schema, "", "  ")
 	if err != nil {
 		return err
