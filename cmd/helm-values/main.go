@@ -43,7 +43,7 @@ func Schema(logger *logrus.Logger) *cobra.Command {
 				return err
 			}
 
-			schemaCfg, err := cfg.ToConfig()
+			schemaCfg, err := cfg.ToPackageConfig()
 			if err != nil {
 				return err
 			}
@@ -68,7 +68,7 @@ func Docs(logger *logrus.Logger) *cobra.Command {
 				return err
 			}
 
-			docsCfg, err := cfg.ToConfig()
+			docsCfg, err := cfg.ToPackageConfig()
 			if err != nil {
 				return err
 			}

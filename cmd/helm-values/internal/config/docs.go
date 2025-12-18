@@ -120,7 +120,7 @@ func (c *DocsConfig) BindFlags(cmd *cobra.Command) {
 	c.BindEnv("extra-templates")
 }
 
-func (c *DocsConfig) ToConfig() (*docs.Config, error) {
+func (c *DocsConfig) ToPackageConfig() (*docs.Config, error) {
 	logLevel, err := c.LogLevel()
 	if err != nil {
 		return nil, err

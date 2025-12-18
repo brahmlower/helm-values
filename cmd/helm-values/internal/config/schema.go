@@ -54,7 +54,7 @@ func (c *SchemaConfig) BindFlags(cmd *cobra.Command) {
 	c.BindEnv("write-modeline")
 }
 
-func (c *SchemaConfig) ToConfig() (*schema.Config, error) {
+func (c *SchemaConfig) ToPackageConfig() (*schema.Config, error) {
 	logLevel, err := c.LogLevel()
 	if err != nil {
 		return nil, err
