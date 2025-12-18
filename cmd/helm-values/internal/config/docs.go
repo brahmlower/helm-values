@@ -1,4 +1,4 @@
-package commands
+package config
 
 import (
 	"helmschema/pkg/docs"
@@ -10,31 +10,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
-func Docs(logger *logrus.Logger) *cobra.Command {
-	cfg := NewDocsConfig()
-
-	cmd := &cobra.Command{
-		Use:   "docs [flags] chart_dir [...chart_dir]",
-		Short: "Generate values docs",
-		Args:  cobra.MinimumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := cfg.UpdateLogger(logger); err != nil {
-				return err
-			}
-
-			docsCfg, err := cfg.ToConfig()
-			if err != nil {
-				return err
-			}
-			return docs.GenerateDocs(logger, docsCfg, args)
-		},
-	}
-
-	cfg.BindFlags(cmd)
-
-	return cmd
-}
 
 func NewDocsConfig() *DocsConfig {
 	cfg := standardViper()

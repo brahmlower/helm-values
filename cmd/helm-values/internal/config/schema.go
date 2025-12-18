@@ -1,4 +1,4 @@
-package commands
+package config
 
 import (
 	"helmschema/pkg/schema"
@@ -7,30 +7,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
-func Schema(logger *logrus.Logger) *cobra.Command {
-	cfg := NewSchemaConfig()
-
-	cmd := &cobra.Command{
-		Use:   "schema [flags] chart_dir [...chart_dir]",
-		Short: "Generate values schema",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := cfg.UpdateLogger(logger); err != nil {
-				return err
-			}
-
-			schemaCfg, err := cfg.ToConfig()
-			if err != nil {
-				return err
-			}
-			return schema.GenerateSchema(logger, schemaCfg, args)
-		},
-	}
-
-	cfg.BindFlags(cmd)
-
-	return cmd
-}
 
 func NewSchemaConfig() *SchemaConfig {
 	cfg := standardViper()
