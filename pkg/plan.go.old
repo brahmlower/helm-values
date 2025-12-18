@@ -1,13 +1,12 @@
-package internal
+package pkg
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"helmschema/cmd/helm-values/internal/charts"
-	"helmschema/cmd/helm-values/internal/config"
-	"helmschema/cmd/helm-values/internal/docs"
-	"helmschema/cmd/helm-values/internal/jsonschema"
+	"helmschema/internal/charts"
+	"helmschema/pkg/docs"
+	"helmschema/pkg/schema"
 	"io"
 	"os"
 	"path/filepath"
@@ -16,11 +15,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func NewPlan(
-	docsCfg *config.DocsConfig,
-	schemaCfg *config.SchemaConfig,
-	chart *charts.Chart,
-) *Plan {
+func NewPlan(docsCfg *docs.Config, schemaCfg *schema.Config, chart *charts.Chart) *Plan {
 	return &Plan{
 		chart:     chart,
 		docsCfg:   docsCfg,
@@ -29,8 +24,8 @@ func NewPlan(
 }
 
 type Plan struct {
-	docsCfg   *config.DocsConfig
-	schemaCfg *config.SchemaConfig
+	docsCfg   *docs.Config
+	schemaCfg *schema.Config
 	chart     *charts.Chart
 }
 
@@ -56,8 +51,7 @@ func (p *Plan) LogIntent(logger *logrus.Logger) {
 		logger.Debugf("plan: %s: Markup=%s (error: %v)", p.chart.Details.Name, markup, err)
 		outputPath, err := p.DocsOutputPath()
 		logger.Debugf("plan: %s: Output=%s (error: %v)", p.chart.Details.Name, outputPath, err)
-		order, err := p.docsCfg.ValuesOrder()
-		logger.Debugf("plan: %s: ValuesOrder=%s (error: %v)", p.chart.Details.Name, order, err)
+		logger.Debugf("plan: %s: ValuesOrder=%s (error: %v)", p.chart.Details.Name, p.docsCfg.Order, err)
 	}
 	// todo: schema configs
 	if p.schemaCfg != nil {
@@ -126,12 +120,12 @@ func (p *Plan) DocsChartReadmeTemplate() string {
 }
 
 func (p *Plan) DocsMarkup() (docs.Markup, error) {
-	markup, set, err := p.docsCfg.Markup()
+	markup, err := p.docsCfg.Markup()
 	if err != nil {
 		return "", err
 	}
-	if set {
-		return markup, nil
+	if value, ok := markup.Get(); ok {
+		return value, nil
 	}
 
 	if p.DocsUseDefault() {
@@ -190,7 +184,7 @@ func (p *Plan) DocsOutputPath() (string, error) {
 	panic("invalid markup type")
 }
 
-func (p *Plan) WriteSchema(logger *logrus.Logger, schema *jsonschema.Schema) error {
+func (p *Plan) WriteSchema(logger *logrus.Logger, schema *schema.Schema) error {
 	s, err := json.MarshalIndent(schema, "", "  ")
 	if err != nil {
 		return err

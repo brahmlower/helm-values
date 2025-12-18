@@ -1,13 +1,13 @@
-package docs
+package templates
 
 import (
 	"embed"
 	"io/fs"
 )
 
-//go:embed all:templates
+//go:embed all:static
 var TemplateFS embed.FS
 
 func StaticTemplates() ([]string, error) {
-	return fs.Glob(TemplateFS, "templates/**/*.gotmpl")
+	return fs.Glob(TemplateFS, "static/**/*.gotmpl")
 }

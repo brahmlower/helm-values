@@ -1,25 +1,18 @@
 package commands
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"helmschema/cmd/helm-values/internal"
-	"helmschema/cmd/helm-values/internal/charts"
-	"helmschema/cmd/helm-values/internal/config"
-	"helmschema/cmd/helm-values/internal/docs"
-	"helmschema/cmd/helm-values/internal/jsonschema"
-	"os"
-	"slices"
-	"sort"
-	"strings"
+	"helmschema/pkg/docs"
+	"helmschema/pkg/docs/templates"
+	"path/filepath"
 
+	"github.com/samber/mo"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func Docs(logger *logrus.Logger) *cobra.Command {
-	cfg := config.NewDocsConfig()
+	cfg := NewDocsConfig()
 
 	cmd := &cobra.Command{
 		Use:   "docs [flags] chart_dir [...chart_dir]",
@@ -30,7 +23,11 @@ func Docs(logger *logrus.Logger) *cobra.Command {
 				return err
 			}
 
-			return generateDocs(logger, cfg, args)
+			docsCfg, err := cfg.ToConfig()
+			if err != nil {
+				return err
+			}
+			return docs.GenerateDocs(logger, docsCfg, args)
 		},
 	}
 
@@ -39,198 +36,147 @@ func Docs(logger *logrus.Logger) *cobra.Command {
 	return cmd
 }
 
-func generateDocs(logger *logrus.Logger, cfg *config.DocsConfig, chartDirs []string) error {
-	chartsFound, err := charts.Search(logger, chartDirs)
+func NewDocsConfig() *DocsConfig {
+	cfg := standardViper()
+
+	return &DocsConfig{cfg}
+}
+
+type DocsConfig struct {
+	*viper.Viper
+}
+
+func (c *DocsConfig) ValuesOrder() (docs.ValuesOrder, error) {
+	return docs.NewValuesOrder(c.GetString("order"))
+}
+
+func (c *DocsConfig) LogLevel() (logrus.Level, error) {
+	return logrus.ParseLevel(c.GetString("log-level"))
+}
+
+func (c *DocsConfig) ExtraTemplates() ([]string, error) {
+	et := c.GetString("extra-templates")
+	if et == "" {
+		return nil, nil
+	}
+
+	path, err := filepath.Abs(et)
+	if err != nil {
+		return nil, err
+	}
+
+	return filepath.Glob(path)
+}
+
+func (c *DocsConfig) Markup() (mo.Option[templates.Markup], error) {
+	if !c.IsSet("markup") {
+		return mo.None[templates.Markup](), nil
+	}
+	markup, err := templates.MarkupFromString(c.GetString("markup"))
+	if err != nil {
+		return mo.None[templates.Markup](), err
+	}
+	return mo.Some(markup), nil
+}
+
+func (c *DocsConfig) UseDefault() mo.Option[bool] {
+	if !c.IsSet("use-default") {
+		return mo.None[bool]()
+	}
+	return mo.Some(c.GetBool("use-default"))
+}
+
+func (c *DocsConfig) Output() mo.Option[string] {
+	if !c.IsSet("output") {
+		return mo.None[string]()
+	}
+	return mo.Some(c.GetString("output"))
+}
+
+func (c *DocsConfig) UpdateLogger(logger *logrus.Logger) error {
+	level, err := c.LogLevel()
 	if err != nil {
 		return err
 	}
 
-	valuesOrder, err := cfg.ValuesOrder()
-	if err != nil {
-		return err
-	}
-
-	// Itterate through plan to set the logger and config
-	plans := []*internal.Plan{}
-	for _, chart := range chartsFound {
-		plan := internal.NewPlan(cfg, nil, chart)
-
-		plan.LogIntent(logger)
-
-		if _, _, err := plan.DocsTargetTemplate(); err != nil {
-			return fmt.Errorf("default template disallowed, but no template found in chart %s", plan.Chart().RootPath())
-		}
-		plans = append(plans, plan)
-	}
-
-	staticPaths, err := docs.StaticTemplates()
-	if err != nil {
-		return err
-	}
-
-	// Iterate through plans again, this time generating the docs
-	for _, plan := range plans {
-		logger.Infof("docs: %s: starting generation", plan.Chart().Details.Name)
-
-		logger.Debugf("docs: %s: reading values file", plan.Chart().Details.Name)
-		schema, err := internal.NewGenerator(logger, plan).Generate()
-		if err != nil {
-			logger.Error(err.Error())
-			return nil
-		}
-
-		table := docs.TemplateContext{
-			Raw: &docs.RawContext{
-				Chart:  plan.Chart(),
-				Values: schema,
-			},
-			ValuesTable: schemaProperties(schema, valuesOrder, []string{}),
-		}
-
-		for _, p := range staticPaths {
-			logger.Debugf("docs: %s: collecting static template: %s", plan.Chart().Details.Name, p)
-		}
-		extraTemplates, err := cfg.ExtraTemplates()
-		if err != nil {
-			return err
-		}
-		for _, extraTemplate := range extraTemplates {
-			logger.Debugf("docs: %s: collecting extra template: %s", plan.Chart().Details.Name, extraTemplate)
-		}
-		extraTemplates = append(staticPaths, extraTemplates...)
-
-		if !plan.DocsUseDefault() {
-			logger.Debugf(
-				"docs: %s: collecting template: %s",
-				plan.Chart().Details.Name,
-				plan.DocsChartReadmeTemplate(),
-			)
-		} else {
-			logger.Debugf(
-				"docs: %s: using builtin default template",
-				plan.Chart().Details.Name,
-			)
-		}
-
-		root, err := os.OpenRoot("/")
-		if err != nil {
-			return err
-		}
-
-		layeredFs := docs.NewLayeredFS(docs.TemplateFS, root.FS())
-
-		markup, err := plan.DocsMarkup()
-		if err != nil {
-			return err
-		}
-
-		opts := []docs.BuilderOpt{
-			docs.WithExtraPaths(extraTemplates),
-			docs.WithUseDefault(plan.DocsUseDefault()),
-			docs.WithMarkup(markup),
-		}
-		if !plan.DocsUseDefault() {
-			opts = append(opts, docs.WithCustomTemplate(plan.DocsChartReadmeTemplate()))
-		}
-
-		builder := docs.NewTemplateBuilder(opts...)
-		t, err := builder.Build(layeredFs)
-		if err != nil {
-			return err
-		}
-
-		buf := new(bytes.Buffer)
-		logger.Debugf("docs: %s: rendering template", plan.Chart().Details.Name)
-		err = t.Execute(buf, table)
-		if err != nil {
-			return err
-		}
-
-		logger.Debugf("docs: %s: writing output", plan.Chart().Details.Name)
-		if err := plan.WriteReadme(logger, buf.String()); err != nil {
-			return err
-		}
-
-		logger.Infof("docs: %s: finished", plan.Chart().Details.Name)
-	}
-
+	logger.SetLevel(level)
 	return nil
 }
 
-func schemaProperties(schema *jsonschema.Schema, order config.ValuesOrder, parents []string) []docs.ValuesRow {
-	rows := []docs.ValuesRow{}
+func (c *DocsConfig) BindFlags(cmd *cobra.Command) {
+	cmd.Flags().Bool("stdout", false, "write to stdout")
+	c.BindPFlag("stdout", cmd.Flags().Lookup("stdout"))
+	c.BindEnv("stdout")
 
-	// Key order is preserved by default
-	keys := slices.Collect(schema.Properties.Keys())
+	cmd.Flags().Bool("strict", false, "fail on doc comment parsing errors")
+	c.BindPFlag("strict", cmd.Flags().Lookup("strict"))
+	c.BindEnv("strict")
 
-	// Sort keys alphabetically if requested
-	if order == config.ValuesOrderAlphabetical {
-		sort.Strings(keys)
+	cmd.Flags().Bool("dry-run", false, "don't write changes to disk")
+	c.BindPFlag("dry-run", cmd.Flags().Lookup("dry-run"))
+	c.BindEnv("dry-run")
+
+	cmd.Flags().String("log-level", "warn", "log level (debug, info, warn, error, fatal, panic)")
+	c.BindPFlag("log-level", cmd.Flags().Lookup("log-level"))
+	c.BindEnv("log-level")
+
+	cmd.Flags().String("markup", "", "markup language (md, markdown, rst, restructuredtext)")
+	c.BindPFlag("markup", cmd.Flags().Lookup("markup"))
+	c.BindEnv("markup")
+
+	cmd.Flags().String("order", "preserve", "order of values (preserve, alphabetical)")
+	c.BindPFlag("order", cmd.Flags().Lookup("order"))
+	c.BindEnv("order")
+
+	cmd.Flags().Bool("use-default", true, "uses default template unless a custom template is present")
+	c.BindPFlag("use-default", cmd.Flags().Lookup("use-default"))
+	c.BindEnv("use-default")
+
+	cmd.Flags().String("output", "", "path to output (defaults to README.md or README.rst based on markup)")
+	c.BindPFlag("output", cmd.Flags().Lookup("output"))
+	c.BindEnv("output")
+
+	cmd.Flags().String("template", "", "path to template (defaults to README.md.tmpl or README.rst.tmpl based on markup)")
+	c.BindPFlag("template", cmd.Flags().Lookup("template"))
+	c.BindEnv("template")
+
+	cmd.Flags().String("extra-templates", "", "glob path to extra templates")
+	c.BindPFlag("extra-templates", cmd.Flags().Lookup("extra-templates"))
+	c.BindEnv("extra-templates")
+}
+
+func (c *DocsConfig) ToConfig() (*docs.Config, error) {
+	logLevel, err := c.LogLevel()
+	if err != nil {
+		return nil, err
 	}
 
-	for _, key := range keys {
-		prop, ok := schema.Properties.Get(key)
-		if !ok {
-			// should be impossible
-			continue
-		}
-
-		if prop.Ref != "" {
-			row := docs.ValuesRow{
-				Key:  strings.Join(append(parents, key), "."),
-				Type: fmt.Sprintf("[Ref](%s)", prop.Ref),
-			}
-			rows = append(rows, row)
-			continue
-		}
-
-		if prop.Schema != "" {
-			row := docs.ValuesRow{
-				Key:  strings.Join(append(parents, key), "."),
-				Type: fmt.Sprintf("[Schema](%s)", prop.Schema),
-			}
-			rows = append(rows, row)
-			continue
-		}
-
-		if prop.Type == "object" {
-			rows = append(rows, schemaProperties(prop, order, append(parents, key))...)
-			continue
-		}
-
-		defaultStr, err := json.Marshal(prop.Default)
-		if err != nil {
-			// TODO: Handle this error better
-			fmt.Printf("Error marshaling default value for key %s: %v\n", key, err)
-		}
-
-		typeValue := prop.Type
-		if len(prop.Enum) > 0 {
-			enumItems := make([]string, len(prop.Enum))
-			for i, enumItem := range prop.Enum {
-				enumBytes, err := json.Marshal(enumItem)
-				if err != nil {
-					// TODO: Handle this error better
-					continue
-				}
-				enumItems[i] = string(enumBytes)
-			}
-
-			typeValue = fmt.Sprintf(
-				"%s (enum)\n%s",
-				typeValue,
-				strings.Join(enumItems, ", "),
-			)
-		}
-
-		row := docs.ValuesRow{
-			Key:         strings.Join(append(parents, key), "."),
-			Type:        typeValue,
-			Default:     string(defaultStr),
-			Description: prop.Description,
-		}
-		rows = append(rows, row)
+	extraTemplates, err := c.ExtraTemplates()
+	if err != nil {
+		return nil, err
 	}
 
-	return rows
+	valuesOrder, err := c.ValuesOrder()
+	if err != nil {
+		return nil, err
+	}
+
+	markup, err := c.Markup()
+	if err != nil {
+		return nil, err
+	}
+
+	config := &docs.Config{
+		LogLevel:       logLevel,
+		StdOut:         c.GetBool("stdout"),
+		Strict:         c.GetBool("strict"),
+		DryRun:         c.GetBool("dry-run"),
+		UseDefault:     c.UseDefault(),
+		Output:         c.Output(),
+		Template:       c.GetString("template"),
+		ExtraTemplates: extraTemplates,
+		Markup:         markup,
+		Order:          valuesOrder,
+	}
+	return config, nil
 }

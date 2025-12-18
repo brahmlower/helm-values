@@ -1,14 +1,13 @@
-package comment
+package schema
 
 import (
 	"fmt"
-	"helmschema/cmd/helm-values/internal/jsonschema"
 	"strings"
 
 	"go.yaml.in/yaml/v4"
 )
 
-func ToSchema(s *jsonschema.Schema, node *yaml.Node, extraNodes []*yaml.Node) error {
+func ToSchema(s *Schema, node *yaml.Node, extraNodes []*yaml.Node) error {
 	// new yaml map node to append the schema field nodes to
 	schemaMapNode := &yaml.Node{
 		Kind:    yaml.MappingNode,

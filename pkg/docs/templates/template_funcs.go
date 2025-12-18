@@ -1,4 +1,4 @@
-package docs
+package templates
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package docs
+package internal
 
 import (
 	"io/fs"

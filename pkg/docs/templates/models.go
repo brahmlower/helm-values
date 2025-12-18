@@ -1,8 +1,8 @@
-package docs
+package templates
 
 import (
-	"helmschema/cmd/helm-values/internal/charts"
-	"helmschema/cmd/helm-values/internal/jsonschema"
+	"helmschema/internal/charts"
+	"helmschema/pkg/schema"
 )
 
 type ValuesRow struct {
@@ -14,7 +14,7 @@ type ValuesRow struct {
 
 type RawContext struct {
 	Chart  *charts.Chart
-	Values *jsonschema.Schema
+	Values *schema.Schema
 }
 
 type TemplateContext struct {

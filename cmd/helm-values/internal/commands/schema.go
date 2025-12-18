@@ -1,16 +1,15 @@
 package commands
 
 import (
-	"helmschema/cmd/helm-values/internal"
-	"helmschema/cmd/helm-values/internal/charts"
-	"helmschema/cmd/helm-values/internal/config"
+	"helmschema/pkg/schema"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func Schema(logger *logrus.Logger) *cobra.Command {
-	cfg := config.NewSchemaConfig()
+	cfg := NewSchemaConfig()
 
 	cmd := &cobra.Command{
 		Use:   "schema [flags] chart_dir [...chart_dir]",
@@ -20,7 +19,11 @@ func Schema(logger *logrus.Logger) *cobra.Command {
 				return err
 			}
 
-			return generateSchema(logger, cfg, args)
+			schemaCfg, err := cfg.ToConfig()
+			if err != nil {
+				return err
+			}
+			return schema.GenerateSchema(logger, schemaCfg, args)
 		},
 	}
 
@@ -29,47 +32,64 @@ func Schema(logger *logrus.Logger) *cobra.Command {
 	return cmd
 }
 
-func generateSchema(logger *logrus.Logger, cfg *config.SchemaConfig, chartDirs []string) error {
-	chartsFound, err := charts.Search(logger, chartDirs)
+func NewSchemaConfig() *SchemaConfig {
+	cfg := standardViper()
+
+	return &SchemaConfig{cfg}
+}
+
+type SchemaConfig struct {
+	*viper.Viper
+}
+
+func (c *SchemaConfig) LogLevel() (logrus.Level, error) {
+	return logrus.ParseLevel(c.GetString("log-level"))
+}
+
+func (c *SchemaConfig) UpdateLogger(logger *logrus.Logger) error {
+	level, err := c.LogLevel()
 	if err != nil {
 		return err
 	}
 
-	// Itterate through plan to set the logger and config
-	plans := []*internal.Plan{}
-	for _, chart := range chartsFound {
-		plan := internal.NewPlan(nil, cfg, chart)
-		plan.LogIntent(logger)
-		plans = append(plans, plan)
-	}
-
-	// Iterate through plans again, this time generating the schema
-	for _, plan := range plans {
-		logger.Infof("schema: %s: starting generation", plan.Chart().Details.Name)
-		schema, err := internal.NewGenerator(logger, plan).Generate()
-		if err != nil {
-			logger.Error(err.Error())
-			return nil
-		}
-
-		logger.Debugf("schema: %s: writing output", plan.Chart().Details.Name)
-		if err := plan.WriteSchema(logger, schema); err != nil {
-			logger.Error(err.Error())
-			return nil
-		}
-
-		if cfg.WriteModeline() {
-			logger.Debugf("schema: %s: writing modeline", plan.Chart().Details.Name)
-			if err := plan.WriteSchemaModeline(logger); err != nil {
-				logger.Error(err.Error())
-				return nil
-			}
-		} else {
-			logger.Debugf("schema: %s: skipping modeline write", plan.Chart().Details.Name)
-		}
-
-		logger.Infof("schema: %s: finished", plan.Chart().Details.Name)
-	}
-
+	logger.SetLevel(level)
 	return nil
+}
+
+func (c *SchemaConfig) BindFlags(cmd *cobra.Command) {
+	cmd.Flags().Bool("stdout", false, "write to stdout")
+	c.BindPFlag("stdout", cmd.Flags().Lookup("stdout"))
+	c.BindEnv("stdout")
+
+	cmd.Flags().Bool("strict", false, "fail on doc comment parsing errors")
+	c.BindPFlag("strict", cmd.Flags().Lookup("strict"))
+	c.BindEnv("strict")
+
+	cmd.Flags().Bool("dry-run", false, "don't write changes to disk")
+	c.BindPFlag("dry-run", cmd.Flags().Lookup("dry-run"))
+	c.BindEnv("dry-run")
+
+	cmd.Flags().String("log-level", "warn", "log level (debug, info, warn, error, fatal, panic)")
+	c.BindPFlag("log-level", cmd.Flags().Lookup("log-level"))
+	c.BindEnv("log-level")
+
+	cmd.Flags().Bool("write-modeline", true, "write modeline to values file")
+	c.BindPFlag("write-modeline", cmd.Flags().Lookup("write-modeline"))
+	c.BindEnv("write-modeline")
+}
+
+func (c *SchemaConfig) ToConfig() (*schema.Config, error) {
+	logLevel, err := c.LogLevel()
+	if err != nil {
+		return nil, err
+	}
+
+	config := &schema.Config{
+		StdOut:        c.GetBool("stdout"),
+		Strict:        c.GetBool("strict"),
+		DryRun:        c.GetBool("dry-run"),
+		WriteModeline: c.GetBool("write-modeline"),
+		LogLevel:      logLevel,
+	}
+	return config, nil
 }
