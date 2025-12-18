@@ -5,9 +5,9 @@ import (
 	"helmschema/pkg"
 	"helmschema/pkg/schema/comments"
 	"os"
+	"slices"
 	"strings"
 
-	om "github.com/elliotchance/orderedmap/v3"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"go.yaml.in/yaml/v4"
@@ -97,7 +97,7 @@ func (g *Generator) buildSequenceNode(key *yaml.Node, _ *yaml.Node) (*pkg.JsonSc
 	// Not all objects will have a yaml key node, only set key values if they exist
 	if key == nil {
 		s := &pkg.JsonSchema{}
-		s.Properties = om.NewOrderedMap[string, *pkg.JsonSchema]()
+		s.Properties = pkg.NewEncodableOrderedMap[string, *pkg.JsonSchema]()
 		return s, nil
 	}
 
@@ -143,7 +143,7 @@ func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*pkg.Jso
 			}
 		}
 	}
-	s.Properties = om.NewOrderedMap[string, *pkg.JsonSchema]()
+	s.Properties = pkg.NewEncodableOrderedMap[string, *pkg.JsonSchema]()
 
 	for _, child := range lo.Chunk(value.Content, 2) {
 		childKey := child[0]
@@ -176,6 +176,14 @@ func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*pkg.Jso
 		}
 
 		s.Properties.Set(childKey.Value, childValueSchema)
+	}
+
+	// If there are no properties described in the docs, allow additional properties by default
+	//
+	// TODO: This isn't quite right - we should only do this if additionalProperties isn't
+	// explicitly set to false, or if $schema or $ref hasn't been set
+	if len(slices.Collect(s.Properties.Keys())) == 0 {
+		s.AdditionalProperties = true
 	}
 
 	return s, nil

@@ -2,8 +2,6 @@ package pkg
 
 import (
 	"regexp"
-
-	om "github.com/elliotchance/orderedmap/v3"
 )
 
 type JsonSchema struct {
@@ -33,17 +31,17 @@ type JsonSchema struct {
 	Then  *JsonSchema   `json:"then,omitempty"`
 	Else  *JsonSchema   `json:"else,omitempty"`
 
-	MinProperties         int64                               `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
-	MaxProperties         int64                               `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
-	Required              []string                            `json:"required,omitempty" yaml:"required,omitempty"`
-	Properties            *om.OrderedMap[string, *JsonSchema] `json:"properties,omitempty" yaml:"properties,omitempty"`
-	PropertyNames         *JsonSchema                         `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
-	PatternProperties     map[*regexp.Regexp]*JsonSchema      `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
-	AdditionalProperties  any                                 `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
-	Dependencies          map[string]any                      `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
-	DependentRequired     map[string][]string                 `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"`
-	DependentSchemas      map[string]*JsonSchema              `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
-	UnevaluatedProperties *JsonSchema                         `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
+	MinProperties         int64                                     `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
+	MaxProperties         int64                                     `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
+	Required              []string                                  `json:"required,omitempty" yaml:"required,omitempty"`
+	Properties            *EncodableOrderedMap[string, *JsonSchema] `json:"properties,omitempty" yaml:"properties,omitempty"`
+	PropertyNames         *JsonSchema                               `json:"propertyNames,omitempty" yaml:"propertyNames,omitempty"`
+	PatternProperties     map[*regexp.Regexp]*JsonSchema            `json:"patternProperties,omitempty" yaml:"patternProperties,omitempty"`
+	AdditionalProperties  any                                       `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
+	Dependencies          map[string]any                            `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
+	DependentRequired     map[string][]string                       `json:"dependentRequired,omitempty" yaml:"dependentRequired,omitempty"`
+	DependentSchemas      map[string]*JsonSchema                    `json:"dependentSchemas,omitempty" yaml:"dependentSchemas,omitempty"`
+	UnevaluatedProperties *JsonSchema                               `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"`
 
 	MinItems         int64         `json:"minItems,omitempty" yaml:"minItems,omitempty"`
 	MaxItems         int64         `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
