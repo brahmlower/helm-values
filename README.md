@@ -401,7 +401,7 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
   - [ ] Docs Generation
     - [ ] Support "Deprecated" indicator
     - [ ] Template: Chart Values
-      - [ ] Values render order (alpha/grouped/preserved)
+      - [x] Values groups
 - 0.3.0
   - [ ] Schema Generation
     - [ ] Support declaring and using yaml anchors in doc comments
