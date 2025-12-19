@@ -2,7 +2,7 @@ package comments
 
 import (
 	"fmt"
-	"helmschema/pkg"
+	"helmvalues/pkg"
 	"testing"
 
 	"regexp"

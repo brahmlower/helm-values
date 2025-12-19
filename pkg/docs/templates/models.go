@@ -1,8 +1,8 @@
 package templates
 
 import (
-	"helmschema/internal/charts"
-	"helmschema/pkg"
+	"helmvalues/internal/charts"
+	"helmvalues/pkg"
 )
 
 type ValuesRow struct {

@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"helmschema/cmd/helm-values/internal/config"
-	"helmschema/pkg/docs"
-	"helmschema/pkg/schema"
+	"helmvalues/cmd/helm-values/internal/config"
+	"helmvalues/pkg/docs"
+	"helmvalues/pkg/schema"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

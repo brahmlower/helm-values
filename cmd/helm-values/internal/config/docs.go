@@ -1,8 +1,8 @@
 package config
 
 import (
-	"helmschema/pkg/docs"
-	"helmschema/pkg/docs/templates"
+	"helmvalues/pkg/docs"
+	"helmvalues/pkg/docs/templates"
 	"path/filepath"
 
 	"github.com/samber/mo"

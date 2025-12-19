@@ -1,7 +1,7 @@
 package schema
 
 import (
-	"helmschema/internal/charts"
+	"helmvalues/internal/charts"
 
 	"github.com/sirupsen/logrus"
 )

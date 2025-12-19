@@ -2,8 +2,8 @@ package schema
 
 import (
 	"fmt"
-	"helmschema/pkg"
-	"helmschema/pkg/schema/comments"
+	"helmvalues/pkg"
+	"helmvalues/pkg/schema/comments"
 	"os"
 	"slices"
 	"strings"

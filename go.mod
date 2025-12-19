@@ -1,4 +1,4 @@
-module helmschema
+module helmvalues
 
 go 1.24.2
 

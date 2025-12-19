@@ -1,7 +1,7 @@
 package config
 
 import (
-	"helmschema/pkg/schema"
+	"helmvalues/pkg/schema"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

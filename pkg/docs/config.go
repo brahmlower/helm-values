@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"helmschema/pkg/docs/templates"
+	"helmvalues/pkg/docs/templates"
 
 	"github.com/samber/mo"
 	"github.com/sirupsen/logrus"

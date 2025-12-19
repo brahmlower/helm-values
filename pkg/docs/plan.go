@@ -3,9 +3,9 @@ package docs
 import (
 	"errors"
 	"fmt"
-	"helmschema/internal/charts"
-	"helmschema/pkg/docs/templates"
-	"helmschema/pkg/schema"
+	"helmvalues/internal/charts"
+	"helmvalues/pkg/docs/templates"
+	"helmvalues/pkg/schema"
 	"os"
 
 	"github.com/sirupsen/logrus"
