@@ -177,7 +177,7 @@ func TestCommentFieldsSingleLine(t *testing.T) {
 		{
 			field:         "minLength",
 			commentValue:  "5",
-			expectedValue: 5,
+			expectedValue: int64(5),
 			validate: func(tt *testing.T, tc testCase, s *pkg.JsonSchema) {
 				assert.IsType(tt, tc.expectedValue, s.MinLength)
 				assert.Equal(tt, tc.expectedValue, s.MinLength)
