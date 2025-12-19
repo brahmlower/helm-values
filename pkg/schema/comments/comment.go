@@ -16,9 +16,9 @@ func Parse(node *yaml.Node, extraNodes []*yaml.Node) (*pkg.JsonSchema, error) {
 	}
 
 	if node.HeadComment != "" {
-		commentDocs, err := parseNodeComment(node)
+		commentDocs, err := parseNodeComment(node.HeadComment)
 		if err != nil {
-			return nil, err
+			return nil, NewCommentError(node, err)
 		}
 
 		for _, commentDoc := range commentDocs {
@@ -35,6 +35,34 @@ func Parse(node *yaml.Node, extraNodes []*yaml.Node) (*pkg.JsonSchema, error) {
 		}
 	}
 
+	if node.FootComment != "" {
+		commentDocs, err := parseNodeComment(node.FootComment)
+		if err != nil {
+			return nil, NewCommentError(node, err)
+		}
+
+		exampleNodeKey := &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Value: "examples",
+		}
+		exampleNodeValue := &yaml.Node{
+			Kind:    yaml.SequenceNode,
+			Content: []*yaml.Node{},
+		}
+		for _, commentDoc := range commentDocs {
+			exampleNodeValue.Content = append(exampleNodeValue.Content, &yaml.Node{
+				Kind:  yaml.ScalarNode,
+				Value: strings.TrimSpace(commentDoc),
+			})
+		}
+
+		schemaMapNode.Content = append(
+			schemaMapNode.Content,
+			exampleNodeKey,
+			exampleNodeValue,
+		)
+	}
+
 	// marshal to a string and subsequently unmarshal into the schema
 	fullSchema, err := yaml.Marshal(newDocumentNode(schemaMapNode))
 	if err != nil {
@@ -47,21 +75,18 @@ func Parse(node *yaml.Node, extraNodes []*yaml.Node) (*pkg.JsonSchema, error) {
 	return s, err
 }
 
-func parseNodeComment(node *yaml.Node) ([]string, error) {
-	targetComment := node.HeadComment
-
+func parseNodeComment(rawComment string) ([]string, error) {
 	// split the comment by double newline
-	parts := strings.Split(targetComment, "\n\n")
+	parts := strings.Split(rawComment, "\n\n")
 	if len(parts) > 1 {
-		targetComment = parts[len(parts)-1]
+		rawComment = parts[len(parts)-1]
 	}
 
-	commentLines := strings.Split(targetComment, "\n")
+	commentLines := strings.Split(rawComment, "\n")
 	for i, line := range commentLines {
 		after, found := strings.CutPrefix(line, "# ")
 		if !found {
-			err := fmt.Errorf("unexpected prefix: %s (%d of %d lines)", line, i, len(commentLines))
-			return nil, NewCommentError(node, err)
+			return nil, fmt.Errorf("unexpected prefix: %s (%d of %d lines)", line, i, len(commentLines))
 		}
 		commentLines[i] = after
 	}

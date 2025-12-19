@@ -383,7 +383,7 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
   - [x] Helm v4 Plugin support
 - 0.1.0
   - [ ] Schema Generation
-    - [ ] Set examples from comments
+    - [x] Set examples from comments
     - [ ] Warn on ignored jsonschema property (in cases of $ref/$schema usage)
   - [ ] Docs Generation
     - [ ] Template: Table of Contents
@@ -392,6 +392,7 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
   - [x] fixed bug with null values
   - [x] fixed comment parsing with empty lines
   - [x] fixed values rows not being in a consistent order
+  - [x] package organization overhaul
 - 0.2.0
   - [ ] Pre-Commit Hook support
   - [ ] Schema Generation
@@ -411,3 +412,5 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
     - [ ] TODO: markdown/rst escaping
 - 0.4.0
   - [ ] Template: Chart Dependencies (defined in Chart.yaml)
+- some day
+  - [ ] validate examples against schema
