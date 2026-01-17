@@ -179,7 +179,7 @@ exit_trap() {
 testVersion() {
   set +e
   echo "$PROJECT_NAME installed into $HELM_PLUGIN_DIR"
-  "${HELM_PLUGIN_DIR}/bin/$BINARY_NAME" --version
+  "${HELM_PLUGIN_DIR}/bin/$BINARY_NAME" version
   set -e
 }
 
