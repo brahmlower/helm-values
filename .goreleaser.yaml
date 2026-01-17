@@ -18,6 +18,11 @@ before:
 builds:
   - id: helm-values
     main: ./cmd/helm-values
+    ldflags:
+      - -s -w
+      - -X main.BuildVersion={{ .Version }}
+      - -X main.BuildCommit={{ .FullCommit }}
+      - -X main.BuildDate={{ .Date }}
     env:
       - CGO_ENABLED=0
     goos:

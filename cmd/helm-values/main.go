@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"helmvalues/cmd/helm-values/internal/config"
@@ -10,6 +11,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+var BuildVersion string
+var BuildCommit string
+var BuildDate string
 
 func main() {
 	logger := logrus.New()
@@ -27,12 +32,13 @@ func Program(logger *logrus.Logger) *cobra.Command {
 		Short: "Schema and docs generator for Helm values",
 	}
 	cmd.CompletionOptions.DisableDefaultCmd = true
-	cmd.AddCommand(Schema(logger))
-	cmd.AddCommand(Docs(logger))
+	cmd.AddCommand(CommandSchema(logger))
+	cmd.AddCommand(CommandDocs(logger))
+	cmd.AddCommand(CommandVersion(logger))
 	return cmd
 }
 
-func Schema(logger *logrus.Logger) *cobra.Command {
+func CommandSchema(logger *logrus.Logger) *cobra.Command {
 	cfg := config.NewSchemaConfig()
 
 	cmd := &cobra.Command{
@@ -56,7 +62,7 @@ func Schema(logger *logrus.Logger) *cobra.Command {
 	return cmd
 }
 
-func Docs(logger *logrus.Logger) *cobra.Command {
+func CommandDocs(logger *logrus.Logger) *cobra.Command {
 	cfg := config.NewDocsConfig()
 
 	cmd := &cobra.Command{
@@ -73,6 +79,26 @@ func Docs(logger *logrus.Logger) *cobra.Command {
 				return err
 			}
 			return docs.GenerateDocs(logger, docsCfg, args)
+		},
+	}
+
+	cfg.BindFlags(cmd)
+
+	return cmd
+}
+
+func CommandVersion(logger *logrus.Logger) *cobra.Command {
+	cfg := config.NewDocsConfig()
+
+	cmd := &cobra.Command{
+		Use:   "version",
+		Short: "Print version information",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Printf("helm-values\n\n")
+			fmt.Printf("  Version: %s\n", BuildVersion)
+			fmt.Printf("  Commit:  %s\n", BuildCommit)
+			fmt.Printf("  Date:    %s\n", BuildDate)
+			return nil
 		},
 	}
 
