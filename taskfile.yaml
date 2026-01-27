@@ -11,7 +11,7 @@ tasks:
     cmds:
       - goreleaser build --clean --snapshot
       - cp ./plugin.yaml ./dist/values/.
-      - helm plugin package ./dist/ --sign=false
+      - helm plugin package -d ./dist/ ./dist/values/. --sign=false
 
   test:
     desc: Run unit tests
