@@ -414,3 +414,23 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
   - [ ] Template: Chart Dependencies (defined in Chart.yaml)
 - some day
   - [ ] validate examples against schema
+
+## Local Development
+
+Dependencies:
+- go
+- goreleaser
+- taskfile
+- helm
+
+Building just the binaries
+
+```
+task build:bin
+```
+
+Build the binaries and plugin will require providing the `--snapshot` flag if you have any uncommitted git changes.
+
+```
+task build:plugin -- --snapshot
+```
