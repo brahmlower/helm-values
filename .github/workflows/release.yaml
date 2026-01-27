@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  goreleaser:
+  release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,6 +29,10 @@ jobs:
         run: |
           curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | bash
 
+      - name: Install taskfile
+        run: |
+          sudo snap install task --classic
+
       # Soon 👀
       # - name: Configure GPG Key
       #   run: |
@@ -38,9 +42,7 @@ jobs:
 
       - name: Build
         run: |
-          goreleaser build --clean
-          cp ./plugin.yaml ./dist/values/.
-          helm plugin package ./dist/ --sign=false
+          task build:plugin
 
       - name: Release
         uses: softprops/action-gh-release@v2

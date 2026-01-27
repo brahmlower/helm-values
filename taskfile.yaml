@@ -4,7 +4,14 @@ tasks:
   build:bin:
     desc: Build production binary
     cmds:
-      - go build -o helm-values ./cmd/helm-values
+      - goreleaser build --clean --snapshot
+
+  build:plugin:
+    desc: Build release artifacts
+    cmds:
+      - goreleaser build --clean --snapshot
+      - cp ./plugin.yaml ./dist/values/.
+      - helm plugin package ./dist/ --sign=false
 
   test:
     desc: Run unit tests
@@ -17,13 +24,3 @@ tasks:
     desc: Clean build artifacts
     cmds:
       - rm -rf dist
-      - rm -f helm-values
-
-  build:plugin:
-    desc: Build helm plugin
-    cmds:
-      - task: build:bin
-      - mkdir -p dist
-      - cp helm-values dist/helm-values
-      - cp plugin.yaml dist/plugin.yaml
-      - helm plugin package ./dist --sign=false
