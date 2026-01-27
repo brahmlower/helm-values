@@ -17,7 +17,7 @@ upx:
   - enabled: true
     ids: ["helm-values"]
 
-dist: ./dist/values
+dist: ./dist/helm-values
 
 builds:
   - id: helm-values

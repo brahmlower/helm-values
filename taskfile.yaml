@@ -10,8 +10,8 @@ tasks:
     desc: Build release artifacts
     cmds:
       - goreleaser build --clean
-      - cp ./plugin.yaml ./dist/values/.
-      - helm plugin package -d ./dist/ ./dist/values/. --sign=false
+      - cp ./plugin.yaml ./dist/helm-values/.
+      - helm plugin package -d ./dist/ ./dist/helm-values/. --sign=false
 
   test:
     desc: Run unit tests
