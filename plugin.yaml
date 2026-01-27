@@ -9,39 +9,58 @@ config:
 runtimeConfig:
   platformCommand:
     - os: darwin
-      command: ${HELM_PLUGIN_DIR}/bin/helm-values
+      command: ${HELM_PLUGIN_DIR}/helm-values
     - os: linux
-      command: ${HELM_PLUGIN_DIR}/bin/helm-values
+      command: ${HELM_PLUGIN_DIR}/helm-values
     - os: windows
-      command: ${HELM_PLUGIN_DIR}/bin/helm-values.exe
-  platformHooks: # Configure plugin lifecycle hooks based on the platform
-    install: # Install lifecycle commands
+      command: ${HELM_PLUGIN_DIR}/helm-values.exe
+  platformHooks:
+    install:
+      - os: darwin
+        arch: amd64
+        command: sh
+        args:
+          - "-c"
+          - "cp ${HELM_PLUGIN_DIR}/helm-values_darwin_amd64_v1/helm-values ${HELM_PLUGIN_DIR}/helm-values && rm -r ${HELM_PLUGIN_DIR}/helm-values_*"
       - os: darwin
         arch: arm64
-        command: ${HELM_PLUGIN_DIR}/install-binary.sh
-      - os: darwin
+        command: sh
+        args:
+          - "-c"
+          - "cp ${HELM_PLUGIN_DIR}/helm-values_darwin_arm64_v8.0/helm-values ${HELM_PLUGIN_DIR}/helm-values && rm -r ${HELM_PLUGIN_DIR}/helm-values_*"
+      - os: linux
         arch: x86
-        command: ${HELM_PLUGIN_DIR}/install-binary.sh
+        command: sh
+        args:
+          - "-c"
+          - "cp ${HELM_PLUGIN_DIR}/helm-values_linux_386_sse2/helm-values ${HELM_PLUGIN_DIR}/helm-values && rm -r ${HELM_PLUGIN_DIR}/helm-values_*"
+      - os: linux
+        arch: amd64
+        command: sh
+        args:
+          - "-c"
+          - "cp ${HELM_PLUGIN_DIR}/helm-values_linux_amd64_v1/helm-values ${HELM_PLUGIN_DIR}/helm-values && rm -r ${HELM_PLUGIN_DIR}/helm-values_*"
       - os: linux
         arch: arm64
-        command: ${HELM_PLUGIN_DIR}/install-binary.sh
-      - os: linux
-        arch: i386
-        command: ${HELM_PLUGIN_DIR}/install-binary.sh
-      - os: linux
+        command: sh
+        args:
+          - "-c"
+          - "cp ${HELM_PLUGIN_DIR}/helm-values_linux_arm64_v8.0/helm-values ${HELM_PLUGIN_DIR}/helm-values && rm -r ${HELM_PLUGIN_DIR}/helm-values_*"
+      - os: windows
         arch: x86
-        command: ${HELM_PLUGIN_DIR}/install-binary.sh
+        command: sh
+        args:
+          - "-c"
+          - "cp ${HELM_PLUGIN_DIR}/helm-values_windows_386_sse2/helm-values.exe ${HELM_PLUGIN_DIR}/helm-values.exe && rm -r ${HELM_PLUGIN_DIR}/helm-values_*"
+      - os: windows
+        arch: amd64
+        command: sh
+        args:
+          - "-c"
+          - "cp ${HELM_PLUGIN_DIR}/helm-values_windows_amd64_v1/helm-values.exe ${HELM_PLUGIN_DIR}/helm-values.exe && rm -r ${HELM_PLUGIN_DIR}/helm-values_*"
       - os: windows
         arch: arm64
-        command: ${HELM_PLUGIN_DIR}/install-binary.sh
-      - os: windows
-        arch: i386
-        command: ${HELM_PLUGIN_DIR}/install-binary.sh
-      - os: windows
-        arch: x86
-        command: ${HELM_PLUGIN_DIR}/install-binary.sh
-
-# legacy metadata, needed for artifacthub
-usage: Schema and docs generator for Helm values
-description:
-  Schema and docs generator for Helm values
+        command: sh
+        args:
+          - "-c"
+          - "cp ${HELM_PLUGIN_DIR}/helm-values_windows_arm64_v8.0/helm-values.exe ${HELM_PLUGIN_DIR}/helm-values.exe && rm -r ${HELM_PLUGIN_DIR}/helm-values_*"

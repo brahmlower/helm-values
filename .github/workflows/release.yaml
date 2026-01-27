@@ -14,26 +14,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
+
+      - name: Install GoReleaser
+        run: sudo snap install --classic goreleaser
+
+      - name: Install Helm
+        shell: bash
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | bash
 
       # Soon 👀
-      # - name: Import GPG key
-      #   id: import_gpg
-      #   uses: crazy-max/ghaction-import-gpg@v6
-      #   with:
-      #     gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-      #     passphrase: ${{ secrets.PASSPHRASE }}
+      # - name: Configure GPG Key
+      #   run: |
+      #     echo -n "$GPG_SIGNING_KEY" | base64 --decode | gpg --import
+      #   env:
+      #     GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
 
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
+      - name: Build
+        run: |
+          goreleaser build --clean
+          cp ./plugin.yaml ./dist/values/.
+          helm plugin package ./dist/ --sign=false
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
         with:
-          distribution: goreleaser
-          version: '~> v2'
-          args: release --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          draft: true
+          files: ./dist/values-*.tgz

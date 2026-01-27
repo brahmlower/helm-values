@@ -10,10 +10,14 @@ version: 2
 
 before:
   hooks:
-    # You may remove this if you don't use go modules.
     - go mod tidy
-    # you may remove this if you don't need go generate
     - go generate ./...
+
+upx:
+  - enabled: true
+    ids: ["helm-values"]
+
+dist: ./dist/values
 
 builds:
   - id: helm-values
@@ -31,23 +35,7 @@ builds:
       - darwin
 
 archives:
-  - formats: [tar.gz]
-    # this name template makes the OS and Arch compatible with the results of `uname`.
-    name_template: >-
-      {{ .ProjectName }}_
-      {{- .Tag }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64{{- else if eq .Arch "386" }}i386{{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
-    # use zip for windows archives
-    format_overrides:
-      - goos: windows
-        formats: [zip]
-    # files:
-    #   - plugin.yaml
-
-checksum:
-  name_template: checksums.txt
+  - formats: [binary]
 
 changelog:
   sort: asc
@@ -55,12 +43,3 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
-
-release:
-  # Repo in which the release will be created.
-  # Default: extracted from the origin remote URL or empty if its private hosted.
-  github:
-    owner: brahmlower
-    name: helm-values
-
-  draft: true
