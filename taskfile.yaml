@@ -9,7 +9,7 @@ tasks:
   build:plugin:
     desc: Build release artifacts
     cmds:
-      - goreleaser build --clean --snapshot
+      - goreleaser build --clean
       - cp ./plugin.yaml ./dist/values/.
       - helm plugin package -d ./dist/ ./dist/values/. --sign=false
 
