@@ -434,3 +434,14 @@ Build the binaries and plugin will require providing the `--snapshot` flag if yo
 ```
 task build:plugin -- --snapshot
 ```
+
+### New release
+
+Bump the changelog:
+
+```
+release to --version $(release next --type minor) --force
+git add .
+git commit -m "release $(release latest)"
+git tag -a "$(release latest)" -m ''
+```

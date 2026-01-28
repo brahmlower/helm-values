@@ -1,6 +1,8 @@
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-01-27
+
 ### Added
 * 374bca3 improved devex for building locally
 * 9aee443 fixing tarball name
@@ -36,7 +38,7 @@
 * 7160311 added note about supporting redhat.vscode-yaml tooltips
 * f94a1e9 fixed something, i dont remember
 
-## [0.0.2] - 2023-03-05
+## [0.0.2] - 2025-11-25
 
 ### Added
 * 29075c2 removed unused schema-file cli param
@@ -49,7 +51,7 @@
 * 71cc14b warn about undocumented fields
 * 6846bed wip: documenting the schema comments
 
-## [0.0.1] - 2023-03-05
+## [0.0.1] - 2025-11-24
 
 ### Added
 * 3f70951 added artifact repo config
