@@ -9,8 +9,11 @@ tasks:
   build:plugin:
     desc: Build release artifacts
     cmds:
+      # build the binaries
       - goreleaser build --clean {{.CLI_ARGS}}
-      - cp ./plugin.yaml ./dist/helm-values/.
+      # render the plugin file
+      - sed "s/VERSION/$(git describe --tags --abbrev=0)/" plugin.yaml.tmpl > ./dist/helm-values/plugin.yaml
+      # package the plugin
       - helm plugin package -d ./dist/ ./dist/helm-values/. --sign=false
 
   test:
