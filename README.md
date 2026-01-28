@@ -384,10 +384,10 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
 - 0.1.0
   - [ ] Schema Generation
     - [x] Set examples from comments
-    - [ ] Warn on ignored jsonschema property (in cases of $ref/$schema usage)
+    - [ ] ~~Warn on ignored jsonschema property (in cases of $ref/$schema usage)~~
   - [ ] Docs Generation
-    - [ ] Template: Table of Contents
-    - [ ] Helpers for table generation
+    - [ ] ~~Template: Table of Contents~~
+    - [ ] ~~Helpers for table generation~~
     - [x] Support values order (preserved, alphabetical)
   - [x] fixed bug with null values
   - [x] fixed comment parsing with empty lines
@@ -396,10 +396,13 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
 - 0.2.0
   - [ ] Pre-Commit Hook support
   - [ ] Schema Generation
+    - [ ] Warn on ignored jsonschema property (in cases of $ref/$schema usage)
     - [ ] Json-Schema Draft 7 support?
     - [ ] Support declaring root level attributes
     - [ ] Objects defined in Definitions sections
   - [ ] Docs Generation
+    - [ ] Template: Table of Contents
+    - [ ] Helpers for table generation
     - [ ] Support "Deprecated" indicator
     - [ ] Template: Chart Values
       - [x] Values groups
