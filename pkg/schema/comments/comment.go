@@ -84,6 +84,11 @@ func parseNodeComment(rawComment string) ([]string, error) {
 
 	commentLines := strings.Split(rawComment, "\n")
 	for i, line := range commentLines {
+		// handle case where comment line is just "#"
+		if line == "#" {
+			line = "# "
+		}
+
 		after, found := strings.CutPrefix(line, "# ")
 		if !found {
 			return nil, fmt.Errorf("unexpected prefix: %s (%d of %d lines)", line, i, len(commentLines))
