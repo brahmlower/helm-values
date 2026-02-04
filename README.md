@@ -5,6 +5,7 @@ A helm plugin for generating schema and docs for chart values.
 
 [![Release](https://img.shields.io/github/v/release/brahmlower/helm-values.svg?logo=github)](https://github.com/brahmlower/helm-values/releases)
 [![Tests](https://github.com/brahmlower/helm-values/actions/workflows/tests.yaml/badge.svg)](https://github.com/brahmlower/helm-values/actions/workflows/tests.yaml)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 - [Installation & Getting Started](#installation-getting-started)
 - [Updating the Plugin](#updating-the-plugin)
