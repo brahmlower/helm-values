@@ -3,7 +3,7 @@ package docs
 import (
 	"errors"
 	"fmt"
-	"helmvalues/internal/charts"
+	"helmvalues/pkg/charts"
 	"helmvalues/pkg/docs/templates"
 	"helmvalues/pkg/schema"
 	"os"

@@ -3,8 +3,8 @@ package schema
 import (
 	"encoding/json"
 	"fmt"
-	"helmvalues/internal/charts"
 	"helmvalues/pkg"
+	"helmvalues/pkg/charts"
 	"os"
 
 	"github.com/sirupsen/logrus"

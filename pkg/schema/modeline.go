@@ -2,7 +2,7 @@ package schema
 
 import (
 	"fmt"
-	"helmvalues/internal/charts"
+	"helmvalues/pkg/charts"
 	"io"
 	"os"
 	"path/filepath"

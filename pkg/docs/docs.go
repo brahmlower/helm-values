@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"helmvalues/internal"
-	"helmvalues/internal/charts"
 	"helmvalues/pkg"
+	"helmvalues/pkg/charts"
 	"helmvalues/pkg/docs/templates"
 	"helmvalues/pkg/schema"
 	"os"
@@ -90,7 +89,7 @@ func GenerateDocs(logger *logrus.Logger, cfg *Config, chartDirs []string) error 
 			return err
 		}
 
-		layeredFs := internal.NewLayeredFS(templates.TemplateFS, root.FS())
+		layeredFs := pkg.NewLayeredFS(templates.TemplateFS, root.FS())
 
 		markup, err := plan.DocsMarkup()
 		if err != nil {
