@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
+	"helmvalues/cmd/helm-values/internal"
 	"helmvalues/cmd/helm-values/internal/config"
 	"helmvalues/pkg/docs"
 	"helmvalues/pkg/schema"
@@ -15,10 +17,11 @@ import (
 var BuildVersion string
 var BuildCommit string
 var BuildDate string
+var Repository string
 
 func main() {
 	logger := logrus.New()
-	logger.SetLevel(logrus.InfoLevel)
+	logger.SetLevel(logrus.WarnLevel)
 
 	err := Program(logger).Execute()
 	if err != nil {
@@ -34,6 +37,7 @@ func Program(logger *logrus.Logger) *cobra.Command {
 	cmd.CompletionOptions.DisableDefaultCmd = true
 	cmd.AddCommand(CommandSchema(logger))
 	cmd.AddCommand(CommandDocs(logger))
+	cmd.AddCommand(CommandUpdate(logger))
 	cmd.AddCommand(CommandVersion(logger))
 	return cmd
 }
@@ -87,22 +91,37 @@ func CommandDocs(logger *logrus.Logger) *cobra.Command {
 	return cmd
 }
 
-func CommandVersion(logger *logrus.Logger) *cobra.Command {
-	cfg := config.NewDocsConfig()
+func CommandUpdate(logger *logrus.Logger) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update",
+		Short: "Update the helm-values plugin to the latest version",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return internal.Update(logger, Repository, BuildVersion)
+		},
+	}
 
+	return cmd
+}
+
+func CommandVersion(logger *logrus.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print version information",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			releaseNotes := ""
+
+			if !strings.Contains(BuildVersion, "SNAPSHOT") {
+				releaseNotes = fmt.Sprintf("https://github.com/%s/releases/tag/%s", Repository, BuildVersion)
+			}
+
 			fmt.Printf("helm-values\n\n")
-			fmt.Printf("  Version: %s\n", BuildVersion)
-			fmt.Printf("  Commit:  %s\n", BuildCommit)
-			fmt.Printf("  Date:    %s\n", BuildDate)
+			fmt.Printf("  Version:       %s\n", BuildVersion)
+			fmt.Printf("  Commit:        %s\n", BuildCommit)
+			fmt.Printf("  Date:          %s\n", BuildDate)
+			fmt.Printf("  Release Notes: %s\n", releaseNotes)
 			return nil
 		},
 	}
-
-	cfg.BindFlags(cmd)
 
 	return cmd
 }

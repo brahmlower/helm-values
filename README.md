@@ -6,7 +6,8 @@ A helm plugin for generating schema and docs for chart values.
 [![Release](https://img.shields.io/github/v/release/brahmlower/helm-values.svg?logo=github)](https://github.com/brahmlower/helm-values/releases)
 [![Tests](https://github.com/brahmlower/helm-values/actions/workflows/tests.yaml/badge.svg)](https://github.com/brahmlower/helm-values/actions/workflows/tests.yaml)
 
-- [Getting Started](#getting-started)
+- [Installation & Getting Started](#installation-getting-started)
+- [Updating the Plugin](#updating-the-plugin)
 - [Generate Schema](#generate-schema)
 - [Generate Docs](#generate-docs)
 - [Schema Comments](#schema-comments)
@@ -18,7 +19,7 @@ A helm plugin for generating schema and docs for chart values.
   - [Additional Functions](#additional-functions)
 - [Development Roadmap](#development-roadmap)
 
-## Getting Started
+## Installation & Getting Started
 
 Install the plugin: <sub>(signed packages coming soon)</sub>
 
@@ -38,6 +39,21 @@ Generate your values docs:
 helm values docs ./path/to/my/chart
 ```
 
+## Updating the Plugin
+
+Update the plugin using its own builtin update command:
+
+```
+helm values update
+```
+
+This simply uninstalls the existing version and installs the latest version from github.
+
+Helm's builtin update mechanism for plugins only works with VCS-based installations.
+This plugin uses tarball installation for simplicity, meaning the builtin update mechanism won't work.
+
+Using the builtin update mechanism will give the following error:
+> cannot get information about plugin source
 
 ## Generate Schema
 

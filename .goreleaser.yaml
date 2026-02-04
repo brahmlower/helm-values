@@ -27,6 +27,7 @@ builds:
       - -X main.BuildVersion={{ .Version }}
       - -X main.BuildCommit={{ .FullCommit }}
       - -X main.BuildDate={{ .Date }}
+      - -X main.Repository=brahmlower/helm-values
     env:
       - CGO_ENABLED=0
     goos:
