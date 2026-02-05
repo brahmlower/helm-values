@@ -19,6 +19,11 @@ var BuildCommit string
 var BuildDate string
 var Repository string
 
+var generationGroup = &cobra.Group{
+	ID:    "generation",
+	Title: "Generation Commands:",
+}
+
 func main() {
 	logger := logrus.New()
 	logger.SetLevel(logrus.WarnLevel)
@@ -35,14 +40,17 @@ func Program(logger *logrus.Logger) *cobra.Command {
 		Short: "Schema and docs generator for Helm values",
 	}
 	cmd.CompletionOptions.DisableDefaultCmd = true
-	cmd.AddCommand(CommandSchema(logger))
-	cmd.AddCommand(CommandDocs(logger))
+
+	cmd.AddGroup(generationGroup)
+
+	cmd.AddCommand(CommandSchema(logger, generationGroup))
+	cmd.AddCommand(CommandDocs(logger, generationGroup))
 	cmd.AddCommand(CommandUpdate(logger))
 	cmd.AddCommand(CommandVersion(logger))
 	return cmd
 }
 
-func CommandSchema(logger *logrus.Logger) *cobra.Command {
+func CommandSchema(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
 	cfg := config.NewSchemaConfig()
 
 	cmd := &cobra.Command{
@@ -59,6 +67,7 @@ func CommandSchema(logger *logrus.Logger) *cobra.Command {
 			}
 			return schema.GenerateSchema(logger, schemaCfg, args)
 		},
+		GroupID: group.ID,
 	}
 
 	cfg.BindFlags(cmd)
@@ -66,7 +75,7 @@ func CommandSchema(logger *logrus.Logger) *cobra.Command {
 	return cmd
 }
 
-func CommandDocs(logger *logrus.Logger) *cobra.Command {
+func CommandDocs(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
 	cfg := config.NewDocsConfig()
 
 	cmd := &cobra.Command{
@@ -84,6 +93,7 @@ func CommandDocs(logger *logrus.Logger) *cobra.Command {
 			}
 			return docs.GenerateDocs(logger, docsCfg, args)
 		},
+		GroupID: group.ID,
 	}
 
 	cfg.BindFlags(cmd)
