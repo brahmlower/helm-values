@@ -7,6 +7,7 @@ import (
 	"helmvalues/pkg/docs/templates"
 	"helmvalues/pkg/schema"
 	"os"
+	"os/exec"
 
 	"github.com/sirupsen/logrus"
 )
@@ -75,6 +76,10 @@ func (p *Plan) StdOut() bool {
 
 func (p *Plan) StrictComments() bool {
 	return p.cfg.Strict
+}
+
+func (p *Plan) GitAdd() bool {
+	return p.cfg.GitAdd
 }
 
 func (p *Plan) DryRun() bool {
@@ -172,7 +177,7 @@ func (p *Plan) SchemaPlan() *schema.Plan {
 	return p.schemaPlan
 }
 
-func (p *Plan) WriteReadme(logger *logrus.Logger, s string) error {
+func (p *Plan) WriteReadme(logger *logrus.Logger, content string) error {
 	if !p.DryRun() {
 		outputPath, err := p.DocsOutputPath()
 		if err != nil {
@@ -185,13 +190,20 @@ func (p *Plan) WriteReadme(logger *logrus.Logger, s string) error {
 		}
 		defer f.Close()
 
-		if _, err = f.Write([]byte(s)); err != nil {
+		if _, err = f.Write([]byte(content)); err != nil {
 			return err
+		}
+
+		if p.GitAdd() {
+			err := exec.Command("git", "add", outputPath).Run()
+			if err != nil {
+				return fmt.Errorf("failed to git add %s: %w", outputPath, err)
+			}
 		}
 	}
 
 	if p.StdOut() {
-		fmt.Println(s)
+		fmt.Println(content)
 	}
 
 	return nil

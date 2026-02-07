@@ -16,6 +16,12 @@ tasks:
       # package the plugin
       - helm plugin package -d ./dist/ ./dist/helm-values/. --sign=false
 
+  reinstall:
+    desc: Reinstall the plugin locally
+    cmds:
+      - helm plugin uninstall values || true
+      - helm plugin install ./dist/values-*.tgz
+
   test:
     desc: Run unit tests
     cmds:

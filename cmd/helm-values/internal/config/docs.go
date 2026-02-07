@@ -83,6 +83,10 @@ func (c *DocsConfig) BindFlags(cmd *cobra.Command) {
 	c.BindPFlag("stdout", cmd.Flags().Lookup("stdout"))
 	c.BindEnv("stdout")
 
+	cmd.Flags().Bool("git-add", false, "stage changes with git add (useful for pre-commit hooks)")
+	c.BindPFlag("git-add", cmd.Flags().Lookup("git-add"))
+	c.BindEnv("git-add")
+
 	cmd.Flags().Bool("strict", false, "fail on doc comment parsing errors")
 	c.BindPFlag("strict", cmd.Flags().Lookup("strict"))
 	c.BindEnv("strict")
@@ -146,6 +150,7 @@ func (c *DocsConfig) ToPackageConfig() (*docs.Config, error) {
 		StdOut:         c.GetBool("stdout"),
 		Strict:         c.GetBool("strict"),
 		DryRun:         c.GetBool("dry-run"),
+		GitAdd:         c.GetBool("git-add"),
 		UseDefault:     c.UseDefault(),
 		Output:         c.Output(),
 		Template:       c.GetString("template"),

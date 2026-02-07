@@ -41,6 +41,10 @@ func (c *SchemaConfig) BindFlags(cmd *cobra.Command) {
 	c.BindPFlag("strict", cmd.Flags().Lookup("strict"))
 	c.BindEnv("strict")
 
+	cmd.Flags().Bool("git-add", false, "stage changes with git add (useful for pre-commit hooks)")
+	c.BindPFlag("git-add", cmd.Flags().Lookup("git-add"))
+	c.BindEnv("git-add")
+
 	cmd.Flags().Bool("dry-run", false, "don't write changes to disk")
 	c.BindPFlag("dry-run", cmd.Flags().Lookup("dry-run"))
 	c.BindEnv("dry-run")
@@ -64,6 +68,7 @@ func (c *SchemaConfig) ToPackageConfig() (*schema.Config, error) {
 		StdOut:        c.GetBool("stdout"),
 		Strict:        c.GetBool("strict"),
 		DryRun:        c.GetBool("dry-run"),
+		GitAdd:        c.GetBool("git-add"),
 		WriteModeline: c.GetBool("write-modeline"),
 		LogLevel:      logLevel,
 	}
