@@ -3,60 +3,59 @@ package schema
 import (
 	"fmt"
 	"helmvalues/pkg/charts"
+	"helmvalues/pkg/modeline"
 	"io"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 )
 
-const YAML_MODELINE = "yaml-language-server"
-const MODELINE_PARAM = "$schema="
-
-func renderedModeline(schemaPath string) string {
-	return fmt.Sprintf(
-		"# %s: %s%s\n",
-		YAML_MODELINE,
-		MODELINE_PARAM,
-		filepath.Base(schemaPath),
-	)
-}
-
-func WriteSchemaModeline(logger *logrus.Logger, chart *charts.Chart, dryRun bool) error {
-	valuesFilePath := chart.ValuesFilePath()
-
-	if dryRun {
-		logger.Infof("schema: %s: dry-run enabled, skipping modeline write to %s", chart.Details.Name, valuesFilePath)
-		return nil
-	}
-
-	f, err := os.OpenFile(valuesFilePath, os.O_RDONLY, 0644)
+func NewModelineWriter(filepath string) (*ModelineWriter, error) {
+	f, err := os.OpenFile(filepath, os.O_RDONLY, 0644)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer f.Close()
 
-	contentB, err := io.ReadAll(f)
+	content, err := io.ReadAll(f)
 	if err != nil {
-		return err
-	}
-	content := string(contentB)
-	var updatedContent string
-
-	modelineStart := strings.Index(content, fmt.Sprintf("# %s:", YAML_MODELINE))
-	if modelineStart == -1 {
-		// write an extra newline when inserting the modeline for the first time
-		updatedContent = renderedModeline(chart.SchemaFilePath()) + "\n" + content
-	} else {
-		eolIdx := strings.Index(content[modelineStart:], "\n")
-		updatedContent = content[:modelineStart] + renderedModeline(chart.SchemaFilePath()) + content[modelineStart+eolIdx+1:]
+		return nil, err
 	}
 
-	err = os.WriteFile(valuesFilePath, []byte(updatedContent), 0644)
+	ml := &ModelineWriter{
+		filepath: filepath,
+		content:  string(content),
+	}
+
+	return ml, nil
+}
+
+type ModelineWriter struct {
+	filepath string
+	content  string
+}
+
+func (w *ModelineWriter) SetModeline(value *modeline.Modeline) {
+	w.content = value.String() + "\n" + w.content
+}
+
+func (w *ModelineWriter) WriteToFile() error {
+	return os.WriteFile(w.filepath, []byte(w.content), 0644)
+}
+
+func WriteSchemaModeline(logger *logrus.Logger, chart *charts.Chart, valuesPath string, dryRun bool) error {
+	mlWriter, err := NewModelineWriter(valuesPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read values file: %w", err)
 	}
 
-	return nil
+	ml := modeline.NewModeline("yaml-language-server", "$schema", chart.SchemaFilePath())
+	mlWriter.SetModeline(ml)
+
+	if dryRun {
+		logger.Infof("schema: %s: dry-run enabled, skipping modeline write to %s", chart.Details.Name, valuesPath)
+		return nil
+	}
+
+	return mlWriter.WriteToFile()
 }

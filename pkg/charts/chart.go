@@ -66,6 +66,17 @@ func (p *Chart) ReadmeRstTemplateFilePath() string {
 }
 
 type ChartDetails struct {
-	Name        string `yaml:"name"`
-	Description string `yaml:"description"`
+	Name        string            `yaml:"name"`
+	Description string            `yaml:"description"`
+	Version     string            `yaml:"version"`
+	Annotations map[string]string `yaml:"annotations"`
+}
+
+func (d *ChartDetails) ValuesSchema() string {
+	schemaURL, ok := d.Annotations["values-schema"]
+	if !ok || schemaURL == "" {
+		return ""
+	}
+
+	return schemaURL
 }
