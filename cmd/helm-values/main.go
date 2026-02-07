@@ -45,6 +45,7 @@ func Program(logger *logrus.Logger) *cobra.Command {
 
 	cmd.AddCommand(CommandSchema(logger, generationGroup))
 	cmd.AddCommand(CommandDocs(logger, generationGroup))
+	cmd.AddCommand(CommandPreCommit(logger))
 	cmd.AddCommand(CommandUpdate(logger))
 	cmd.AddCommand(CommandVersion(logger))
 	return cmd
@@ -107,6 +108,18 @@ func CommandUpdate(logger *logrus.Logger) *cobra.Command {
 		Short: "Update the helm-values plugin to the latest version",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return internal.Update(logger, Repository, BuildVersion)
+		},
+	}
+
+	return cmd
+}
+
+func CommandPreCommit(logger *logrus.Logger) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "pre-commit",
+		Short: "Install pre-commit hooks for generating schema and docs",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return internal.InstallPreCommitHooks(logger)
 		},
 	}
 

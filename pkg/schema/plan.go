@@ -6,6 +6,7 @@ import (
 	"helmvalues/pkg"
 	"helmvalues/pkg/charts"
 	"os"
+	"os/exec"
 
 	"github.com/sirupsen/logrus"
 )
@@ -54,18 +55,22 @@ func (p *Plan) StrictComments() bool {
 	return p.cfg.Strict
 }
 
+func (p *Plan) GitAdd() bool {
+	return p.cfg.GitAdd
+}
+
 func (p *Plan) DryRun() bool {
 	return p.cfg.DryRun
 }
 
 func (p *Plan) WriteSchema(logger *logrus.Logger, schema *pkg.JsonSchema) error {
-	s, err := json.MarshalIndent(schema, "", "  ")
+	content, err := json.MarshalIndent(schema, "", "  ")
 	if err != nil {
 		return err
 	}
 
 	if p.StdOut() {
-		fmt.Println(string(s))
+		fmt.Println(string(content))
 	}
 
 	if p.DryRun() {
@@ -78,9 +83,16 @@ func (p *Plan) WriteSchema(logger *logrus.Logger, schema *pkg.JsonSchema) error 
 	}
 	defer f.Close()
 
-	_, err = f.WriteString(string(s))
+	_, err = f.WriteString(string(content))
 	if err != nil {
 		return err
+	}
+
+	if p.GitAdd() {
+		err := exec.Command("git", "add", p.chart.SchemaFilePath()).Run()
+		if err != nil {
+			return fmt.Errorf("failed to git add %s: %w", p.chart.SchemaFilePath(), err)
+		}
 	}
 
 	return nil

@@ -15,6 +15,7 @@ type Config struct {
 	StdOut         bool
 	Strict         bool
 	DryRun         bool
+	GitAdd         bool
 	UseDefault     mo.Option[bool]
 	Output         mo.Option[string]
 	Template       string
