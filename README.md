@@ -25,16 +25,22 @@ A helm plugin for generating schema and docs for chart values.
 Install the plugin: <sub>(signed packages coming soon)</sub>
 
 ```
-helm plugin install https://github.com/brahmlower/helm-values/releases/download/0.1.0/values-0.1.0.tgz
+helm plugin install https://github.com/brahmlower/helm-values/releases/download/0.2.0/values-0.2.0.tgz
 ```
 
-Generate your values schema:
+Add pre-commit hooks (optional):
+
+```
+helm values pre-commit
+```
+
+Manually generate your values schema:
 
 ```
 helm values schema ./path/to/my/chart
 ```
 
-Generate your values docs:
+Manually generate your values docs:
 
 ```
 helm values docs ./path/to/my/chart
@@ -410,7 +416,9 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
   - [x] fixed values rows not being in a consistent order
   - [x] package organization overhaul
 - 0.2.0
-  - [ ] Pre-Commit Hook support
+  - [x] Built-in plugin update mechanism
+- 0.3.0
+  - [x] Pre-Commit Hook support
   - [ ] Schema Generation
     - [ ] Warn on ignored jsonschema property (in cases of $ref/$schema usage)
     - [ ] Json-Schema Draft 7 support?
@@ -422,14 +430,14 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
     - [ ] Support "Deprecated" indicator
     - [ ] Template: Chart Values
       - [x] Values groups
-- 0.3.0
+- 0.4.0
   - [ ] Schema Generation
     - [ ] Support declaring and using yaml anchors in doc comments
     - [ ] Root level one-of/any-of/all-of
   - [ ] Docs Generation
     - [ ] TODO: Detect recursive templates
     - [ ] TODO: markdown/rst escaping
-- 0.4.0
+- 0.5.0
   - [ ] Template: Chart Dependencies (defined in Chart.yaml)
 - some day
   - [ ] validate examples against schema
