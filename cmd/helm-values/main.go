@@ -8,6 +8,7 @@ import (
 	"helmvalues/cmd/helm-values/internal"
 	"helmvalues/cmd/helm-values/internal/config"
 	"helmvalues/pkg/docs"
+	"helmvalues/pkg/modeline"
 	"helmvalues/pkg/schema"
 
 	"github.com/sirupsen/logrus"
@@ -46,6 +47,7 @@ func Program(logger *logrus.Logger) *cobra.Command {
 	cmd.AddCommand(CommandSchema(logger, generationGroup))
 	cmd.AddCommand(CommandDocs(logger, generationGroup))
 	cmd.AddCommand(CommandPreCommit(logger))
+	cmd.AddCommand(CommandModeline(logger, generationGroup))
 	cmd.AddCommand(CommandUpdate(logger))
 	cmd.AddCommand(CommandVersion(logger))
 	return cmd
@@ -93,6 +95,35 @@ func CommandDocs(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
 				return err
 			}
 			return docs.GenerateDocs(logger, docsCfg, args)
+		},
+		GroupID: group.ID,
+	}
+
+	cfg.BindFlags(cmd)
+
+	return cmd
+}
+
+func CommandModeline(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
+	cfg := config.NewModelineConfig()
+
+	cmd := &cobra.Command{
+		Use:   "modeline [flags] chart_ref [values_file]",
+		Short: "Add yaml-language-server modeline to values file",
+		Args:  cobra.RangeArgs(1, 2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := cfg.UpdateLogger(logger); err != nil {
+				return err
+			}
+
+			chartRef := args[0]
+			valuesFile := ""
+			if len(args) > 1 {
+				valuesFile = args[1]
+			}
+
+			modelineCfg := cfg.ToPackageConfig(chartRef, valuesFile)
+			return modeline.WriteModeline(logger, modelineCfg)
 		},
 		GroupID: group.ID,
 	}

@@ -40,7 +40,13 @@ func GenerateSchema(logger *logrus.Logger, cfg *Config, chartDirs []string) erro
 
 		if cfg.WriteModeline {
 			logger.Debugf("schema: %s: writing modeline", plan.Chart().Details.Name)
-			if err := WriteSchemaModeline(logger, plan.Chart(), plan.DryRun()); err != nil {
+			err := WriteSchemaModeline(
+				logger,
+				plan.Chart(),
+				plan.Chart().ValuesFilePath(),
+				plan.DryRun(),
+			)
+			if err != nil {
 				logger.Error(err.Error())
 				return nil
 			}

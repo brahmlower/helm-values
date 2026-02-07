@@ -117,6 +117,40 @@ Flags:
       --use-default              uses default template unless a custom template is present (default true)
 ```
 
+## Values Modeline
+
+The modeline subcommand is useful for setting a chart's schema in the yaml modeline of a values file.
+
+For instance, running the following:
+
+```
+helm values modeline brahmlower-kiwix/kiwix ./kiwix-values.yaml --version 0.1.1
+```
+
+results in the following line being added to the top of the document:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/brahmlower/helm-kiwix/refs/tags/kiwix-0.1.1/charts/kiwix/values.schema.json
+
+...
+```
+
+Options:
+
+```
+Add yaml-language-server modeline to values file
+
+Usage:
+  helm-values modeline [flags] chart_ref [values_file]
+
+Flags:
+  -f, --force              replace existing modeline
+  -h, --help               help for modeline
+      --log-level string   log level (debug, info, warn, error, fatal, panic) (default "warn")
+  -p, --parents            create parent directories if they don't exist
+      --version string     chart version (for remote charts)
+```
+
 ## Schema Comments
 
 This plugin simplifies schema markup in the values.yaml comments.
@@ -419,6 +453,7 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
   - [x] Built-in plugin update mechanism
 - 0.3.0
   - [x] Pre-Commit Hook support
+  - [x] Values modeline support
   - [ ] Schema Generation
     - [ ] Warn on ignored jsonschema property (in cases of $ref/$schema usage)
     - [ ] Json-Schema Draft 7 support?
