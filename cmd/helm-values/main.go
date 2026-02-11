@@ -24,6 +24,10 @@ var generationGroup = &cobra.Group{
 	ID:    "generation",
 	Title: "Generation Commands:",
 }
+var utilityGroup = &cobra.Group{
+	ID:    "utility",
+	Title: "Utility Commands:",
+}
 
 func main() {
 	logger := logrus.New()
@@ -43,11 +47,12 @@ func Program(logger *logrus.Logger) *cobra.Command {
 	cmd.CompletionOptions.DisableDefaultCmd = true
 
 	cmd.AddGroup(generationGroup)
+	cmd.AddGroup(utilityGroup)
 
 	cmd.AddCommand(CommandSchema(logger, generationGroup))
 	cmd.AddCommand(CommandDocs(logger, generationGroup))
-	cmd.AddCommand(CommandPreCommit(logger))
-	cmd.AddCommand(CommandModeline(logger, generationGroup))
+	cmd.AddCommand(CommandPreCommit(logger, utilityGroup))
+	cmd.AddCommand(CommandModeline(logger, utilityGroup))
 	cmd.AddCommand(CommandUpdate(logger))
 	cmd.AddCommand(CommandVersion(logger))
 	return cmd
@@ -108,9 +113,10 @@ func CommandModeline(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
 	cfg := config.NewModelineConfig()
 
 	cmd := &cobra.Command{
-		Use:   "modeline [flags] chart_ref [values_file]",
-		Short: "Add yaml-language-server modeline to values file",
-		Args:  cobra.RangeArgs(1, 2),
+		Use:     "modeline [flags] chart_ref [values_file]",
+		Short:   "Add yaml-language-server modeline to values file",
+		GroupID: group.ID,
+		Args:    cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cfg.UpdateLogger(logger); err != nil {
 				return err
@@ -129,7 +135,6 @@ func CommandModeline(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
 
 			return modeline.WriteModeline(logger, modelineCfg)
 		},
-		GroupID: group.ID,
 	}
 
 	cfg.BindFlags(cmd)
@@ -149,10 +154,11 @@ func CommandUpdate(logger *logrus.Logger) *cobra.Command {
 	return cmd
 }
 
-func CommandPreCommit(logger *logrus.Logger) *cobra.Command {
+func CommandPreCommit(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "pre-commit",
-		Short: "Install pre-commit hooks for generating schema and docs",
+		Use:     "pre-commit",
+		Short:   "Install pre-commit hooks for generating schema and docs",
+		GroupID: group.ID,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return internal.InstallPreCommitHooks(logger)
 		},
