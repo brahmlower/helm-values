@@ -4,11 +4,27 @@ import (
 	"fmt"
 	"helmvalues/pkg/charts"
 	"os"
+	"path/filepath"
 	"sort"
 
 	"github.com/Masterminds/semver/v3"
 	"go.yaml.in/yaml/v4"
 )
+
+func RepositoryIndexFromCache(repoName string) (*Index, error) {
+	repositoryCache := os.Getenv("HELM_REPOSITORY_CACHE")
+	if repositoryCache == "" {
+		return nil, fmt.Errorf("HELM_REPOSITORY_CACHE environment variable is not set")
+	}
+
+	indexPath := filepath.Join(repositoryCache, repoName+"-index.yaml")
+
+	if _, err := os.Stat(indexPath); err != nil {
+		return nil, err
+	}
+
+	return LoadIndex(indexPath)
+}
 
 type Index struct {
 	Entries map[string][]*charts.ChartDetails `yaml:"entries"`

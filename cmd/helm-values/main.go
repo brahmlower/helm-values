@@ -122,7 +122,11 @@ func CommandModeline(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
 				valuesFile = args[1]
 			}
 
-			modelineCfg := cfg.ToPackageConfig(chartRef, valuesFile)
+			modelineCfg, err := cfg.ToPackageConfig(chartRef, valuesFile)
+			if err != nil {
+				return err
+			}
+
 			return modeline.WriteModeline(logger, modelineCfg)
 		},
 		GroupID: group.ID,

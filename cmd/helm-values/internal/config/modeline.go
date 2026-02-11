@@ -1,6 +1,7 @@
 package config
 
 import (
+	"helmvalues/pkg/helm"
 	"helmvalues/pkg/modeline"
 
 	"github.com/sirupsen/logrus"
@@ -46,12 +47,21 @@ func (c *ModelineConfig) BindFlags(cmd *cobra.Command) {
 	c.BindEnv("log-level")
 }
 
-func (c *ModelineConfig) ToPackageConfig(chartRef string, targetFile string) *modeline.Config {
-	return &modeline.Config{
+func (c *ModelineConfig) ToPackageConfig(rawChartRef string, targetFile string) (*modeline.Config, error) {
+	if version := c.GetString("version"); version != "" {
+		rawChartRef = rawChartRef + "@" + version
+	}
+
+	chartRef, err := helm.NewChartRef(rawChartRef)
+	if err != nil {
+		return nil, err
+	}
+
+	modelineCfg := &modeline.Config{
 		ChartRef:        chartRef,
-		ChartVersion:    c.GetString("version"),
 		TargetFile:      targetFile,
 		CreateParents:   c.GetBool("parents"),
 		PartialModeline: modeline.NewPartialModeline("yaml-language-server", "$schema"),
 	}
+	return modelineCfg, nil
 }

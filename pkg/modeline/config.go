@@ -1,9 +1,10 @@
 package modeline
 
+import "helmvalues/pkg/helm"
+
 // Config holds configuration for the modeline command
 type Config struct {
-	ChartVersion    string
-	ChartRef        string
+	ChartRef        *helm.ChartRef
 	TargetFile      string
 	CreateParents   bool
 	PartialModeline PartialModeline

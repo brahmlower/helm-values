@@ -66,8 +66,8 @@ func (m Modeline) String() string {
 	return fmt.Sprintf("%s%s", m.ProgramAndKey(), m.Value)
 }
 
-func ValuesSchemaForChart(chartRef string, version string) (string, error) {
-	chartDetails, err := helm.ChartDetailsFromRef(chartRef, version)
+func ValuesSchemaURLForChart(chartRef *helm.ChartRef) (string, error) {
+	chartDetails, err := helm.ChartDetailsFromRef(chartRef)
 	if err != nil {
 		return "", err
 	}
@@ -83,7 +83,7 @@ func ValuesSchemaForChart(chartRef string, version string) (string, error) {
 func WriteModeline(logger *logrus.Logger, cfg *Config) error {
 	plan := NewPlan(cfg)
 
-	schemaURL, err := plan.ValuesSchemaForChart()
+	schemaURL, err := plan.ValuesSchemaURLForChart()
 	if err != nil {
 		return fmt.Errorf("failed to get values schema for chart: %w", err)
 	}

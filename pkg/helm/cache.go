@@ -2,68 +2,44 @@ package helm
 
 import (
 	"fmt"
-	"helmvalues/pkg/charts"
-	"os"
-	"path/filepath"
 	"strings"
-
-	"github.com/sirupsen/logrus"
 )
 
-func GetCacheHome() (string, error) {
-	cacheHome := os.Getenv("HELM_CACHE_HOME")
-	if cacheHome == "" {
-		return "", fmt.Errorf("HELM_CACHE_HOME environment variable is not set")
-	}
-	return cacheHome, nil
+type ChartRef struct {
+	Repository string
+	Chart      string
+	Version    string
+	Path       string
 }
 
-func FindRepositoryIndex(logger *logrus.Logger, repoName string) (*Index, error) {
-	cacheHome, err := GetCacheHome()
-	if err != nil {
-		return nil, err
+func NewChartRef(ref string) (*ChartRef, error) {
+	parts1 := strings.SplitN(ref, "/", 2)
+	if len(parts1) != 2 {
+		cr := &ChartRef{
+			Path: ref,
+		}
+		return cr, nil
+	}
+	repository := parts1[0]
+
+	parts2 := strings.SplitN(parts1[1], "@", 2)
+	chart := parts2[0]
+	version := ""
+	if len(parts2) == 2 {
+		version = parts2[1]
 	}
 
-	indexPath := filepath.Join(cacheHome, "repository", repoName+"-index.yaml")
-
-	if _, err := os.Stat(indexPath); err != nil {
-		return nil, err
+	cr := &ChartRef{
+		Repository: repository,
+		Chart:      chart,
+		Version:    version,
 	}
-
-	return LoadIndex(indexPath)
+	return cr, nil
 }
 
-// GetChartFromCache retrieves chart information from the Helm cache
-func GetChartFromCache(logger *logrus.Logger, chartRef string, version string) (*charts.ChartDetails, error) {
-	// Parse chart reference
-	parts := strings.SplitN(chartRef, "/", 2)
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid chart reference: %s", chartRef)
+func (c ChartRef) String() string {
+	if c.Version != "" {
+		return fmt.Sprintf("%s/%s@%s", c.Repository, c.Chart, c.Version)
 	}
-	repoName := parts[0]
-	chartName := parts[1]
-
-	// Find the repository index
-	index, err := FindRepositoryIndex(logger, repoName)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get the specific version or latest
-	var chartVersion *charts.ChartDetails
-	if version != "" {
-		chartVersion, err = index.GetVersion(chartName, version)
-		if err != nil {
-			return nil, err
-		}
-		logger.Infof("Using chart %s version %s", chartName, version)
-	} else {
-		chartVersion, err = index.GetLatestVersion(chartName)
-		if err != nil {
-			return nil, err
-		}
-		logger.Infof("Using latest stable version of %s: %s", chartName, chartVersion.Version)
-	}
-
-	return chartVersion, nil
+	return fmt.Sprintf("%s/%s", c.Repository, c.Chart)
 }
