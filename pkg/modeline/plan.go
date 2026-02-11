@@ -10,8 +10,8 @@ type Plan struct {
 	cfg *Config
 }
 
-func (p *Plan) ValuesSchemaForChart() (string, error) {
-	return ValuesSchemaForChart(p.cfg.ChartRef, p.cfg.ChartVersion)
+func (p *Plan) ValuesSchemaURLForChart() (string, error) {
+	return ValuesSchemaURLForChart(p.cfg.ChartRef)
 }
 
 func (p *Plan) Modeline(schema string) *Modeline {
