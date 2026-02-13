@@ -7,20 +7,27 @@ A helm plugin for generating schema and docs for chart values.
 [![Tests](https://github.com/brahmlower/helm-values/actions/workflows/tests.yaml/badge.svg)](https://github.com/brahmlower/helm-values/actions/workflows/tests.yaml)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-- [Installation & Getting Started](#installation-getting-started)
-- [Updating the Plugin](#updating-the-plugin)
-- [Generate Schema](#generate-schema)
-- [Generate Docs](#generate-docs)
-- [Schema Comments](#schema-comments)
-- [Docs Template API](#docs-templating-api)
-  - [Built-In Templates](#built-in-templates)
-  - [Extra Templates](#extra-templates)
-  - [Template Context](#template-context)
-  - [Sprig Functions](#sprig-functions)
-  - [Additional Functions](#additional-functions)
+- [Getting Started](#getting-started)
+  - [Installation](#installation)
+  - [Updating](#updating)
+  - [Uninstalling](#uninstalling)
+  - [Quickstart](#quickstart)
+- [Usage](#usage)
+  - [Generate Schema](#generate-schema)
+  - [Generate Docs](#generate-docs)
+  - [Schema Comments](#schema-comments)
+  - [Docs Template API](#docs-templating-api)
+    - [Built-In Templates](#built-in-templates)
+    - [Extra Templates](#extra-templates)
+    - [Template Context](#template-context)
+    - [Sprig Functions](#sprig-functions)
+    - [Additional Functions](#additional-functions)
 - [Development Roadmap](#development-roadmap)
+- [Development Notes](#development-notes)
 
-## Installation & Getting Started
+## Getting Started
+
+### Installation
 
 Install the plugin: <sub>(signed packages coming soon)</sub>
 
@@ -34,20 +41,7 @@ Add pre-commit hooks (optional):
 helm values pre-commit
 ```
 
-Manually generate your values schema:
-
-```
-helm values schema ./path/to/my/chart
-```
-
-Manually generate your values docs:
-
-```
-helm values docs ./path/to/my/chart
-```
-
-## Updating the Plugin
-
+### Updating
 Update the plugin using its own builtin update command:
 
 ```
@@ -62,7 +56,29 @@ This plugin uses tarball installation for simplicity, meaning the builtin update
 Using the builtin update mechanism will give the following error:
 > cannot get information about plugin source
 
-## Generate Schema
+### Uninstalling
+
+```
+helm plugin uninstall values
+```
+
+### Quickstart
+
+Manually generate your values schema:
+
+```
+helm values schema ./path/to/my/chart
+```
+
+Manually generate your values docs:
+
+```
+helm values docs ./path/to/my/chart
+```
+
+## Usage
+
+### Generate Schema
 
 Options:
 
@@ -94,7 +110,7 @@ Flags:
 > jq 'walk(if type == "object" and .description then . = . * {"markdownDescription": .description} else . end)' ./path/to/schema.values.yaml
 > ```
 
-## Generate Docs
+### Generate Docs
 
 Options:
 
@@ -117,7 +133,7 @@ Flags:
       --use-default              uses default template unless a custom template is present (default true)
 ```
 
-## Values Modeline
+### Values Modeline
 
 The modeline subcommand is useful for setting a chart's schema in the yaml modeline of a values file.
 
@@ -151,7 +167,7 @@ Flags:
       --version string     chart version (for remote charts)
 ```
 
-## Schema Comments
+### Schema Comments
 
 This plugin simplifies schema markup in the values.yaml comments.
 
@@ -283,11 +299,11 @@ resources: {}
 </details><br>
 
 
-## Docs Templating API
+### Docs Templating API
 
 Markdown and ReStructuredText are supported.
 
-### Built-In Templates
+#### Built-In Templates
 
 Built-in template names are prefixed with the markup language they support (eg: `md`, `rst`) and are provided the full [TemplateContext](#template-context) for flexibility when being overwritten (see [extra templates](#extra-templates)).
 
@@ -322,7 +338,7 @@ Built-in template names are prefixed with the markup language they support (eg: 
 
   No multiline support.
 
-### Extra Templates
+#### Extra Templates
 
 Built-in templates can be overwritten by including extra template files!
 
@@ -348,7 +364,7 @@ $ head -n 2 README.md
 # MyChart - A chart by me 😎
 ```
 
-### Template Context
+#### Template Context
 
 > [!IMPORTANT]
 > This project is under very active development. These are likely to change at any point.
@@ -477,7 +493,7 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
 - some day
   - [ ] validate examples against schema
 
-## Local Development
+## Development Notes
 
 Dependencies:
 - go
