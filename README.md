@@ -470,6 +470,7 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
 - 0.3.0
   - [x] Pre-Commit Hook support
   - [x] Values modeline support
+- 0.4.0
   - [ ] Schema Generation
     - [ ] Warn on ignored jsonschema property (in cases of $ref/$schema usage)
     - [ ] Json-Schema Draft 7 support?
@@ -481,14 +482,14 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
     - [ ] Support "Deprecated" indicator
     - [ ] Template: Chart Values
       - [x] Values groups
-- 0.4.0
+- 0.5.0
   - [ ] Schema Generation
     - [ ] Support declaring and using yaml anchors in doc comments
     - [ ] Root level one-of/any-of/all-of
   - [ ] Docs Generation
     - [ ] TODO: Detect recursive templates
     - [ ] TODO: markdown/rst escaping
-- 0.5.0
+- 0.6.0
   - [ ] Template: Chart Dependencies (defined in Chart.yaml)
 - some day
   - [ ] validate examples against schema
@@ -518,8 +519,8 @@ task build:plugin -- --snapshot
 Bump the changelog:
 
 ```
-release to --version $(release next --type minor) --force
+git cliff --bump minor --output CHANGELOG.md
 git add .
-git commit -m "release $(release latest)"
-git tag -a "$(release latest)" -m ''
+git commit -m "release $(git cliff --bumped-version --bump minor)"
+git tag -a "$(git cliff --bumped-version --bump minor)" -m ''
 ```
