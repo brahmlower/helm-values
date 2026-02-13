@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-02-13
+
+### Added
+
+- Added license
+- Add renovate.json
+- Added group for utility subcommands
+
+### Changed
+
+- Updated deps
+- Renovate pins dependency versions
+- Grouped subcommands
+- Pre-commit support
+- Install includes pre-commit hooks, updated roadmap
+- Modeline support
+- Cleaned up chartref type
+- Small readme restructuring
+
+### Fixed
+
+- Yaml v4 update broke yaml error handling
+
 ## [0.2.0] - 2026-02-04
 
 ### Added
@@ -18,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cleaned up comment errors rendering logic
 - Reduce clutter from internal package
 - Switch changelog to cliff
+- Release 0.2.0
 
 ### Fixed
 
@@ -158,6 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removed unecessary fs for file ops
 
+[0.3.0]: https://github.com/brahmlower/helm-values/compare/0.2.0..0.3.0
 [0.2.0]: https://github.com/brahmlower/helm-values/compare/0.1.0..0.2.0
 [0.1.0]: https://github.com/brahmlower/helm-values/compare/0.0.2..0.1.0
 [0.0.2]: https://github.com/brahmlower/helm-values/compare/0.0.1..0.0.2
