@@ -14,17 +14,17 @@ const preCommitConfigPath = ".pre-commit-config.yaml"
 var schemaPreCommitHook = &PreCommitHook{
 	ID:            "helm-values-schema",
 	Name:          "Generate Helm values schema",
-	Entry:         "helm values schema . --git-add",
+	Entry:         "helm values schema --git-add .",
 	Language:      "system",
-	Files:         "^.*/values\\.yaml$",
+	Files:         "values\\.yaml$",
 	PassFilenames: lo.ToPtr(false),
 }
 var docsPreCommitHook = &PreCommitHook{
 	ID:            "helm-values-docs",
 	Name:          "Generate Helm values documentation",
-	Entry:         "helm values docs . --git-add",
+	Entry:         "helm values docs --git-add .",
 	Language:      "system",
-	Files:         "^.*/values\\.yaml$",
+	Files:         "values\\.yaml$",
 	PassFilenames: lo.ToPtr(false),
 }
 
