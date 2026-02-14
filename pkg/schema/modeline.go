@@ -14,7 +14,7 @@ func WriteSchemaModeline(logger *logrus.Logger, chart *charts.Chart, valuesPath 
 		return fmt.Errorf("failed to read values file: %w", err)
 	}
 
-	ml := modeline.NewModeline("yaml-language-server", "$schema", chart.SchemaFilePath())
+	ml := modeline.NewModeline("yaml-language-server", "$schema", "values.schema.json")
 	fileManager.SetModeline(ml)
 
 	if dryRun {
