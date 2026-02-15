@@ -1,6 +1,12 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
 version: '3'
 
 tasks:
+  run:
+    cmds:
+      - go run ./cmd/helm-values {{.CLI_ARGS}}
+
   build:bin:
     desc: Build production binary
     cmds:
@@ -20,13 +26,25 @@ tasks:
     desc: Reinstall the plugin locally
     cmds:
       - helm plugin uninstall values || true
-      - helm plugin install ./dist/values-*.tgz
+      - helm plugin install ./dist/values-$(git describe --tags --abbrev=0).tgz
 
   test:
+    desc: Run all tests
+    cmds:
+      - task: test:unit
+      - task: test:pre-commit
+
+  test:unit:
     desc: Run unit tests
     cmds:
       - go test ./pkg/...
       - go test ./cmd/...
+
+  test:pre-commit:
+    desc: Run pre-commit hook tests
+    dir: ./tests/pre-commit
+    cmds:
+      - bats ./tests.bats
 
   clean:
     desc: Clean build artifacts
