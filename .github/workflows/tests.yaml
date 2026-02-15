@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  test:
+  unit:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo
@@ -18,5 +18,36 @@ jobs:
       - name: Install taskfile
         run: sudo snap install task --classic
 
-      - name: Run tests
-        run: task test
+      - name: Run unit tests
+        run: task test:unit
+
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Install taskfile
+        run: sudo snap install task --classic
+
+      - name: Install GoReleaser
+        run: sudo snap install --classic goreleaser
+
+      - name: Install pre-commit dependencies
+        run: |
+          sudo snap install helm --classic
+          sudo npm install -g bats
+          sudo npm install -g https://github.com/ztombol/bats-assert
+          sudo npm install -g https://github.com/ztombol/bats-support
+          pip install pre-commit
+
+      - name: Install the plugin
+        run: |
+          task build:plugin -- --snapshot
+          task reinstall
+
+      - name: Run pre-commit hook tests
+        run: task test:pre-commit

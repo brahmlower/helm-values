@@ -514,6 +514,15 @@ Build the binaries and plugin will require providing the `--snapshot` flag if yo
 task build:plugin -- --snapshot
 ```
 
+bats install
+
+```
+brew install bats-core
+brew tap kaos/shell
+brew install bats-assert
+```
+
+
 ### New release
 
 Bump the changelog:
