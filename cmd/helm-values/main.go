@@ -113,7 +113,7 @@ func CommandModeline(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
 	cfg := config.NewModelineConfig()
 
 	cmd := &cobra.Command{
-		Use:     "modeline [flags] chart_ref [values_file]",
+		Use:     "modeline [flags] chart_ref values_file",
 		Short:   "Add yaml-language-server modeline to values file",
 		GroupID: group.ID,
 		Args:    cobra.RangeArgs(1, 2),
