@@ -1,3 +1,6 @@
+// Command helm-values is a Helm plugin that generates a JSON Schema and
+// documentation for a chart's values.yaml, and manages the
+// yaml-language-server modeline and pre-commit hooks that go with them.
 package main
 
 import (
@@ -55,6 +58,7 @@ func Program(logger *logrus.Logger) *cobra.Command {
 	cmd.AddCommand(CommandModeline(logger, utilityGroup))
 	cmd.AddCommand(CommandUpdate(logger))
 	cmd.AddCommand(CommandVersion(logger))
+
 	return cmd
 }
 
@@ -64,21 +68,24 @@ func CommandSchema(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "schema [flags] chart_dir [...chart_dir]",
 		Short: "Generate values schema",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, args []string) error {
 			if err := cfg.UpdateLogger(logger); err != nil {
-				return err
+				return fmt.Errorf("updating logger: %w", err)
 			}
 
 			schemaCfg, err := cfg.ToPackageConfig()
 			if err != nil {
-				return err
+				return fmt.Errorf("building schema config: %w", err)
 			}
+
 			return schema.GenerateSchema(logger, schemaCfg, args)
 		},
 		GroupID: group.ID,
 	}
 
-	cfg.BindFlags(cmd)
+	if err := cfg.BindFlags(cmd); err != nil {
+		panic(fmt.Sprintf("binding schema flags: %v", err))
+	}
 
 	return cmd
 }
@@ -90,24 +97,31 @@ func CommandDocs(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
 		Use:   "docs [flags] chart_dir [...chart_dir]",
 		Short: "Generate values docs",
 		Args:  cobra.MinimumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, args []string) error {
 			if err := cfg.UpdateLogger(logger); err != nil {
-				return err
+				return fmt.Errorf("updating logger: %w", err)
 			}
 
 			docsCfg, err := cfg.ToPackageConfig()
 			if err != nil {
-				return err
+				return fmt.Errorf("building docs config: %w", err)
 			}
+
 			return docs.GenerateDocs(logger, docsCfg, args)
 		},
 		GroupID: group.ID,
 	}
 
-	cfg.BindFlags(cmd)
+	if err := cfg.BindFlags(cmd); err != nil {
+		panic(fmt.Sprintf("binding docs flags: %v", err))
+	}
 
 	return cmd
 }
+
+// modelineMaxArgs is the maximum number of positional args the modeline
+// command accepts: chart_ref and, optionally, values_file.
+const modelineMaxArgs = 2
 
 func CommandModeline(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
 	cfg := config.NewModelineConfig()
@@ -116,13 +130,14 @@ func CommandModeline(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
 		Use:     "modeline [flags] chart_ref values_file",
 		Short:   "Add yaml-language-server modeline to values file",
 		GroupID: group.ID,
-		Args:    cobra.RangeArgs(1, 2),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Args:    cobra.RangeArgs(1, modelineMaxArgs),
+		RunE: func(_ *cobra.Command, args []string) error {
 			if err := cfg.UpdateLogger(logger); err != nil {
-				return err
+				return fmt.Errorf("updating logger: %w", err)
 			}
 
 			chartRef := args[0]
+
 			valuesFile := ""
 			if len(args) > 1 {
 				valuesFile = args[1]
@@ -130,14 +145,16 @@ func CommandModeline(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
 
 			modelineCfg, err := cfg.ToPackageConfig(chartRef, valuesFile)
 			if err != nil {
-				return err
+				return fmt.Errorf("building modeline config: %w", err)
 			}
 
 			return modeline.WriteModeline(logger, modelineCfg)
 		},
 	}
 
-	cfg.BindFlags(cmd)
+	if err := cfg.BindFlags(cmd); err != nil {
+		panic(fmt.Sprintf("binding modeline flags: %v", err))
+	}
 
 	return cmd
 }
@@ -146,8 +163,8 @@ func CommandUpdate(logger *logrus.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update",
 		Short: "Update the helm-values plugin to the latest version",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return internal.Update(logger, Repository, BuildVersion)
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return internal.Update(cmd.Context(), logger, Repository, BuildVersion)
 		},
 	}
 
@@ -159,7 +176,7 @@ func CommandPreCommit(logger *logrus.Logger, group *cobra.Group) *cobra.Command 
 		Use:     "pre-commit",
 		Short:   "Install pre-commit hooks for generating schema and docs",
 		GroupID: group.ID,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			return internal.InstallPreCommitHooks(logger)
 		},
 	}
@@ -167,11 +184,11 @@ func CommandPreCommit(logger *logrus.Logger, group *cobra.Group) *cobra.Command 
 	return cmd
 }
 
-func CommandVersion(logger *logrus.Logger) *cobra.Command {
+func CommandVersion(_ *logrus.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print version information",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			releaseNotes := ""
 
 			if !strings.Contains(BuildVersion, "SNAPSHOT") {
@@ -183,6 +200,7 @@ func CommandVersion(logger *logrus.Logger) *cobra.Command {
 			fmt.Printf("  Commit:        %s\n", BuildCommit)
 			fmt.Printf("  Date:          %s\n", BuildDate)
 			fmt.Printf("  Release Notes: %s\n", releaseNotes)
+
 			return nil
 		},
 	}

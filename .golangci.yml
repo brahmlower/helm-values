@@ -1,0 +1,80 @@
+version: "2"
+
+linters:
+  default: all
+
+  disable:
+    # Deprecated, replaced by wsl_v5 / gomodguard_v2 below.
+    - wsl
+    - gomodguard
+
+    # Forces every struct literal (including third-party ones) to set every
+    # field explicitly. Too invasive for general application code.
+    - exhaustruct
+
+    # Requires every error to be a package-level sentinel wrapped with %w.
+    # Fights idiomatic fmt.Errorf("...: %w", err) for one-off dynamic errors.
+    - err113
+
+    # Disallows `if err := f(); err != nil {}`, which is standard idiomatic
+    # Go (recommended by Effective Go) and used throughout this codebase.
+    - noinlineerr
+
+    # Flags common, readable short names (i, ok, t, tt, f, s) as too short;
+    # too aggressive for this codebase's style.
+    - varnamelen
+
+    # main.BuildVersion/BuildCommit/BuildDate/Repository are populated via
+    # -ldflags at build time and must be package-level vars.
+    - gochecknoglobals
+
+    # TODO comments here track real, intentional follow-up work; failing CI
+    # on their presence isn't useful for this project.
+    - godox
+
+  settings:
+    depguard:
+      rules:
+        main:
+          files:
+            - $all
+          deny:
+            - pkg: io/ioutil
+              desc: "io/ioutil is deprecated, use io or os instead"
+
+    forbidigo:
+      # Only flag the bare print/println builtins (debug leftovers); this is
+      # a CLI tool where fmt.Print* is legitimate, intentional user output.
+      forbid:
+        - pattern: "^(print|println)$"
+          msg: "use fmt.Print* or a logger instead of the print/println builtins"
+
+    lll:
+      line-length: 140
+
+    funlen:
+      ignore-comments: true
+
+  exclusions:
+    rules:
+      # Table-driven tests are naturally long; that's not a complexity smell.
+      - path: _test\.go
+        linters:
+          - funlen
+
+      # These structs mirror external, fixed wire formats (the GitHub
+      # releases API and the pre-commit hook manifest schema), so their
+      # struct tags must stay snake_case to match those formats exactly.
+      - path: cmd/helm-values/internal/(github|precommit)\.go
+        linters:
+          - tagliatelle
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+  settings:
+    goimports:
+      local-prefixes:
+        - helmvalues

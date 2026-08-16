@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	"helmvalues/pkg/helm"
 	"helmvalues/pkg/modeline"
 
@@ -9,20 +11,31 @@ import (
 	"github.com/spf13/viper"
 )
 
+// ModelineConfig holds the flag/env-bound configuration for the modeline
+// command.
+type ModelineConfig struct {
+	*viper.Viper
+}
+
+// NewModelineConfig creates a ModelineConfig backed by a fresh viper
+// instance.
 func NewModelineConfig() *ModelineConfig {
 	cfg := standardViper()
 
 	return &ModelineConfig{cfg}
 }
 
-type ModelineConfig struct {
-	*viper.Viper
-}
-
+// LogLevel returns the configured log level.
 func (c *ModelineConfig) LogLevel() (logrus.Level, error) {
-	return logrus.ParseLevel(c.GetString("log-level"))
+	level, err := logrus.ParseLevel(c.GetString(logLevelFlag))
+	if err != nil {
+		return level, fmt.Errorf("parsing log level: %w", err)
+	}
+
+	return level, nil
 }
 
+// UpdateLogger sets logger's level to the configured log level.
 func (c *ModelineConfig) UpdateLogger(logger *logrus.Logger) error {
 	level, err := c.LogLevel()
 	if err != nil {
@@ -30,23 +43,28 @@ func (c *ModelineConfig) UpdateLogger(logger *logrus.Logger) error {
 	}
 
 	logger.SetLevel(level)
+
 	return nil
 }
 
-func (c *ModelineConfig) BindFlags(cmd *cobra.Command) {
+// BindFlags registers the modeline command's flags on cmd and binds them
+// (and their environment-variable equivalents) to this config.
+func (c *ModelineConfig) BindFlags(cmd *cobra.Command) error {
 	cmd.Flags().BoolP("parents", "p", false, "create parent directories if they don't exist")
-	c.BindPFlag("parents", cmd.Flags().Lookup("parents"))
-	c.BindEnv("parents")
-
 	cmd.Flags().String("version", "", "chart version (for remote charts)")
-	c.BindPFlag("version", cmd.Flags().Lookup("version"))
-	c.BindEnv("version")
+	cmd.Flags().String(logLevelFlag, "warn", "log level (debug, info, warn, error, fatal, panic)")
 
-	cmd.Flags().String("log-level", "warn", "log level (debug, info, warn, error, fatal, panic)")
-	c.BindPFlag("log-level", cmd.Flags().Lookup("log-level"))
-	c.BindEnv("log-level")
+	for _, name := range []string{"parents", "version", logLevelFlag} {
+		if err := bindFlag(c.Viper, cmd, name); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
+// ToPackageConfig builds the modeline.Config this configuration describes
+// for the given chart reference and target file.
 func (c *ModelineConfig) ToPackageConfig(rawChartRef string, targetFile string) (*modeline.Config, error) {
 	if version := c.GetString("version"); version != "" {
 		rawChartRef = rawChartRef + "@" + version
@@ -54,7 +72,7 @@ func (c *ModelineConfig) ToPackageConfig(rawChartRef string, targetFile string) 
 
 	chartRef, err := helm.NewChartRef(rawChartRef)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing chart reference: %w", err)
 	}
 
 	modelineCfg := &modeline.Config{
@@ -63,5 +81,6 @@ func (c *ModelineConfig) ToPackageConfig(rawChartRef string, targetFile string) 
 		CreateParents:   c.GetBool("parents"),
 		PartialModeline: modeline.NewPartialModeline("yaml-language-server", "$schema"),
 	}
+
 	return modelineCfg, nil
 }

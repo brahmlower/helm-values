@@ -1,9 +1,11 @@
-package comments
+package comments_test
 
 import (
 	"bytes"
 	"errors"
 	"testing"
+
+	"helmvalues/pkg/schema/comments"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -11,6 +13,8 @@ import (
 )
 
 func TestNewCommentError(t *testing.T) {
+	t.Parallel()
+
 	node := &yaml.Node{
 		Line:        10,
 		Value:       "test-value",
@@ -18,7 +22,7 @@ func TestNewCommentError(t *testing.T) {
 	}
 	err := errors.New("test error")
 
-	commentErr := NewCommentError(node, err)
+	commentErr := comments.NewCommentError(node, err)
 
 	assert.NotNil(t, commentErr)
 	assert.Equal(t, node, commentErr.Node)
@@ -27,10 +31,12 @@ func TestNewCommentError(t *testing.T) {
 }
 
 func TestCommentError_Error(t *testing.T) {
+	t.Parallel()
+
 	expectedMsg := "some error message"
 	err := errors.New(expectedMsg)
 
-	commentErr := &CommentError{
+	commentErr := &comments.CommentError{
 		Node: &yaml.Node{},
 		Err:  err,
 	}
@@ -39,6 +45,8 @@ func TestCommentError_Error(t *testing.T) {
 }
 
 func TestCommentError_Render(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name            string
 		filepath        string
@@ -123,7 +131,9 @@ func TestCommentError_Render(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			commentErr := &CommentError{
+			t.Parallel()
+
+			commentErr := &comments.CommentError{
 				Filepath: tt.filepath,
 				Node:     tt.node,
 				Err:      tt.err,
@@ -139,6 +149,8 @@ func TestCommentError_Render(t *testing.T) {
 }
 
 func TestCommentError_Render_WithYamlTypeError(t *testing.T) {
+	t.Parallel()
+
 	node := &yaml.Node{
 		Line:        20,
 		Value:       "field",
@@ -155,7 +167,7 @@ func TestCommentError_Render_WithYamlTypeError(t *testing.T) {
 		},
 	}
 
-	commentErr := &CommentError{
+	commentErr := &comments.CommentError{
 		Filepath: "config.yaml",
 		Node:     node,
 		Err:      yamlErr,
@@ -173,6 +185,8 @@ func TestCommentError_Render_WithYamlTypeError(t *testing.T) {
 }
 
 func TestCommentError_RenderToLog_MultipleLines(t *testing.T) {
+	t.Parallel()
+
 	node := &yaml.Node{
 		Line:        10,
 		Value:       "value",
@@ -180,13 +194,14 @@ func TestCommentError_RenderToLog_MultipleLines(t *testing.T) {
 	}
 	err := errors.New("multi-line test")
 
-	commentErr := &CommentError{
+	commentErr := &comments.CommentError{
 		Filepath: "multi.yaml",
 		Node:     node,
 		Err:      err,
 	}
 
 	var buf bytes.Buffer
+
 	logger := logrus.New()
 	logger.SetOutput(&buf)
 	logger.SetLevel(logrus.WarnLevel)

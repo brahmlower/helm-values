@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	"helmvalues/pkg/schema"
 
 	"github.com/sirupsen/logrus"
@@ -8,20 +10,30 @@ import (
 	"github.com/spf13/viper"
 )
 
+// SchemaConfig holds the flag/env-bound configuration for the schema
+// command.
+type SchemaConfig struct {
+	*viper.Viper
+}
+
+// NewSchemaConfig creates a SchemaConfig backed by a fresh viper instance.
 func NewSchemaConfig() *SchemaConfig {
 	cfg := standardViper()
 
 	return &SchemaConfig{cfg}
 }
 
-type SchemaConfig struct {
-	*viper.Viper
-}
-
+// LogLevel returns the configured log level.
 func (c *SchemaConfig) LogLevel() (logrus.Level, error) {
-	return logrus.ParseLevel(c.GetString("log-level"))
+	level, err := logrus.ParseLevel(c.GetString(logLevelFlag))
+	if err != nil {
+		return level, fmt.Errorf("parsing log level: %w", err)
+	}
+
+	return level, nil
 }
 
+// UpdateLogger sets logger's level to the configured log level.
 func (c *SchemaConfig) UpdateLogger(logger *logrus.Logger) error {
 	level, err := c.LogLevel()
 	if err != nil {
@@ -29,35 +41,32 @@ func (c *SchemaConfig) UpdateLogger(logger *logrus.Logger) error {
 	}
 
 	logger.SetLevel(level)
+
 	return nil
 }
 
-func (c *SchemaConfig) BindFlags(cmd *cobra.Command) {
+// BindFlags registers the schema command's flags on cmd and binds them
+// (and their environment-variable equivalents) to this config.
+func (c *SchemaConfig) BindFlags(cmd *cobra.Command) error {
 	cmd.Flags().Bool("stdout", false, "write to stdout")
-	c.BindPFlag("stdout", cmd.Flags().Lookup("stdout"))
-	c.BindEnv("stdout")
-
 	cmd.Flags().Bool("strict", false, "fail on doc comment parsing errors")
-	c.BindPFlag("strict", cmd.Flags().Lookup("strict"))
-	c.BindEnv("strict")
-
 	cmd.Flags().Bool("git-add", false, "stage changes with git add (useful for pre-commit hooks)")
-	c.BindPFlag("git-add", cmd.Flags().Lookup("git-add"))
-	c.BindEnv("git-add")
-
 	cmd.Flags().Bool("dry-run", false, "don't write changes to disk")
-	c.BindPFlag("dry-run", cmd.Flags().Lookup("dry-run"))
-	c.BindEnv("dry-run")
-
-	cmd.Flags().String("log-level", "warn", "log level (debug, info, warn, error, fatal, panic)")
-	c.BindPFlag("log-level", cmd.Flags().Lookup("log-level"))
-	c.BindEnv("log-level")
-
+	cmd.Flags().String(logLevelFlag, "warn", "log level (debug, info, warn, error, fatal, panic)")
 	cmd.Flags().Bool("write-modeline", true, "write modeline to values file")
-	c.BindPFlag("write-modeline", cmd.Flags().Lookup("write-modeline"))
-	c.BindEnv("write-modeline")
+
+	for _, name := range []string{
+		"stdout", "strict", "git-add", "dry-run", logLevelFlag, "write-modeline",
+	} {
+		if err := bindFlag(c.Viper, cmd, name); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
+// ToPackageConfig builds the schema.Config this configuration describes.
 func (c *SchemaConfig) ToPackageConfig() (*schema.Config, error) {
 	logLevel, err := c.LogLevel()
 	if err != nil {
@@ -72,5 +81,6 @@ func (c *SchemaConfig) ToPackageConfig() (*schema.Config, error) {
 		WriteModeline: c.GetBool("write-modeline"),
 		LogLevel:      logLevel,
 	}
+
 	return config, nil
 }

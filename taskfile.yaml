@@ -28,6 +28,11 @@ tasks:
       - helm plugin uninstall values || true
       - helm plugin install ./dist/values-$(git describe --tags --abbrev=0).tgz
 
+  lint:
+    desc: Run golangci-lint
+    cmds:
+      - golangci-lint run ./...
+
   test:
     desc: Run all tests
     cmds:
