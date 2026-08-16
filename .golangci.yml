@@ -42,6 +42,13 @@ linters:
             - pkg: io/ioutil
               desc: "io/ioutil is deprecated, use io or os instead"
 
+    exhaustive:
+      # Switches over third-party enums (e.g. yaml.Kind) commonly only care
+      # about a handful of cases and treat the rest as an error via a
+      # default case; requiring every variant to be listed explicitly adds
+      # no value there.
+      default-signifies-exhaustive: true
+
     forbidigo:
       # Only flag the bare print/println builtins (debug leftovers); this is
       # a CLI tool where fmt.Print* is legitimate, intentional user output.
