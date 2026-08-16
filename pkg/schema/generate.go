@@ -1,25 +1,39 @@
 package schema
 
 import (
+	"errors"
 	"fmt"
-	"helmvalues/pkg"
-	"helmvalues/pkg/schema/comments"
 	"os"
 	"slices"
 	"strings"
+
+	"helmvalues/pkg"
+	"helmvalues/pkg/schema/comments"
 
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"go.yaml.in/yaml/v4"
 )
 
-const JsonSchemaURI = "http://json-schema.org/draft-07/schema#"
+// JSONSchemaURI is the JSON Schema draft version URI written to the "$schema" field
+// of generated schemas.
+const JSONSchemaURI = "http://json-schema.org/draft-07/schema#"
 
+// yamlKeyValuePairSize is the number of yaml.Node entries that make up a single
+// key+value pair when chunking a mapping node's Content slice.
+const yamlKeyValuePairSize = 2
+
+// mappingNodeBaseExtraNodeCount is the number of "type"/"additionalProperties" comment
+// nodes always added to a mapping node's extra nodes, used as a preallocation hint.
+const mappingNodeBaseExtraNodeCount = 2
+
+// Generator builds a JSON schema from a chart's values file.
 type Generator struct {
 	logger *logrus.Logger
 	plan   *Plan
 }
 
+// NewGenerator constructs a Generator for the given plan.
 func NewGenerator(logger *logrus.Logger, plan *Plan) *Generator {
 	return &Generator{
 		logger: logger,
@@ -27,16 +41,19 @@ func NewGenerator(logger *logrus.Logger, plan *Plan) *Generator {
 	}
 }
 
+// Generate reads and parses the plan's chart values file and builds a JSON schema
+// describing its structure.
 func (g *Generator) Generate() (*pkg.JsonSchema, error) {
 	f, err := os.ReadFile(g.plan.chart.ValuesFilePath())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read values file: %w", err)
 	}
 
 	rootNode := &yaml.Node{}
+
 	err = yaml.Unmarshal(f, rootNode)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal values file: %w", err)
 	}
 
 	if rootNode.Kind != yaml.DocumentNode {
@@ -47,7 +64,8 @@ func (g *Generator) Generate() (*pkg.JsonSchema, error) {
 	if err != nil {
 		return nil, err
 	}
-	s.Schema = JsonSchemaURI
+
+	s.Schema = JSONSchemaURI
 	g.logger.Tracef("schmea generator, properties: %+v", s.Properties)
 
 	s.WalkProperties(
@@ -68,12 +86,14 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*pkg.Json
 	if valueType != "null" {
 		extraNodes = append(extraNodes, comments.KeyValueNodes("type", valueType)...)
 	}
+
 	extraNodes = append(extraNodes, comments.KeyValueNodes("title", key.Value)...)
 	extraNodes = append(extraNodes, comments.KeyValueNodes("default", value.Value)...)
 
 	s, err := comments.Parse(key, extraNodes)
 	if err != nil {
-		if cErr, ok := err.(*comments.CommentError); ok {
+		cErr := &comments.CommentError{}
+		if errors.As(err, &cErr) {
 			cErr.Filepath = g.plan.chart.ValuesFilePath()
 			cErr.RenderToLog(g.logger)
 		}
@@ -81,15 +101,15 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*pkg.Json
 		err := fmt.Errorf("doc comment error: %w", err)
 		if g.plan.StrictComments() {
 			return nil, err
-		} else {
-			g.logger.Warn(err.Error())
 		}
+
+		g.logger.Warn(err.Error())
 	}
 
 	return s, nil
 }
 
-// TODO: Finish handling sequences
+// TODO: Finish handling sequences.
 func (g *Generator) buildSequenceNode(key *yaml.Node, _ *yaml.Node) (*pkg.JsonSchema, error) {
 	extraNodes := []*yaml.Node{}
 	extraNodes = append(extraNodes, comments.KeyValueNodes("type", "array")...)
@@ -98,6 +118,7 @@ func (g *Generator) buildSequenceNode(key *yaml.Node, _ *yaml.Node) (*pkg.JsonSc
 	if key == nil {
 		s := &pkg.JsonSchema{}
 		s.Properties = pkg.NewEncodableOrderedMap[string, *pkg.JsonSchema]()
+
 		return s, nil
 	}
 
@@ -105,7 +126,8 @@ func (g *Generator) buildSequenceNode(key *yaml.Node, _ *yaml.Node) (*pkg.JsonSc
 
 	s, err := comments.Parse(key, extraNodes)
 	if err != nil {
-		if cErr, ok := err.(*comments.CommentError); ok {
+		cErr := &comments.CommentError{}
+		if errors.As(err, &cErr) {
 			cErr.Filepath = g.plan.chart.ValuesFilePath()
 			cErr.RenderToLog(g.logger)
 		}
@@ -119,60 +141,93 @@ func (g *Generator) buildSequenceNode(key *yaml.Node, _ *yaml.Node) (*pkg.JsonSc
 	return s, nil
 }
 
+// buildMappingNodeTitledSchema parses the doc comments attached to key into a schema,
+// with a "title" field derived from the key added to extraNodes. This is only relevant
+// when the mapping node being built has a yaml key node (i.e. it isn't the root node).
+func (g *Generator) buildMappingNodeTitledSchema(key *yaml.Node, extraNodes []*yaml.Node) (*pkg.JsonSchema, error) {
+	extraNodes = append(extraNodes, comments.KeyValueNodes("title", key.Value)...)
+
+	s, err := comments.Parse(key, extraNodes)
+	if err != nil {
+		cErr := &comments.CommentError{}
+		if errors.As(err, &cErr) {
+			cErr.Filepath = g.plan.chart.ValuesFilePath()
+			cErr.RenderToLog(g.logger)
+		}
+
+		wrappedErr := fmt.Errorf("doc comment error: %w", err)
+		if g.plan.StrictComments() {
+			return nil, wrappedErr
+		}
+	}
+
+	return s, nil
+}
+
+// buildChildNodeSchema builds the schema for a single key/value pair found in a
+// mapping node's Content, dispatching to the appropriate builder based on the
+// value node's kind.
+func (g *Generator) buildChildNodeSchema(childKey *yaml.Node, childValue *yaml.Node) (*pkg.JsonSchema, error) {
+	switch childValue.Kind {
+	case yaml.ScalarNode:
+		childValueSchema, err := g.buildScalarNode(childKey, childValue)
+		if err != nil {
+			g.logger.Debugf("Error building scalar node for key %s: %v", childKey.Value, err)
+
+			return nil, err
+		}
+
+		return childValueSchema, nil
+	case yaml.SequenceNode:
+		childValueSchema, err := g.buildSequenceNode(childKey, childValue)
+		if err != nil {
+			g.logger.Debugf("Error building sequence node for key %s: %v", childKey.Value, err)
+
+			return nil, err
+		}
+
+		return childValueSchema, nil
+	case yaml.MappingNode:
+		childValueSchema, err := g.buildMappingNode(childKey, childValue)
+		if err != nil {
+			g.logger.Debugf("Error building mapping node for key %s: %v", childKey.Value, err)
+
+			return nil, err
+		}
+
+		return childValueSchema, nil
+	default:
+		// should be impossible
+		return nil, fmt.Errorf("unsupported yaml type: %v", childValue.Kind)
+	}
+}
+
 func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*pkg.JsonSchema, error) {
-	extraNodes := []*yaml.Node{}
+	extraNodes := make([]*yaml.Node, 0, mappingNodeBaseExtraNodeCount)
 	extraNodes = append(extraNodes, comments.KeyValueNodes("type", "object")...)
 	extraNodes = append(extraNodes, comments.KeyValueNodes("additionalProperties", "false")...)
 
 	// Not all objects will have a yaml key node, only set key values if they exist
 	s := &pkg.JsonSchema{}
+
 	if key != nil {
-		extraNodes = append(extraNodes, comments.KeyValueNodes("title", key.Value)...)
-
 		var err error
-		s, err = comments.Parse(key, extraNodes)
-		if err != nil {
-			if cErr, ok := err.(*comments.CommentError); ok {
-				cErr.Filepath = g.plan.chart.ValuesFilePath()
-				cErr.RenderToLog(g.logger)
-			}
 
-			err := fmt.Errorf("doc comment error: %w", err)
-			if g.plan.StrictComments() {
-				return nil, err
-			}
+		s, err = g.buildMappingNodeTitledSchema(key, extraNodes)
+		if err != nil {
+			return nil, err
 		}
 	}
+
 	s.Properties = pkg.NewEncodableOrderedMap[string, *pkg.JsonSchema]()
 
-	for _, child := range lo.Chunk(value.Content, 2) {
+	for _, child := range lo.Chunk(value.Content, yamlKeyValuePairSize) {
 		childKey := child[0]
 		childValue := child[1]
 
-		var err error
-		var childValueSchema *pkg.JsonSchema
-		switch childValue.Kind {
-		case yaml.ScalarNode:
-			childValueSchema, err = g.buildScalarNode(childKey, childValue)
-			if err != nil {
-				g.logger.Debugf("Error building scalar node for key %s: %v", childKey.Value, err)
-				return nil, err
-			}
-		case yaml.SequenceNode:
-			childValueSchema, err = g.buildSequenceNode(childKey, childValue)
-			if err != nil {
-				g.logger.Debugf("Error building sequence node for key %s: %v", childKey.Value, err)
-				return nil, err
-			}
-		case yaml.MappingNode:
-			childValueSchema, err = g.buildMappingNode(childKey, childValue)
-			if err != nil {
-				g.logger.Debugf("Error building mapping node for key %s: %v", childKey.Value, err)
-				return nil, err
-			}
-		default:
-			// should be impossible
-			return nil, fmt.Errorf("unsupported yaml type: %v", childValue.Kind)
+		childValueSchema, err := g.buildChildNodeSchema(childKey, childValue)
+		if err != nil {
+			return nil, err
 		}
 
 		s.Properties.Set(childKey.Value, childValueSchema)
@@ -231,10 +286,12 @@ func (g *Generator) warnUndocumentedValue(keyPath []*pkg.JsonSchema, schema *pkg
 		}
 
 		keyValues := []string{}
+
 		for _, k := range append(keyPath, schema) {
 			if k.Title == "" {
 				continue
 			}
+
 			keyValues = append(keyValues, k.Title)
 		}
 
@@ -252,10 +309,12 @@ func (g *Generator) warnUntypedValue(keyPath []*pkg.JsonSchema, schema *pkg.Json
 	}
 
 	keyValues := []string{}
+
 	for _, k := range append(keyPath, schema) {
 		if k.Title == "" {
 			continue
 		}
+
 		keyValues = append(keyValues, k.Title)
 	}
 

@@ -7,6 +7,20 @@ import (
 	"strings"
 )
 
+// filePerm is the permission mode used when writing the modeline back to
+// the target file.
+const filePerm = 0o600
+
+// FileModelineManager reads and rewrites the modeline comment in a file's
+// content, without touching the rest of the file.
+type FileModelineManager struct {
+	filepath string
+	exists   bool
+	content  string
+}
+
+// NewFileModelineManager loads the file at filepath, if it exists, so its
+// modeline can be inspected or replaced.
 func NewFileModelineManager(filepath string) (*FileModelineManager, error) {
 	manager := &FileModelineManager{
 		filepath: filepath,
@@ -15,9 +29,9 @@ func NewFileModelineManager(filepath string) (*FileModelineManager, error) {
 	if _, err := os.Stat(filepath); err == nil {
 		manager.exists = true
 
-		data, err := os.ReadFile(filepath)
+		data, err := os.ReadFile(filepath) //nolint:gosec // CLI intentionally reads a user-supplied local file path
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("reading %s: %w", filepath, err)
 		}
 
 		manager.content = string(data)
@@ -26,22 +40,20 @@ func NewFileModelineManager(filepath string) (*FileModelineManager, error) {
 	return manager, nil
 }
 
-type FileModelineManager struct {
-	filepath string
-	exists   bool
-	content  string
-}
-
+// SetModeline replaces the existing modeline matching modeline's program and
+// key, or inserts modeline as a new first line if none is found.
 func (m *FileModelineManager) SetModeline(modeline *Modeline) {
-	yamlModelinePrefix := fmt.Sprintf("# %s", modeline.ProgramAndKey())
-	yamlModeline := fmt.Sprintf("# %s", modeline.String())
+	yamlModelinePrefix := "# " + modeline.ProgramAndKey()
+	yamlModeline := "# " + modeline.String()
 
 	found := false
+
 	content := strings.Split(m.content, "\n")
 	for i, line := range content {
 		if strings.HasPrefix(line, yamlModelinePrefix) {
 			content[i] = yamlModeline
 			found = true
+
 			break
 		}
 	}
@@ -53,6 +65,11 @@ func (m *FileModelineManager) SetModeline(modeline *Modeline) {
 	m.content = strings.Join(content, "\n")
 }
 
-func (m *FileModelineManager) Write(createParents bool) error {
-	return os.WriteFile(m.filepath, []byte(m.content), 0644)
+// Write persists the current content back to disk.
+func (m *FileModelineManager) Write(_ bool) error {
+	if err := os.WriteFile(m.filepath, []byte(m.content), filePerm); err != nil {
+		return fmt.Errorf("writing %s: %w", m.filepath, err)
+	}
+
+	return nil
 }

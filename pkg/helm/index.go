@@ -1,38 +1,44 @@
 package helm
 
 import (
+	"errors"
 	"fmt"
-	"helmvalues/pkg/charts"
 	"os"
 	"path/filepath"
 	"sort"
+
+	"helmvalues/pkg/charts"
 
 	"github.com/Masterminds/semver/v3"
 	"go.yaml.in/yaml/v4"
 )
 
+// RepositoryIndexFromCache loads the Helm repository index for the given
+// repository name from the local Helm repository cache.
 func RepositoryIndexFromCache(repoName string) (*Index, error) {
 	repositoryCache := os.Getenv("HELM_REPOSITORY_CACHE")
 	if repositoryCache == "" {
-		return nil, fmt.Errorf("HELM_REPOSITORY_CACHE environment variable is not set")
+		return nil, errors.New("HELM_REPOSITORY_CACHE environment variable is not set")
 	}
 
 	indexPath := filepath.Join(repositoryCache, repoName+"-index.yaml")
 
+	//nolint:gosec // local Helm repository cache path, not network input
 	if _, err := os.Stat(indexPath); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("stat index file: %w", err)
 	}
 
 	return LoadIndex(indexPath)
 }
 
+// Index represents a parsed Helm repository index.yaml file.
 type Index struct {
 	Entries map[string][]*charts.ChartDetails `yaml:"entries"`
 }
 
-// LoadIndex loads and parses a Helm index.yaml file
+// LoadIndex loads and parses a Helm index.yaml file.
 func LoadIndex(path string) (*Index, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // local Helm repository cache path, not network input
 	if err != nil {
 		return nil, fmt.Errorf("failed to read index file: %w", err)
 	}
@@ -45,7 +51,7 @@ func LoadIndex(path string) (*Index, error) {
 	return &index, nil
 }
 
-// FindChart finds chart versions by name in the index
+// FindChart finds chart versions by name in the index.
 func (i *Index) FindChart(chartName string) ([]*charts.ChartDetails, error) {
 	versions, ok := i.Entries[chartName]
 	if !ok {
@@ -59,7 +65,7 @@ func (i *Index) FindChart(chartName string) ([]*charts.ChartDetails, error) {
 	return versions, nil
 }
 
-// GetVersion finds a specific version of a chart
+// GetVersion finds a specific version of a chart.
 func (i *Index) GetVersion(chartName, version string) (*charts.ChartDetails, error) {
 	versions, err := i.FindChart(chartName)
 	if err != nil {
@@ -76,7 +82,7 @@ func (i *Index) GetVersion(chartName, version string) (*charts.ChartDetails, err
 }
 
 // GetLatestVersion finds the latest stable version of a chart
-// Stable means non-prerelease versions (no -alpha, -beta, -rc suffixes)
+// Stable means non-prerelease versions (no -alpha, -beta, -rc suffixes).
 func (i *Index) GetLatestVersion(chartName string) (*charts.ChartDetails, error) {
 	versions, err := i.FindChart(chartName)
 	if err != nil {
@@ -93,6 +99,7 @@ func (i *Index) GetLatestVersion(chartName string) (*charts.ChartDetails, error)
 			// Skip invalid semver versions
 			continue
 		}
+
 		semvers = append(semvers, sv)
 		versionMap[v.Version] = v
 	}

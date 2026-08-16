@@ -10,6 +10,7 @@ func lpad(s string, padStr string, pLen int64) string {
 	if remaining <= 0 {
 		return s
 	}
+
 	return strings.Repeat(padStr, remaining) + s
 }
 
@@ -18,23 +19,27 @@ func rpad(s string, padStr string, pLen int64) string {
 	if remaining <= 0 {
 		return s
 	}
+
 	return s + strings.Repeat(padStr, remaining)
 }
 
 func maxLen(items []string) int {
-	max := 0
+	longest := 0
+
 	for _, s := range items {
-		for _, line := range strings.Split(s, "\n") {
-			if len(line) > max {
-				max = len(line)
+		for line := range strings.SplitSeq(s, "\n") {
+			if len(line) > longest {
+				longest = len(line)
 			}
 		}
 	}
-	return max
+
+	return longest
 }
 
 func rowSelect(items []ValuesRow, field string) []string {
 	var result []string
+
 	for _, item := range items {
 		switch field {
 		case "Key":
@@ -47,11 +52,12 @@ func rowSelect(items []ValuesRow, field string) []string {
 			result = append(result, item.Description)
 		}
 	}
+
 	return result
 }
 
 func mdRow(cols []string, colWidths []int64) string {
-	c := []string{}
+	c := make([]string, 0, len(cols))
 	for i, col := range cols {
 		c = append(c, rpad(col, " ", colWidths[i]))
 	}

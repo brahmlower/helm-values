@@ -1,3 +1,5 @@
+// Package charts provides types and helpers for locating and parsing
+// Helm chart directories.
 package charts
 
 import (
@@ -7,6 +9,14 @@ import (
 	"go.yaml.in/yaml/v4"
 )
 
+// Chart represents a Helm chart located on disk, rooted at a given directory.
+type Chart struct {
+	rootPath string
+	Details  *ChartDetails
+}
+
+// NewChart loads a Chart from the given chart root directory, parsing its
+// Chart.yaml file into ChartDetails.
 func NewChart(chartRoot string) (*Chart, error) {
 	chart := &Chart{
 		rootPath: chartRoot,
@@ -14,13 +24,14 @@ func NewChart(chartRoot string) (*Chart, error) {
 
 	content, err := os.ReadFile(chart.ChartFilePath())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read chart file: %w", err)
 	}
 
 	details := &ChartDetails{}
+
 	err = yaml.Unmarshal(content, details)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parse chart file: %w", err)
 	}
 
 	chart.Details = details
@@ -28,43 +39,49 @@ func NewChart(chartRoot string) (*Chart, error) {
 	return chart, nil
 }
 
-type Chart struct {
-	rootPath string
-	Details  *ChartDetails
-}
-
+// RootPath returns the chart's root directory path.
 func (c *Chart) RootPath() string {
 	return c.rootPath
 }
 
-func (p *Chart) ChartFilePath() string {
-	return fmt.Sprintf("%s/Chart.yaml", p.rootPath)
+// ChartFilePath returns the path to the chart's Chart.yaml file.
+func (c *Chart) ChartFilePath() string {
+	return c.rootPath + "/Chart.yaml"
 }
 
-func (p *Chart) ValuesFilePath() string {
-	return fmt.Sprintf("%s/values.yaml", p.rootPath)
+// ValuesFilePath returns the path to the chart's values.yaml file.
+func (c *Chart) ValuesFilePath() string {
+	return c.rootPath + "/values.yaml"
 }
 
-func (p *Chart) SchemaFilePath() string {
-	return fmt.Sprintf("%s/values.schema.json", p.rootPath)
+// SchemaFilePath returns the path to the chart's values.schema.json file.
+func (c *Chart) SchemaFilePath() string {
+	return c.rootPath + "/values.schema.json"
 }
 
-func (p *Chart) ReadmeMdFilePath() string {
-	return fmt.Sprintf("%s/README.md", p.rootPath)
+// ReadmeMdFilePath returns the path to the chart's README.md file.
+func (c *Chart) ReadmeMdFilePath() string {
+	return c.rootPath + "/README.md"
 }
 
-func (p *Chart) ReadmeMdTemplateFilePath() string {
-	return fmt.Sprintf("%s/README.md.gotmpl", p.rootPath)
+// ReadmeMdTemplateFilePath returns the path to the chart's README.md.gotmpl
+// template file.
+func (c *Chart) ReadmeMdTemplateFilePath() string {
+	return c.rootPath + "/README.md.gotmpl"
 }
 
-func (p *Chart) ReadmeRstFilePath() string {
-	return fmt.Sprintf("%s/README.rst", p.rootPath)
+// ReadmeRstFilePath returns the path to the chart's README.rst file.
+func (c *Chart) ReadmeRstFilePath() string {
+	return c.rootPath + "/README.rst"
 }
 
-func (p *Chart) ReadmeRstTemplateFilePath() string {
-	return fmt.Sprintf("%s/README.rst.gotmpl", p.rootPath)
+// ReadmeRstTemplateFilePath returns the path to the chart's README.rst.gotmpl
+// template file.
+func (c *Chart) ReadmeRstTemplateFilePath() string {
+	return c.rootPath + "/README.rst.gotmpl"
 }
 
+// ChartDetails holds the metadata parsed from a chart's Chart.yaml file.
 type ChartDetails struct {
 	Name        string            `yaml:"name"`
 	Description string            `yaml:"description"`
@@ -72,6 +89,8 @@ type ChartDetails struct {
 	Annotations map[string]string `yaml:"annotations"`
 }
 
+// ValuesSchema returns the chart's values-schema annotation, or an empty
+// string if it is not set.
 func (d *ChartDetails) ValuesSchema() string {
 	schemaURL, ok := d.Annotations["values-schema"]
 	if !ok || schemaURL == "" {

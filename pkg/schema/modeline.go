@@ -2,12 +2,15 @@ package schema
 
 import (
 	"fmt"
+
 	"helmvalues/pkg/charts"
 	"helmvalues/pkg/modeline"
 
 	"github.com/sirupsen/logrus"
 )
 
+// WriteSchemaModeline writes a yaml-language-server modeline pointing at the chart's
+// generated schema file into the values file at valuesPath.
 func WriteSchemaModeline(logger *logrus.Logger, chart *charts.Chart, valuesPath string, dryRun bool) error {
 	fileManager, err := modeline.NewFileModelineManager(valuesPath)
 	if err != nil {
@@ -19,8 +22,13 @@ func WriteSchemaModeline(logger *logrus.Logger, chart *charts.Chart, valuesPath 
 
 	if dryRun {
 		logger.Infof("schema: %s: dry-run enabled, skipping modeline write to %s", chart.Details.Name, valuesPath)
+
 		return nil
 	}
 
-	return fileManager.Write(false)
+	if err := fileManager.Write(false); err != nil {
+		return fmt.Errorf("failed to write modeline: %w", err)
+	}
+
+	return nil
 }

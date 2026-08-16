@@ -46,6 +46,8 @@ func commentAsMapNodes(comment string) ([]*yaml.Node, bool) {
 	return node.Content[0].Content, true
 }
 
+// KeyValueNodes builds the pair of YAML scalar nodes representing a single
+// "key: value" mapping entry.
 func KeyValueNodes(key string, value string) []*yaml.Node {
 	keyNode := &yaml.Node{
 		Kind:  yaml.ScalarNode,
@@ -55,6 +57,7 @@ func KeyValueNodes(key string, value string) []*yaml.Node {
 		Kind:  yaml.ScalarNode,
 		Value: value,
 	}
+
 	return []*yaml.Node{keyNode, valueNode}
 }
 
