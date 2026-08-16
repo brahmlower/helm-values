@@ -26,7 +26,7 @@ tasks:
     desc: Reinstall the plugin locally
     cmds:
       - helm plugin uninstall values || true
-      - helm plugin install ./dist/values-$(git describe --tags --abbrev=0).tgz
+      - helm plugin install ./dist/values-$(git describe --tags --abbrev=0).tgz --verify=false
 
   lint:
     desc: Run golangci-lint
