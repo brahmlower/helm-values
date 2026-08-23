@@ -66,5 +66,7 @@ func mdRow(cols []string, colWidths []int64) string {
 }
 
 func mdMultiline(s string) string {
+	s = strings.ReplaceAll(s, "|", `\|`)
+
 	return strings.ReplaceAll(s, "\n", "</br>")
 }
