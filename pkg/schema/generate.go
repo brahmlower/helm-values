@@ -88,7 +88,7 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*pkg.Json
 	}
 
 	extraNodes = append(extraNodes, comments.KeyValueNodes("title", key.Value)...)
-	extraNodes = append(extraNodes, comments.KeyValueNodes("default", value.Value)...)
+	extraNodes = append(extraNodes, comments.KeyNodeValueNodes("default", value)...)
 
 	s, err := comments.Parse(key, extraNodes)
 	if err != nil {

@@ -61,6 +61,27 @@ func KeyValueNodes(key string, value string) []*yaml.Node {
 	return []*yaml.Node{keyNode, valueNode}
 }
 
+// KeyNodeValueNodes builds a key node paired with a clone of valueNode, preserving
+// its Tag and Style. Use this instead of KeyValueNodes when the value comes from an
+// existing scalar node (e.g. a values.yaml default) rather than a literal Go string —
+// KeyValueNodes always produces an untagged plain scalar, so re-marshaling and
+// re-parsing it lets YAML's implicit typing turn a quoted "3000" into an int or a
+// quoted "true" into a bool, silently losing the original string type.
+func KeyNodeValueNodes(key string, valueNode *yaml.Node) []*yaml.Node {
+	keyNode := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Value: key,
+	}
+	clonedValue := &yaml.Node{
+		Kind:  valueNode.Kind,
+		Tag:   valueNode.Tag,
+		Style: valueNode.Style,
+		Value: valueNode.Value,
+	}
+
+	return []*yaml.Node{keyNode, clonedValue}
+}
+
 func newDocumentNode(content ...*yaml.Node) *yaml.Node {
 	return &yaml.Node{
 		Kind:    yaml.DocumentNode,
