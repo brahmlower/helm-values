@@ -51,7 +51,7 @@ linters:
         # Third-party types we don't own the fields of (go.yaml.in/yaml/v4's
         # node/error types, spf13/cobra's Command); requiring every field
         # (most irrelevant to the construction site) adds no value.
-        - "go\\.yaml\\.in/yaml/v4\\.(Node|LoadErrors|LoadError)"
+        - "go\\.yaml\\.in/yaml/v4\\.(Node|LoadErrors|LoadError|Mark)"
         - "github\\.com/spf13/cobra\\.Command"
 
     forbidigo:
