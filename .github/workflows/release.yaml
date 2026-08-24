@@ -44,9 +44,19 @@ jobs:
         run: |
           task build:plugin
 
+      - name: Generate changelog
+        uses: orhun/git-cliff-action@v4.8.0
+        id: git-cliff
+        with:
+          config: cliff.toml
+          args: --latest --strip header
+        env:
+          OUTPUT: CHANGES.md
+
       - name: Release
         uses: softprops/action-gh-release@v3.0.2
         if: github.ref_type == 'tag'
         with:
           draft: true
+          body_path: CHANGES.md
           files: ./dist/values-*.tgz
