@@ -37,7 +37,7 @@ tasks:
     desc: Run all tests
     cmds:
       - task: test:unit
-      - task: test:pre-commit
+      - task: test:e2e
 
   test:unit:
     desc: Run unit tests
@@ -45,7 +45,12 @@ tasks:
       - go test ./pkg/...
       - go test ./cmd/...
 
-  test:pre-commit:
+  test:e2e:
+    desc: Run all end-to-end tests
+    cmds:
+      - task: test:e2e:pre-commit
+
+  test:e2e:pre-commit:
     desc: Run pre-commit hook tests
     dir: ./tests/pre-commit
     cmds:
