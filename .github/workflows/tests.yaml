@@ -37,7 +37,7 @@ jobs:
       - name: Run unit tests
         run: task test:unit
 
-  pre-commit:
+  e2e:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo
@@ -65,5 +65,5 @@ jobs:
           task build:plugin -- --snapshot
           task reinstall
 
-      - name: Run pre-commit hook tests
-        run: task test:pre-commit
+      - name: Run e2e tests
+        run: task test:e2e
