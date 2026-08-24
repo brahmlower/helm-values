@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-08-24
+
+### Added
+
+- Added bats tests validating the pre-commit hooks
+- Add golangci-lint with a maximal ruleset
+
+### Changed
+
+- Rename pre-commit job to e2e, restructure e2e task hierarchy
+- Update actions/setup-go action to v7
+- Update actions/checkout action to v7
+- Update softprops/action-gh-release action to v3
+- Update golangci/golangci-lint-action action to v9
+- Update dependency golangci/golangci-lint to v2.13.1
+
+### Fixed
+
+- Pre-commit config uses correct files regex
+- Use message for modeline command
+- Schema command correctly writes modeline to values file
+- Schema modeline writes correct schema path
+- Update module github.com/samber/lo to v1.53.0
+- Resolve CI lint and pre-commit job failures
+- Escape pipe characters in generated markdown values table
+- Preserve scalar type of values.yaml defaults in generated schema
+- Pin dependencies
+- Resolve exhaustruct_v5 lint failures from golangci-lint v2.13.1
+- Update go dependencies (non-major)
+- Update to go.yaml.in/yaml/v4 LoadError.Mark.Line field
+- Exempt yaml.Mark from exhaustruct_v5
+
 ## [0.3.0] - 2026-02-13
 
 ### Added
@@ -23,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modeline support
 - Cleaned up chartref type
 - Small readme restructuring
+- Release 0.3.0
 
 ### Fixed
 
@@ -182,6 +215,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removed unecessary fs for file ops
 
+[0.4.0]: https://github.com/brahmlower/helm-values/compare/0.3.0..0.4.0
 [0.3.0]: https://github.com/brahmlower/helm-values/compare/0.2.0..0.3.0
 [0.2.0]: https://github.com/brahmlower/helm-values/compare/0.1.0..0.2.0
 [0.1.0]: https://github.com/brahmlower/helm-values/compare/0.0.2..0.1.0
