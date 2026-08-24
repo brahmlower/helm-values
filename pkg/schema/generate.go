@@ -92,7 +92,11 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*pkg.Json
 
 	s, err := comments.Parse(key, extraNodes)
 	if err != nil {
-		cErr := &comments.CommentError{}
+		cErr := &comments.CommentError{
+			Filepath: "",
+			Node:     nil,
+			Err:      nil,
+		}
 		if errors.As(err, &cErr) {
 			cErr.Filepath = g.plan.chart.ValuesFilePath()
 			cErr.RenderToLog(g.logger)
@@ -116,7 +120,7 @@ func (g *Generator) buildSequenceNode(key *yaml.Node, _ *yaml.Node) (*pkg.JsonSc
 
 	// Not all objects will have a yaml key node, only set key values if they exist
 	if key == nil {
-		s := &pkg.JsonSchema{}
+		s := pkg.NewJsonSchema()
 		s.Properties = pkg.NewEncodableOrderedMap[string, *pkg.JsonSchema]()
 
 		return s, nil
@@ -126,7 +130,11 @@ func (g *Generator) buildSequenceNode(key *yaml.Node, _ *yaml.Node) (*pkg.JsonSc
 
 	s, err := comments.Parse(key, extraNodes)
 	if err != nil {
-		cErr := &comments.CommentError{}
+		cErr := &comments.CommentError{
+			Filepath: "",
+			Node:     nil,
+			Err:      nil,
+		}
 		if errors.As(err, &cErr) {
 			cErr.Filepath = g.plan.chart.ValuesFilePath()
 			cErr.RenderToLog(g.logger)
@@ -149,7 +157,11 @@ func (g *Generator) buildMappingNodeTitledSchema(key *yaml.Node, extraNodes []*y
 
 	s, err := comments.Parse(key, extraNodes)
 	if err != nil {
-		cErr := &comments.CommentError{}
+		cErr := &comments.CommentError{
+			Filepath: "",
+			Node:     nil,
+			Err:      nil,
+		}
 		if errors.As(err, &cErr) {
 			cErr.Filepath = g.plan.chart.ValuesFilePath()
 			cErr.RenderToLog(g.logger)
@@ -208,7 +220,7 @@ func (g *Generator) buildMappingNode(key *yaml.Node, value *yaml.Node) (*pkg.Jso
 	extraNodes = append(extraNodes, comments.KeyValueNodes("additionalProperties", "false")...)
 
 	// Not all objects will have a yaml key node, only set key values if they exist
-	s := &pkg.JsonSchema{}
+	s := pkg.NewJsonSchema()
 
 	if key != nil {
 		var err error

@@ -29,6 +29,7 @@ func NewPlan(cfg *Config, chart *charts.Chart) *Plan {
 		StdOut:        cfg.StdOut,
 		Strict:        cfg.Strict,
 		DryRun:        cfg.DryRun,
+		GitAdd:        cfg.GitAdd,
 		WriteModeline: false,
 		LogLevel:      cfg.LogLevel,
 	}

@@ -20,6 +20,7 @@ type Chart struct {
 func NewChart(chartRoot string) (*Chart, error) {
 	chart := &Chart{
 		rootPath: chartRoot,
+		Details:  nil,
 	}
 
 	content, err := os.ReadFile(chart.ChartFilePath())
@@ -27,7 +28,12 @@ func NewChart(chartRoot string) (*Chart, error) {
 		return nil, fmt.Errorf("read chart file: %w", err)
 	}
 
-	details := &ChartDetails{}
+	details := &ChartDetails{
+		Name:        "",
+		Description: "",
+		Version:     "",
+		Annotations: nil,
+	}
 
 	err = yaml.Unmarshal(content, details)
 	if err != nil {

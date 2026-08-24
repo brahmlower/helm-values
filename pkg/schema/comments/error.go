@@ -33,8 +33,9 @@ type CommentError struct {
 // NewCommentError wraps err as a CommentError for node.
 func NewCommentError(node *yaml.Node, err error) *CommentError {
 	return &CommentError{
-		Node: node,
-		Err:  err,
+		Filepath: "",
+		Node:     node,
+		Err:      err,
 	}
 }
 

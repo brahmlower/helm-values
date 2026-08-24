@@ -26,7 +26,10 @@ func NewChartRef(ref string) (*ChartRef, error) {
 	parts1 := strings.SplitN(ref, "/", maxSplitParts)
 	if len(parts1) != maxSplitParts {
 		cr := &ChartRef{
-			Path: ref,
+			Repository: "",
+			Chart:      "",
+			Version:    "",
+			Path:       ref,
 		}
 
 		return cr, nil
@@ -46,6 +49,7 @@ func NewChartRef(ref string) (*ChartRef, error) {
 		Repository: repository,
 		Chart:      chart,
 		Version:    version,
+		Path:       "",
 	}
 
 	return cr, nil

@@ -4,12 +4,9 @@ linters:
   default: all
 
   disable:
-    # Deprecated, replaced by wsl_v5 / gomodguard_v2 below.
+    # Deprecated, replaced by wsl_v5 / gomodguard_v2 / exhaustruct_v5 below.
     - wsl
     - gomodguard
-
-    # Forces every struct literal (including third-party ones) to set every
-    # field explicitly. Too invasive for general application code.
     - exhaustruct
 
     # Requires every error to be a package-level sentinel wrapped with %w.
@@ -48,6 +45,14 @@ linters:
       # default case; requiring every variant to be listed explicitly adds
       # no value there.
       default-signifies-exhaustive: true
+
+    exhaustruct_v5:
+      ignore-patterns:
+        # Third-party types we don't own the fields of (go.yaml.in/yaml/v4's
+        # node/error types, spf13/cobra's Command); requiring every field
+        # (most irrelevant to the construction site) adds no value.
+        - "go\\.yaml\\.in/yaml/v4\\.(Node|LoadErrors|LoadError)"
+        - "github\\.com/spf13/cobra\\.Command"
 
     forbidigo:
       # Only flag the bare print/println builtins (debug leftovers); this is

@@ -46,7 +46,7 @@ func Parse(node *yaml.Node, extraNodes []*yaml.Node) (*pkg.JsonSchema, error) {
 		return nil, fmt.Errorf("marshaling schema node: %w", err)
 	}
 
-	s := &pkg.JsonSchema{}
+	s := pkg.NewJsonSchema()
 	if err := yaml.Unmarshal(fullSchema, s); err != nil {
 		return nil, fmt.Errorf("unmarshaling schema: %w", err)
 	}

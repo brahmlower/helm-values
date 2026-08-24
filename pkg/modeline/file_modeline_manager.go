@@ -24,6 +24,8 @@ type FileModelineManager struct {
 func NewFileModelineManager(filepath string) (*FileModelineManager, error) {
 	manager := &FileModelineManager{
 		filepath: filepath,
+		exists:   false,
+		content:  "",
 	}
 
 	if _, err := os.Stat(filepath); err == nil {
