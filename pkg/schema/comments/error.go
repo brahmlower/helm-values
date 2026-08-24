@@ -60,7 +60,7 @@ func (e *CommentError) Render() string {
 	if errors.As(e.Err, &yamlErr) {
 		for _, unmarshalErr := range yamlErr.Errors {
 			// UnmarshalErrors report line number as 1-indexed
-			unmarshalErr.Line = displayFile.Lines()[unmarshalErr.Line-1].LineNum
+			unmarshalErr.Mark.Line = displayFile.Lines()[unmarshalErr.Mark.Line-1].LineNum
 		}
 	}
 
