@@ -162,8 +162,8 @@ func TestCommentError_Render_WithYamlTypeError(t *testing.T) {
 	yamlErr := &yaml.LoadErrors{
 		Errors: []*yaml.LoadError{
 			{
-				Line: 1, // This is relative to the comment block
-				Err:  errors.New("cannot unmarshal string into int"),
+				Mark:    yaml.Mark{Line: 1}, // This is relative to the comment block
+				Message: "cannot unmarshal string into int",
 			},
 		},
 	}
