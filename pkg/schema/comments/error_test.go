@@ -37,8 +37,9 @@ func TestCommentError_Error(t *testing.T) {
 	err := errors.New(expectedMsg)
 
 	commentErr := &comments.CommentError{
-		Node: &yaml.Node{},
-		Err:  err,
+		Filepath: "",
+		Node:     &yaml.Node{},
+		Err:      err,
 	}
 
 	assert.Equal(t, expectedMsg, commentErr.Error())

@@ -86,6 +86,74 @@ type JsonSchema struct {
 	// Extensions map[string]ExtSchema `json:"extensions,omitempty"`
 }
 
+// NewJsonSchema returns a JsonSchema with every field set to its zero value,
+// ready to have only the fields relevant to the caller overridden.
+//
+//nolint:revive,funlen // mirrors the JsonSchema type name; a flat zero-value field list, not complexity
+func NewJsonSchema() *JsonSchema {
+	return &JsonSchema{
+		Location:              "",
+		Schema:                "",
+		Format:                "",
+		Always:                nil,
+		Ref:                   "",
+		RecursiveAnchor:       false,
+		RecursiveRef:          "",
+		DynamicAnchor:         "",
+		DynamicRef:            "",
+		Type:                  "",
+		Constant:              nil,
+		Enum:                  nil,
+		Not:                   nil,
+		AllOf:                 nil,
+		AnyOf:                 nil,
+		OneOf:                 nil,
+		If:                    nil,
+		Then:                  nil,
+		Else:                  nil,
+		MinProperties:         0,
+		MaxProperties:         0,
+		Required:              nil,
+		Properties:            nil,
+		PropertyNames:         nil,
+		PatternProperties:     nil,
+		AdditionalProperties:  nil,
+		Dependencies:          nil,
+		DependentRequired:     nil,
+		DependentSchemas:      nil,
+		UnevaluatedProperties: nil,
+		MinItems:              0,
+		MaxItems:              0,
+		UniqueItems:           false,
+		Items:                 nil,
+		AdditionalItems:       nil,
+		PrefixItems:           nil,
+		Contains:              nil,
+		MinContains:           0,
+		MaxContains:           0,
+		UnevaluatedItems:      nil,
+		MinLength:             0,
+		MaxLength:             0,
+		Pattern:               nil,
+		ContentEncoding:       "",
+		ContentMediaType:      "",
+		ContentSchema:         nil,
+		Minimum:               0,
+		ExclusiveMinimum:      0,
+		Maximum:               0,
+		ExclusiveMaximum:      0,
+		MultipleOf:            0,
+		Title:                 "",
+		Description:           "",
+		Default:               nil,
+		Comment:               "",
+		ReadOnly:              false,
+		WriteOnly:             false,
+		Examples:              nil,
+		Deprecated:            false,
+	}
+}
+
 // NodeInspector is a callback invoked for each schema node visited by
 // WalkProperties, receiving the path of ancestor schemas and the node itself.
 type NodeInspector func(keyPath []*JsonSchema, schema *JsonSchema)

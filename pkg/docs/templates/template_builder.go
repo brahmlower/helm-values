@@ -29,7 +29,12 @@ type TemplateBuilder struct {
 
 // NewTemplateBuilder creates a TemplateBuilder configured with the given options.
 func NewTemplateBuilder(opts ...BuilderOpt) *TemplateBuilder {
-	t := &TemplateBuilder{}
+	t := &TemplateBuilder{
+		customTemplate: "",
+		extraPaths:     nil,
+		useDefault:     false,
+		markup:         "",
+	}
 	for _, s := range opts {
 		s(t)
 	}

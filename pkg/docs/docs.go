@@ -201,21 +201,13 @@ func schemaProperties(jsonschema *pkg.JsonSchema, order ValuesOrder, parents []s
 		}
 
 		if prop.Ref != "" {
-			row := templates.ValuesRow{
-				Key:  strings.Join(append(parents, key), "."),
-				Type: fmt.Sprintf("[Ref](%s)", prop.Ref),
-			}
-			rows = append(rows, row)
+			rows = append(rows, linkValuesRow(parents, key, fmt.Sprintf("[Ref](%s)", prop.Ref)))
 
 			continue
 		}
 
 		if prop.Schema != "" {
-			row := templates.ValuesRow{
-				Key:  strings.Join(append(parents, key), "."),
-				Type: fmt.Sprintf("[Schema](%s)", prop.Schema),
-			}
-			rows = append(rows, row)
+			rows = append(rows, linkValuesRow(parents, key, fmt.Sprintf("[Schema](%s)", prop.Schema)))
 
 			continue
 		}
@@ -244,6 +236,17 @@ func schemaProperties(jsonschema *pkg.JsonSchema, order ValuesOrder, parents []s
 	}
 
 	return rows
+}
+
+// linkValuesRow builds a ValuesRow for a property that links out to a referenced
+// schema instead of describing a value inline (a $ref or $schema property).
+func linkValuesRow(parents []string, key, linkType string) templates.ValuesRow {
+	return templates.ValuesRow{
+		Key:         strings.Join(append(parents, key), "."),
+		Type:        linkType,
+		Default:     "",
+		Description: "",
+	}
 }
 
 // formatEnumType renders a property's type alongside its enum values, if any, for

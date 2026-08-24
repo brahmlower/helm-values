@@ -61,10 +61,9 @@ func TestBasicCommentParsing(t *testing.T) {
 	t.Parallel()
 
 	var tests = []struct {
-		name          string
-		document      string
-		expectedError string
-		validate      func(t *testing.T, s *pkg.JsonSchema, err error)
+		name     string
+		document string
+		validate func(t *testing.T, s *pkg.JsonSchema, err error)
 	}{
 		{
 			name:     "empty document makes no changes",
@@ -72,7 +71,7 @@ func TestBasicCommentParsing(t *testing.T) {
 			validate: func(t *testing.T, s *pkg.JsonSchema, err error) {
 				t.Helper()
 				require.NoError(t, err)
-				assert.Equal(t, pkg.JsonSchema{}, *s)
+				assert.Empty(t, *s)
 			},
 		},
 		{
@@ -109,7 +108,7 @@ func TestBasicCommentParsing(t *testing.T) {
 			validate: func(t *testing.T, s *pkg.JsonSchema, err error) {
 				t.Helper()
 				require.NoError(t, err)
-				assert.Equal(t, pkg.JsonSchema{}, *s)
+				assert.Empty(t, *s)
 			},
 		},
 		{
@@ -302,14 +301,19 @@ func TestCommentFieldsMultipleLines(t *testing.T) {
 		validate      func(t *testing.T, tc testCase, s *pkg.JsonSchema)
 	}
 
+	oneOfStringSchema := pkg.NewJsonSchema()
+	oneOfStringSchema.Type = "string"
+	oneOfStringSchema.Description = "this is a string"
+
+	oneOfNumberSchema := pkg.NewJsonSchema()
+	oneOfNumberSchema.Type = "number"
+	oneOfNumberSchema.Description = "this is a number"
+
 	var tests = []testCase{
 		{
-			name:    "oneOf with multiple lines",
-			comment: TestFieldOneOf,
-			expectedValue: []*pkg.JsonSchema{
-				{Type: "string", Description: "this is a string"},
-				{Type: "number", Description: "this is a number"},
-			},
+			name:          "oneOf with multiple lines",
+			comment:       TestFieldOneOf,
+			expectedValue: []*pkg.JsonSchema{oneOfStringSchema, oneOfNumberSchema},
 			validate: func(t *testing.T, tc testCase, s *pkg.JsonSchema) {
 				t.Helper()
 				assert.IsType(t, tc.expectedValue, s.OneOf)
