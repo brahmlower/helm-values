@@ -476,6 +476,8 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
   - [x] Pre-Commit Hook support
   - [x] Values modeline support
 - 0.4.0
+  - [x] `schema`/`docs` `--check` flag for CI validation
+- 0.5.0
   - [ ] Schema Generation
     - [ ] Warn on ignored jsonschema property (in cases of $ref/$schema usage)
     - [ ] Json-Schema Draft 7 support?
@@ -487,16 +489,14 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
     - [ ] Support "Deprecated" indicator
     - [ ] Template: Chart Values
       - [x] Values groups
-- 0.4.1
-  - [x] `schema`/`docs` `--check` flag for CI validation
-- 0.5.0
+- 0.6.0
   - [ ] Schema Generation
     - [ ] Support declaring and using yaml anchors in doc comments
     - [ ] Root level one-of/any-of/all-of
   - [ ] Docs Generation
     - [ ] TODO: Detect recursive templates
     - [ ] TODO: markdown/rst escaping
-- 0.6.0
+- 0.7.0
   - [ ] Template: Chart Dependencies (defined in Chart.yaml)
 - some day
   - [ ] validate examples against schema
