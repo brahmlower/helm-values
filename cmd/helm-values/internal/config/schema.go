@@ -54,9 +54,13 @@ func (c *SchemaConfig) BindFlags(cmd *cobra.Command) error {
 	cmd.Flags().Bool("dry-run", false, "don't write changes to disk")
 	cmd.Flags().String(logLevelFlag, "warn", "log level (debug, info, warn, error, fatal, panic)")
 	cmd.Flags().Bool("write-modeline", true, "write modeline to values file")
+	cmd.Flags().Bool("check", false,
+		"check that values.schema.json is up to date and that Chart.yaml's "+
+			"values-schema annotation references the chart's current version, "+
+			"without writing changes (exit non-zero if not)")
 
 	for _, name := range []string{
-		"stdout", "strict", "git-add", "dry-run", logLevelFlag, "write-modeline",
+		"stdout", "strict", "git-add", "dry-run", logLevelFlag, "write-modeline", "check",
 	} {
 		if err := bindFlag(c.Viper, cmd, name); err != nil {
 			return err
@@ -79,6 +83,7 @@ func (c *SchemaConfig) ToPackageConfig() (*schema.Config, error) {
 		DryRun:        c.GetBool("dry-run"),
 		GitAdd:        c.GetBool("git-add"),
 		WriteModeline: c.GetBool("write-modeline"),
+		Check:         c.GetBool("check"),
 		LogLevel:      logLevel,
 	}
 

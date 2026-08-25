@@ -11,5 +11,6 @@ type Config struct {
 	DryRun        bool
 	GitAdd        bool
 	WriteModeline bool
+	Check         bool
 	LogLevel      logrus.Level
 }

@@ -1,11 +1,13 @@
 package schema
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"helmvalues/pkg"
 	"helmvalues/pkg/charts"
@@ -73,6 +75,45 @@ func (p *Plan) GitAdd() bool {
 // DryRun reports whether the plan should avoid writing any files.
 func (p *Plan) DryRun() bool {
 	return p.cfg.DryRun
+}
+
+// Check reports whether the plan should verify (rather than write) the
+// chart's generated schema and Chart.yaml metadata.
+func (p *Plan) Check() bool {
+	return p.cfg.Check
+}
+
+// CheckSchema reports problems with the chart's on-disk schema and
+// Chart.yaml metadata: whether values.schema.json matches the freshly
+// generated schema, and whether the values-schema annotation references
+// the chart's current version. An empty result means everything is up to
+// date.
+func (p *Plan) CheckSchema(schema *pkg.JsonSchema) []string {
+	var problems []string
+
+	content, err := json.MarshalIndent(schema, "", "  ")
+	if err != nil {
+		return []string{fmt.Sprintf("%s: failed to marshal generated schema: %s", p.chart.Details.Name, err)}
+	}
+
+	existing, err := os.ReadFile(p.chart.SchemaFilePath())
+	if err != nil || !bytes.Equal(existing, content) {
+		problems = append(problems, fmt.Sprintf(
+			"%s is stale -- run `helm-values schema %s` and commit the result",
+			p.chart.SchemaFilePath(), p.chart.RootPath(),
+		))
+	}
+
+	if schemaURL := p.chart.Details.ValuesSchema(); schemaURL != "" {
+		if !strings.Contains(schemaURL, p.chart.Details.Version) {
+			problems = append(problems, fmt.Sprintf(
+				"%s: values-schema annotation does not reference current chart version %s (found: %s)",
+				p.chart.ChartFilePath(), p.chart.Details.Version, schemaURL,
+			))
+		}
+	}
+
+	return problems
 }
 
 // WriteSchema encodes and writes the generated schema per the plan's config.

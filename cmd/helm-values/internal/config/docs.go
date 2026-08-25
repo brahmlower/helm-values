@@ -125,10 +125,13 @@ func (c *DocsConfig) BindFlags(cmd *cobra.Command) error {
 	cmd.Flags().String("output", "", "path to output (defaults to README.md or README.rst based on markup)")
 	cmd.Flags().String("template", "", "path to template (defaults to README.md.tmpl or README.rst.tmpl based on markup)")
 	cmd.Flags().String("extra-templates", "", "glob path to extra templates")
+	cmd.Flags().Bool("check", false,
+		"check that the rendered docs file is up to date, without writing "+
+			"changes (exit non-zero if not)")
 
 	for _, name := range []string{
 		"stdout", "git-add", "strict", "dry-run", logLevelFlag, "markup",
-		"order", "use-default", "output", "template", "extra-templates",
+		"order", "use-default", "output", "template", "extra-templates", "check",
 	} {
 		if err := bindFlag(c.Viper, cmd, name); err != nil {
 			return err
@@ -166,6 +169,7 @@ func (c *DocsConfig) ToPackageConfig() (*docs.Config, error) {
 		Strict:         c.GetBool("strict"),
 		DryRun:         c.GetBool("dry-run"),
 		GitAdd:         c.GetBool("git-add"),
+		Check:          c.GetBool("check"),
 		UseDefault:     c.UseDefault(),
 		Output:         c.Output(),
 		Template:       c.GetString("template"),
