@@ -487,6 +487,8 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
     - [ ] Support "Deprecated" indicator
     - [ ] Template: Chart Values
       - [x] Values groups
+- 0.4.1
+  - [x] `schema`/`docs` `--check` flag for CI validation
 - 0.5.0
   - [ ] Schema Generation
     - [ ] Support declaring and using yaml anchors in doc comments
