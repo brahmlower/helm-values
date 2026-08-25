@@ -34,6 +34,11 @@ const CommentWithYAMLString = `
 foo: bar
 `
 
+const CommentWithColonAndMultiWordKey = `
+# See docs for details: https://example.com
+foo: bar
+`
+
 const SetsSchemaDefault = `
 # default: baz
 foo: bar
@@ -104,6 +109,15 @@ func TestBasicCommentParsing(t *testing.T) {
 			},
 		},
 		{
+			name:     "comment with a colon after a multi-word phrase is treated as description",
+			document: CommentWithColonAndMultiWordKey,
+			validate: func(t *testing.T, s *pkg.JsonSchema, err error) {
+				t.Helper()
+				require.NoError(t, err)
+				assert.Equal(t, "See docs for details: https://example.com", s.Description)
+			},
+		},
+		{
 			name:     "comment has no jsonschema properties",
 			document: DoesntSetSchemaProperties,
 			validate: func(t *testing.T, s *pkg.JsonSchema, err error) {
@@ -155,6 +169,26 @@ func TestBasicCommentParsing(t *testing.T) {
 			tc.validate(t, s, err)
 		})
 	}
+}
+
+// TestParseOverridesExtraNodeWithCommentField exercises the scenario that
+// used to panic: extraNodes (auto-derived fields, e.g. an inferred "type")
+// and a comment field share the same key. The comment-authored value should
+// win instead of producing a duplicate-mapping-key error.
+func TestParseOverridesExtraNodeWithCommentField(t *testing.T) {
+	t.Parallel()
+
+	extraNodes := comments.KeyValueNodes("type", "object")
+
+	document := "# type: string\nfoo: bar\n"
+
+	yamlNode := &yaml.Node{}
+	err := yaml.Unmarshal([]byte(document), yamlNode)
+	require.NoError(t, err)
+
+	s, err := comments.Parse(getCommentNode(yamlNode), extraNodes)
+	require.NoError(t, err)
+	assert.Equal(t, "string", s.Type)
 }
 
 func TestCommentFieldsSingleLine(t *testing.T) {
