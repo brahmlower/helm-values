@@ -2,6 +2,7 @@ package schema
 
 import (
 	"fmt"
+	"os"
 
 	"helmvalues/pkg/charts"
 
@@ -29,22 +30,26 @@ func GenerateSchema(logger *logrus.Logger, cfg *Config, chartDirs []string) erro
 	}
 
 	// Iterate through plans again, this time generating the schema
+	var problems []string
+
 	for _, plan := range plans {
 		logger.Infof("schema: %s: starting generation", plan.Chart().Details.Name)
 
 		schema, err := NewGenerator(logger, plan).Generate()
 		if err != nil {
-			logger.Error(err.Error())
+			return fmt.Errorf("schema: %s: %w", plan.Chart().Details.Name, err)
+		}
 
-			return nil
+		if plan.Check() {
+			problems = append(problems, plan.CheckSchema(schema)...)
+
+			continue
 		}
 
 		logger.Debugf("schema: %s: writing output", plan.Chart().Details.Name)
 
 		if err := plan.WriteSchema(logger, schema); err != nil {
-			logger.Error(err.Error())
-
-			return nil
+			return fmt.Errorf("schema: %s: %w", plan.Chart().Details.Name, err)
 		}
 
 		if cfg.WriteModeline {
@@ -57,9 +62,7 @@ func GenerateSchema(logger *logrus.Logger, cfg *Config, chartDirs []string) erro
 				plan.DryRun(),
 			)
 			if err != nil {
-				logger.Error(err.Error())
-
-				return nil
+				return fmt.Errorf("schema: %s: %w", plan.Chart().Details.Name, err)
 			}
 		} else {
 			logger.Debugf("schema: %s: skipping modeline write", plan.Chart().Details.Name)
@@ -68,5 +71,19 @@ func GenerateSchema(logger *logrus.Logger, cfg *Config, chartDirs []string) erro
 		logger.Infof("schema: %s: finished", plan.Chart().Details.Name)
 	}
 
-	return nil
+	return reportProblems(problems)
+}
+
+// reportProblems prints every check problem found and, if any were found,
+// returns an error summarizing how many.
+func reportProblems(problems []string) error {
+	if len(problems) == 0 {
+		return nil
+	}
+
+	for _, p := range problems {
+		fmt.Fprintln(os.Stderr, p)
+	}
+
+	return fmt.Errorf("check failed: %d problem(s) found", len(problems))
 }

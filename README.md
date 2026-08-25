@@ -89,7 +89,9 @@ Usage:
   helm-values schema [flags] chart_dir [...chart_dir]
 
 Flags:
+      --check              check that values.schema.json is up to date and that Chart.yaml's values-schema annotation references the chart's current version, without writing changes (exit non-zero if not)
       --dry-run            don't write changes to disk
+      --git-add            stage changes with git add (useful for pre-commit hooks)
   -h, --help               help for schema
       --log-level string   log level (debug, info, warn, error, fatal, panic) (default "warn")
       --stdout             write to stdout
@@ -121,11 +123,14 @@ Usage:
   helm-values docs [flags] chart_dir [...chart_dir]
 
 Flags:
+      --check                    check that the rendered docs file is up to date, without writing changes (exit non-zero if not)
       --dry-run                  don't write changes to disk
       --extra-templates string   glob path to extra templates
+      --git-add                  stage changes with git add (useful for pre-commit hooks)
   -h, --help                     help for docs
       --log-level string         log level (debug, info, warn, error, fatal, panic) (default "warn")
       --markup string            markup language (md, markdown, rst, restructuredtext)
+      --order string             order of values (preserve, alphabetical) (default "preserve")
       --output string            path to output (defaults to README.md or README.rst based on markup)
       --stdout                   write to stdout
       --strict                   fail on doc comment parsing errors

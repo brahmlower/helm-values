@@ -37,13 +37,32 @@ func GenerateDocs(logger *logrus.Logger, cfg *Config, chartDirs []string) error 
 	}
 
 	// Iterate through plans, generating the docs for each
+	var problems []string
+
 	for _, plan := range plans {
-		if err := generateChartDoc(logger, cfg, staticPaths, plan); err != nil {
+		chartProblems, err := generateChartDoc(logger, cfg, staticPaths, plan)
+		if err != nil {
 			return err
 		}
+
+		problems = append(problems, chartProblems...)
 	}
 
-	return nil
+	return reportProblems(problems)
+}
+
+// reportProblems prints every check problem found and, if any were found,
+// returns an error summarizing how many.
+func reportProblems(problems []string) error {
+	if len(problems) == 0 {
+		return nil
+	}
+
+	for _, p := range problems {
+		fmt.Fprintln(os.Stderr, p)
+	}
+
+	return fmt.Errorf("check failed: %d problem(s) found", len(problems))
 }
 
 // collectPlans builds a Plan for each discovered chart, logging its details and
@@ -69,18 +88,18 @@ func collectPlans(logger *logrus.Logger, cfg *Config, chartsFound []*charts.Char
 	return plans, nil
 }
 
-// generateChartDoc renders and writes the documentation for a single chart's plan,
-// using staticPaths and cfg.ExtraTemplates as additional templates.
-func generateChartDoc(logger *logrus.Logger, cfg *Config, staticPaths []string, plan *Plan) error {
+// generateChartDoc renders the documentation for a single chart's plan, using staticPaths
+// and cfg.ExtraTemplates as additional templates, then either writes or checks it
+// depending on the plan's configuration. The returned problems are non-empty only when
+// plan.Check() is set and the rendered content doesn't match what's on disk.
+func generateChartDoc(logger *logrus.Logger, cfg *Config, staticPaths []string, plan *Plan) ([]string, error) {
 	logger.Infof("docs: %s: starting generation", plan.Chart().Details.Name)
 
 	logger.Debugf("docs: %s: reading values file", plan.Chart().Details.Name)
 
 	jsonschema, err := schema.NewGenerator(logger, plan.SchemaPlan()).Generate()
 	if err != nil {
-		logger.Error(err.Error())
-
-		return nil
+		return nil, fmt.Errorf("docs: %s: %w", plan.Chart().Details.Name, err)
 	}
 
 	logger.Tracef("docs: %s: jsonschema properties: %+v", plan.Chart().Details.Name, jsonschema.Properties)
@@ -95,7 +114,7 @@ func generateChartDoc(logger *logrus.Logger, cfg *Config, staticPaths []string, 
 
 	t, err := buildChartTemplate(logger, cfg, staticPaths, plan)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	buf := new(bytes.Buffer)
@@ -104,18 +123,22 @@ func generateChartDoc(logger *logrus.Logger, cfg *Config, staticPaths []string, 
 
 	err = t.Execute(buf, table)
 	if err != nil {
-		return fmt.Errorf("rendering template: %w", err)
+		return nil, fmt.Errorf("rendering template: %w", err)
+	}
+
+	if plan.Check() {
+		return plan.CheckReadme(buf.String())
 	}
 
 	logger.Debugf("docs: %s: writing output", plan.Chart().Details.Name)
 
 	if err := plan.WriteReadme(logger, buf.String()); err != nil {
-		return err
+		return nil, err
 	}
 
 	logger.Infof("docs: %s: finished", plan.Chart().Details.Name)
 
-	return nil
+	return nil, nil
 }
 
 // buildChartTemplate collects the static, extra, and (if applicable) custom template

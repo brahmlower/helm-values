@@ -31,6 +31,7 @@ func NewPlan(cfg *Config, chart *charts.Chart) *Plan {
 		DryRun:        cfg.DryRun,
 		GitAdd:        cfg.GitAdd,
 		WriteModeline: false,
+		Check:         false,
 		LogLevel:      cfg.LogLevel,
 	}
 	schemaPlan := schema.NewPlan(schemaCfg, chart)
@@ -101,6 +102,37 @@ func (p *Plan) GitAdd() bool {
 // DryRun reports whether the plan should skip writing output to disk.
 func (p *Plan) DryRun() bool {
 	return p.cfg.DryRun
+}
+
+// Check reports whether the plan should verify (rather than write) the
+// chart's rendered documentation.
+func (p *Plan) Check() bool {
+	return p.cfg.Check
+}
+
+// CheckReadme reports whether the plan's rendered content matches what's
+// currently on disk. An empty, nil-error result means it's up to date.
+func (p *Plan) CheckReadme(content string) ([]string, error) {
+	outputPath, err := p.DocsOutputPath()
+	if err != nil {
+		return nil, err
+	}
+
+	// outputPath is derived from the chart's own configured/derived README path
+	// (or a user-supplied --output flag), not attacker-controlled input.
+	//nolint:gosec // outputPath is a user-opted-in, non-attacker-controlled file path
+	existing, err := os.ReadFile(outputPath)
+	// A missing or unreadable output file is itself a check problem (stale/missing docs),
+	// not a fatal error, so it's intentionally not propagated as one.
+	//nolint:nilerr // see comment above
+	if err != nil || string(existing) != content {
+		return []string{fmt.Sprintf(
+			"%s is stale -- run `helm-values docs %s` and commit the result",
+			outputPath, p.chart.RootPath(),
+		)}, nil
+	}
+
+	return nil, nil
 }
 
 // DocsTargetTemplate resolves the template path to render, returning whether the
