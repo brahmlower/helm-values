@@ -25,7 +25,7 @@ func commentAsDescriptionNodes(comment string) ([]*yaml.Node, bool) {
 	if node.Content[0].Kind == yaml.MappingNode &&
 		len(node.Content[0].Content) == 2 &&
 		strings.Count(node.Content[0].Content[0].Value, " ") > 1 {
-		return KeyValueNodes("description", node.Content[0].Value), true
+		return KeyValueNodes("description", strings.TrimSpace(comment)), true
 	}
 
 	return []*yaml.Node{}, false

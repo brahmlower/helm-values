@@ -40,6 +40,11 @@ func Parse(node *yaml.Node, extraNodes []*yaml.Node) (*pkg.JsonSchema, error) {
 		schemaMapNode.Content = append(schemaMapNode.Content, footNodes...)
 	}
 
+	// User-authored head/foot comment fields (appended above) should override
+	// the auto-derived extraNodes (e.g. inferred "type") when both set the same
+	// key, rather than producing a duplicate-key YAML error.
+	schemaMapNode.Content = dedupeMappingNodesKeepLast(schemaMapNode.Content)
+
 	// marshal to a string and subsequently unmarshal into the schema
 	fullSchema, err := yaml.Marshal(newDocumentNode(schemaMapNode))
 	if err != nil {
@@ -53,6 +58,36 @@ func Parse(node *yaml.Node, extraNodes []*yaml.Node) (*pkg.JsonSchema, error) {
 
 	return s, nil
 }
+
+// dedupeMappingNodesKeepLast takes a flat key/value node slice (as found in a
+// yaml.Node MappingNode's Content) and removes earlier key/value pairs whose
+// key also appears later in the slice, keeping the last occurrence. This lets
+// later-appended nodes (e.g. user-authored comment fields) override
+// earlier-appended ones (e.g. auto-derived fields like "type") instead of
+// producing a duplicate-mapping-key error when both are marshaled together.
+func dedupeMappingNodesKeepLast(nodes []*yaml.Node) []*yaml.Node {
+	lastIndexForKey := make(map[string]int, len(nodes)/yamlKeyValuePairSizeComments)
+
+	for i := 0; i < len(nodes)-1; i += yamlKeyValuePairSizeComments {
+		lastIndexForKey[nodes[i].Value] = i
+	}
+
+	deduped := make([]*yaml.Node, 0, len(nodes))
+
+	for i := 0; i < len(nodes)-1; i += yamlKeyValuePairSizeComments {
+		if lastIndexForKey[nodes[i].Value] != i {
+			continue
+		}
+
+		deduped = append(deduped, nodes[i], nodes[i+1])
+	}
+
+	return deduped
+}
+
+// yamlKeyValuePairSizeComments is the number of yaml.Node entries that make up
+// a single key+value pair when chunking a mapping node's Content slice.
+const yamlKeyValuePairSizeComments = 2
 
 // headCommentNodes parses node's head comment into schema field nodes
 // (description and/or arbitrary schema keywords).
