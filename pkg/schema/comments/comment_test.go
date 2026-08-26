@@ -39,6 +39,11 @@ const CommentWithColonAndMultiWordKey = `
 foo: bar
 `
 
+const CommentWithColonAndTwoWordKey = `
+# Contact us: support@example.com
+foo: bar
+`
+
 const SetsSchemaDefault = `
 # default: baz
 foo: bar
@@ -117,6 +122,15 @@ func TestBasicCommentParsing(t *testing.T) {
 			},
 		},
 		{
+			name:     "comment with a colon after a two-word phrase is treated as description",
+			document: CommentWithColonAndTwoWordKey,
+			validate: func(t *testing.T, s *pkg.JsonSchema, err error) {
+				t.Helper()
+				require.NoError(t, err)
+				assert.Equal(t, "Contact us: support@example.com", s.Description)
+			},
+		},
+		{
 			name:     "comment has no jsonschema properties",
 			document: DoesntSetSchemaProperties,
 			validate: func(t *testing.T, s *pkg.JsonSchema, err error) {
@@ -188,6 +202,98 @@ func TestParseOverridesExtraNodeWithCommentField(t *testing.T) {
 	s, err := comments.Parse(getCommentNode(yamlNode), extraNodes)
 	require.NoError(t, err)
 	assert.Equal(t, "string", s.Type)
+}
+
+// TestColonDescriptionWordCountBoundary sweeps the word count of the phrase
+// before a colon to pin the exact boundary of the heuristic in
+// commentAsDescriptionNodes: any phrase with 2+ words before the colon is
+// rescued as a description, but a single word is indistinguishable from an
+// unrecognized schema keyword (like "key: value" in DoesntSetSchemaProperties
+// above) and is silently dropped. That single-word case is a known,
+// intentional-but-surprising limitation, not something this test expects to
+// change without a deliberate decision.
+func TestColonDescriptionWordCountBoundary(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name              string
+		phraseBeforeColon string
+		value             string
+		expectDescription bool
+	}{
+		{
+			name:              "single word before colon is dropped (known limitation)",
+			phraseBeforeColon: "Note",
+			value:             "this is important",
+			expectDescription: false,
+		},
+		{
+			name:              "two words before colon is a description",
+			phraseBeforeColon: "Contact us",
+			value:             "support@example.com",
+			expectDescription: true,
+		},
+		{
+			name:              "three words before colon is a description",
+			phraseBeforeColon: "See docs for",
+			value:             "https://example.com",
+			expectDescription: true,
+		},
+		{
+			name:              "five words before colon is a description",
+			phraseBeforeColon: "See docs for full details",
+			value:             "https://example.com",
+			expectDescription: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			expected := tc.phraseBeforeColon + ": " + tc.value
+			document := "# " + expected + "\nfoo: bar\n"
+
+			yamlNode := &yaml.Node{}
+			err := yaml.Unmarshal([]byte(document), yamlNode)
+			require.NoError(t, err)
+
+			s, err := comments.Parse(getCommentNode(yamlNode), nil)
+			require.NoError(t, err)
+
+			if tc.expectDescription {
+				assert.Equal(t, expected, s.Description)
+			} else {
+				assert.Empty(t, *s)
+			}
+		})
+	}
+}
+
+// TestColonDescriptionAfterDelimiter confirms that a colon-containing
+// description is rescued the same way whether it appears before or after
+// the "---" doc separator: parseNodeComment splits the head comment on
+// "---" into independent segments before commentAsDescriptionNodes runs on
+// each one, so the fix for the boundary above applies regardless of
+// position.
+func TestColonDescriptionAfterDelimiter(t *testing.T) {
+	t.Parallel()
+
+	document := `
+# default: baz
+# ---
+# Contact us: support@example.com
+foo: bar
+`
+
+	yamlNode := &yaml.Node{}
+	err := yaml.Unmarshal([]byte(document), yamlNode)
+	require.NoError(t, err)
+
+	s, err := comments.Parse(getCommentNode(yamlNode), nil)
+	require.NoError(t, err)
+	assert.Equal(t, "baz", s.Default)
+	assert.Equal(t, "Contact us: support@example.com", s.Description)
 }
 
 func TestCommentFieldsSingleLine(t *testing.T) {
