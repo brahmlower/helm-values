@@ -34,7 +34,7 @@ func FuzzParseHeadComment(f *testing.F) {
 		f.Add(s)
 	}
 
-	f.Fuzz(func(t *testing.T, raw string) {
+	f.Fuzz(func(_ *testing.T, raw string) {
 		lines := strings.Split(raw, "\n")
 		for i, line := range lines {
 			lines[i] = "# " + line
