@@ -19,12 +19,14 @@ func commentAsDescriptionNodes(comment string) ([]*yaml.Node, bool) {
 		return KeyValueNodes("description", strings.TrimSpace(comment)), true
 	}
 
-	// If the doc is just a string but has a colon in it, which results
-	// in it being yaml parsed as a doc with a single key/value whose
-	// key likely has some spaces in it
+	// If the doc is just a string but has a colon in it, it gets yaml
+	// parsed as a doc with a single key/value pair instead of a scalar.
+	// Every real schema keyword (type, default, examples, ...) is a
+	// single word, so any space in the parsed key means this was never
+	// meant as a keyword and the whole comment is actually a description.
 	if node.Content[0].Kind == yaml.MappingNode &&
 		len(node.Content[0].Content) == 2 &&
-		strings.Count(node.Content[0].Content[0].Value, " ") > 1 {
+		strings.Contains(node.Content[0].Content[0].Value, " ") {
 		return KeyValueNodes("description", strings.TrimSpace(comment)), true
 	}
 
