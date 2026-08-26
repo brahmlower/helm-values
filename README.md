@@ -475,7 +475,7 @@ and [helm-docs](https://github.com/norwoodj/helm-docs).
 - 0.3.0
   - [x] Pre-Commit Hook support
   - [x] Values modeline support
-- 0.4.0
+- 0.4.2
   - [x] `schema`/`docs` `--check` flag for CI validation
 - 0.5.0
   - [ ] Schema Generation

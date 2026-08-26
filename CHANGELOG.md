@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-08-26
+
+### Added
+
+- Add --check flag to schema and docs commands
+- Add e2e bats coverage for schema/docs --check
+- Add 0.4.1 roadmap entry for --check flag
+
+### Changed
+
+- Renumber stale Development Roadmap versions
+
+### Fixed
+
+- Rescue colon descriptions with a two-word phrase before the colon
+- Fix unused-parameter violation in fuzz test
+
+## [0.4.1] - 2026-08-25
+
+### Changed
+
+- Include changelog in release description
+
+### Fixed
+
+- Dedupe extraNode/comment schema fields and stop dropping colon-containing descriptions
+
 ## [0.4.0] - 2026-08-24
 
 ### Added
@@ -20,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update softprops/action-gh-release action to v3
 - Update golangci/golangci-lint-action action to v9
 - Update dependency golangci/golangci-lint to v2.13.1
+- Release 0.4.0
 
 ### Fixed
 
@@ -215,6 +243,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removed unecessary fs for file ops
 
+[0.4.2]: https://github.com/brahmlower/helm-values/compare/0.4.1..0.4.2
+[0.4.1]: https://github.com/brahmlower/helm-values/compare/0.4.0..0.4.1
 [0.4.0]: https://github.com/brahmlower/helm-values/compare/0.3.0..0.4.0
 [0.3.0]: https://github.com/brahmlower/helm-values/compare/0.2.0..0.3.0
 [0.2.0]: https://github.com/brahmlower/helm-values/compare/0.1.0..0.2.0
