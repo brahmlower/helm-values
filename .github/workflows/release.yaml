@@ -54,7 +54,7 @@ jobs:
           OUTPUT: CHANGES.md
 
       - name: Release
-        uses: softprops/action-gh-release@v3.0.2
+        uses: softprops/action-gh-release@v3.0.3
         if: github.ref_type == 'tag'
         with:
           draft: true
