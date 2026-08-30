@@ -8,7 +8,7 @@ require (
 	github.com/elliotchance/orderedmap/v3 v3.1.1
 	github.com/samber/lo v1.53.0
 	github.com/samber/mo v1.17.0
-	github.com/sirupsen/logrus v1.10.1
+	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
