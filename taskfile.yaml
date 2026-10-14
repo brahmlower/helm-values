@@ -19,8 +19,13 @@ tasks:
       - goreleaser build --clean {{.CLI_ARGS}}
       # render the plugin file
       - sed "s/VERSION/$(git describe --tags --abbrev=0)/" plugin.yaml.tmpl > ./dist/helm-values/plugin.yaml
-      # package the plugin
-      - helm plugin package -d ./dist/ ./dist/helm-values/. --sign=false
+      # package the plugin, signing with the release key when one is available (CI)
+      - |
+        if [ -n "$GPG_KEY_ID" ] && [ -n "$GPG_KEYRING" ]; then
+          helm plugin package -d ./dist/ ./dist/helm-values/. --sign --key "$GPG_KEY_ID" --keyring "$GPG_KEYRING"
+        else
+          helm plugin package -d ./dist/ ./dist/helm-values/. --sign=false
+        fi
 
   reinstall:
     desc: Reinstall the plugin locally

@@ -29,11 +29,24 @@ A helm plugin for generating schema and docs for chart values.
 
 ### Installation
 
-Install the plugin: <sub>(signed packages coming soon)</sub>
+Install the plugin:
 
 ```
 helm plugin install https://github.com/brahmlower/helm-values/releases/download/0.2.0/values-0.2.0.tgz
 ```
+
+Releases are signed, and ship with a `.tgz.prov` file alongside the plugin tarball. To verify
+the signature on install, fetch the maintainer's public key from [`KEYS.asc`](./KEYS.asc) and
+pass it as the verification keyring:
+
+```
+curl -sL https://raw.githubusercontent.com/brahmlower/helm-values/main/KEYS.asc | gpg --dearmor > helm-values-keys.gpg
+helm plugin install https://github.com/brahmlower/helm-values/releases/download/0.2.0/values-0.2.0.tgz --keyring ./helm-values-keys.gpg
+```
+
+Without `--keyring`, `helm plugin install` looks for verification keys in `~/.gnupg/pubring.gpg`,
+which modern GnuPG versions don't populate by default — so verification will fail unless you
+either use `--keyring` as shown above or pass `--verify=false` to skip verification.
 
 Add pre-commit hooks (optional):
 
@@ -49,6 +62,11 @@ helm values update
 ```
 
 This simply uninstalls the existing version and installs the latest version from github.
+
+> [!NOTE]
+> Since releases are signed, `helm values update` currently fails signature verification
+> (it doesn't have a `--keyring` to check against). Until that's addressed, update manually
+> using the verified or `--verify=false` install commands above instead.
 
 Helm's builtin update mechanism for plugins only works with VCS-based installations.
 This plugin uses tarball installation for simplicity, meaning the builtin update mechanism won't work.
