@@ -82,3 +82,21 @@ teardown() {
     assert_failure
     assert_output --partial "README.md is stale"
 }
+
+@test "schema --check passes after a fresh generate with the modeline" {
+    cat > values.yaml <<'EOF2'
+# -- foo doc
+foo: bar
+EOF2
+
+    helm values schema .
+
+    run helm values schema . --check
+    assert_success
+
+    run sed -n 2p values.yaml
+    assert_output ""
+
+    run grep -F '"description": "-- foo doc"' values.schema.json
+    assert_success
+}

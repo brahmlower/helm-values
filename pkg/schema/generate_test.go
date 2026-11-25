@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -219,4 +220,53 @@ func TestGenerateKeepsPropertyComments(t *testing.T) {
 			assert.Equal(t, tc.want, property(t, s, "foo").Comment)
 		})
 	}
+}
+
+// TestGenerateIgnoresModelineInFirstKeyComment is the issue #39 parser case:
+// a modeline directly above the first key's doc comment.
+func TestGenerateIgnoresModelineInFirstKeyComment(t *testing.T) {
+	t.Parallel()
+
+	values := "# yaml-language-server: $schema=values.schema.json\n# -- replicas to run\nreplicas: 1\n"
+
+	s, err := generate(t, values, false)
+	require.NoError(t, err)
+
+	assert.Equal(t, "-- replicas to run", property(t, s, "replicas").Description)
+}
+
+// TestGenerateSchemaThenCheckWithModeline is the issue #39 reproduction: a
+// fresh generate that writes the modeline must leave --check passing.
+func TestGenerateSchemaThenCheckWithModeline(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	valuesPath := filepath.Join(dir, "values.yaml")
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "Chart.yaml"), []byte(testChartFile), 0o600))
+	require.NoError(t, os.WriteFile(valuesPath, []byte("# -- replicas to run\nreplicas: 1\n"), 0o600))
+
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
+	cfg := &schema.Config{
+		StdOut:        false,
+		Strict:        false,
+		DryRun:        false,
+		GitAdd:        false,
+		WriteModeline: true,
+		Check:         false,
+		LogLevel:      logrus.InfoLevel,
+	}
+	require.NoError(t, schema.GenerateSchema(logger, cfg, []string{dir}))
+
+	cfg.Check = true
+	require.NoError(t, schema.GenerateSchema(logger, cfg, []string{dir}))
+
+	values, err := fs.ReadFile(os.DirFS(dir), "values.yaml")
+	require.NoError(t, err)
+	assert.True(t, strings.HasPrefix(string(values), "# yaml-language-server: $schema=values.schema.json\n\n"), "got:\n%s", values)
+
+	schemaContent, err := fs.ReadFile(os.DirFS(dir), "values.schema.json")
+	require.NoError(t, err)
+	assert.Contains(t, string(schemaContent), "-- replicas to run")
 }

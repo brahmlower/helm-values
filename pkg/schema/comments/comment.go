@@ -6,6 +6,7 @@ package comments
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"helmvalues/pkg"
@@ -137,10 +138,30 @@ func renameLegacyCommentKey(nodes []*yaml.Node) {
 // a single key+value pair when chunking a mapping node's Content slice.
 const yamlKeyValuePairSizeComments = 2
 
+// modelinePrefix marks a yaml-language-server modeline comment. yaml attaches
+// a modeline written directly above the first key to that key's head comment,
+// so these lines are ignored when parsing doc comments.
+const modelinePrefix = "# yaml-language-server:"
+
+// stripModelineLines removes yaml-language-server modeline lines from comment
+// and trims the leading and trailing newlines left behind.
+func stripModelineLines(comment string) string {
+	lines := slices.DeleteFunc(strings.Split(comment, "\n"), func(line string) bool {
+		return strings.HasPrefix(line, modelinePrefix)
+	})
+
+	return strings.Trim(strings.Join(lines, "\n"), "\n")
+}
+
 // headCommentNodes parses node's head comment into schema field nodes
 // (description and/or arbitrary schema keywords).
 func headCommentNodes(node *yaml.Node) ([]*yaml.Node, error) {
-	commentDocs, err := parseNodeComment(node.HeadComment)
+	headComment := stripModelineLines(node.HeadComment)
+	if headComment == "" {
+		return []*yaml.Node{}, nil
+	}
+
+	commentDocs, err := parseNodeComment(headComment)
 	if err != nil {
 		return nil, NewCommentError(node, err)
 	}

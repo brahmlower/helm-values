@@ -708,3 +708,74 @@ func TestParseInvalidNumberIsCommentError(t *testing.T) {
 		})
 	}
 }
+
+// TestParseIgnoresModelineInHeadComment covers issue #39: yaml attaches a
+// modeline written directly above the first key to that key's head comment,
+// and it must not swallow the key's doc comment.
+func TestParseIgnoresModelineInHeadComment(t *testing.T) {
+	t.Parallel()
+
+	const modelineLine = "# yaml-language-server: $schema=values.schema.json\n"
+
+	tests := []struct {
+		name     string
+		document string
+		validate func(t *testing.T, s *pkg.JsonSchema)
+	}{
+		{
+			name:     "description",
+			document: modelineLine + "# -- replicas to run\nreplicas: 1\n",
+			validate: func(t *testing.T, s *pkg.JsonSchema) {
+				t.Helper()
+				assert.Equal(t, "-- replicas to run", s.Description)
+			},
+		},
+		{
+			name:     "modeline only",
+			document: modelineLine + "replicas: 1\n",
+			validate: func(t *testing.T, s *pkg.JsonSchema) {
+				t.Helper()
+				assert.Empty(t, s.Description)
+			},
+		},
+		{
+			name:     "fields and description",
+			document: modelineLine + "# default: baz\n# ---\n# desc\nreplicas: 1\n",
+			validate: func(t *testing.T, s *pkg.JsonSchema) {
+				t.Helper()
+				assert.Equal(t, "baz", s.Default)
+				assert.Equal(t, "desc", s.Description)
+			},
+		},
+		{
+			name:     "type field",
+			document: modelineLine + "# type: string\nreplicas: 1\n",
+			validate: func(t *testing.T, s *pkg.JsonSchema) {
+				t.Helper()
+				assert.Equal(t, "string", s.Type)
+			},
+		},
+		{
+			name:     "document separator",
+			document: modelineLine + "\n---\n# -- d\nreplicas: 1\n",
+			validate: func(t *testing.T, s *pkg.JsonSchema) {
+				t.Helper()
+				assert.Equal(t, "-- d", s.Description)
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			yamlNode := &yaml.Node{}
+			require.NoError(t, yaml.Unmarshal([]byte(tc.document), yamlNode))
+
+			s, err := comments.Parse(getCommentNode(yamlNode), nil)
+			require.NoError(t, err)
+
+			tc.validate(t, s)
+		})
+	}
+}

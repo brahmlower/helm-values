@@ -29,6 +29,7 @@ func FuzzParseHeadComment(f *testing.F) {
 		":",
 		"::::",
 		"a: b\n---\nc: d",
+		"yaml-language-server: $schema=x\n-- desc",
 	}
 	for _, s := range seeds {
 		f.Add(s)
