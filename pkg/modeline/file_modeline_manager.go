@@ -43,7 +43,9 @@ func NewFileModelineManager(filepath string) (*FileModelineManager, error) {
 }
 
 // SetModeline replaces the existing modeline matching modeline's program and
-// key, or inserts modeline as a new first line if none is found.
+// key in place, or inserts modeline as a new first line if none is found. A
+// newly inserted modeline is followed by a blank line, unless the next line is
+// already blank, so it is not attached to the first key's doc comment.
 func (m *FileModelineManager) SetModeline(modeline *Modeline) {
 	yamlModelinePrefix := "# " + modeline.ProgramAndKey()
 	yamlModeline := "# " + modeline.String()
@@ -62,6 +64,10 @@ func (m *FileModelineManager) SetModeline(modeline *Modeline) {
 
 	if !found {
 		content = slices.Insert(content, 0, yamlModeline)
+
+		if strings.TrimSpace(content[1]) != "" {
+			content = slices.Insert(content, 1, "")
+		}
 	}
 
 	m.content = strings.Join(content, "\n")
