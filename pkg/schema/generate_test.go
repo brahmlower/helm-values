@@ -270,3 +270,64 @@ func TestGenerateSchemaThenCheckWithModeline(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, string(schemaContent), "-- replicas to run")
 }
+
+func marshalProperties(t *testing.T, s *pkg.JsonSchema) map[string]json.RawMessage {
+	t.Helper()
+
+	content, err := json.Marshal(s)
+	require.NoError(t, err)
+
+	var out struct {
+		Properties map[string]json.RawMessage `json:"properties"`
+	}
+	require.NoError(t, json.Unmarshal(content, &out))
+
+	return out.Properties
+}
+
+// TestGenerateConst is the issue #41 reproduction: "const" is written under
+// its draft-07 keyword, including null and inside nested schemas.
+func TestGenerateConst(t *testing.T) {
+	t.Parallel()
+
+	values := "# const: a\nscalar: a\n" +
+		"# const: [a, b]\nlist: []\n" +
+		"# const: {a: 1}\nobject: {}\n" +
+		"# const: null\nnull: null\n" +
+		"# oneOf: [{const: null}, {type: string}]\nnested: null\n"
+
+	s, err := generate(t, values, true)
+	require.NoError(t, err)
+
+	props := marshalProperties(t, s)
+
+	assert.Contains(t, string(props["scalar"]), `"const":"a"`)
+	assert.Contains(t, string(props["list"]), `"const":["a","b"]`)
+	assert.Contains(t, string(props["object"]), `"const":{"a":1}`)
+	assert.Contains(t, string(props["null"]), `"const":null`)
+	assert.Contains(t, string(props["nested"]), `"oneOf":[{"const":null},{"type":"string"}]`)
+}
+
+// TestGenerateDropsNonStandardKeys pins down that the old non-standard keys
+// (including the legacy "constant") are ignored, not aliased, and aren't a
+// strict-mode error (issue #41).
+func TestGenerateDropsNonStandardKeys(t *testing.T) {
+	t.Parallel()
+
+	values := "# constant: [a, b]\n# recursiveAnchor: true\n# recursiveRef: \"#\"\n" +
+		"# dynamicAnchor: x\n# dynamicRef: \"#x\"\n# always: true\n# location: here\nfoo: a\n" +
+		"# constant: foo\n# ---\n# scalar constant\nbar: a\n"
+
+	s, err := generate(t, values, true)
+	require.NoError(t, err)
+
+	props := marshalProperties(t, s)
+
+	for _, key := range []string{"constant", "recursiveAnchor", "recursiveRef", "dynamicAnchor", "dynamicRef", "always", "location", "const"} {
+		for _, prop := range []string{"foo", "bar"} {
+			assert.NotContains(t, string(props[prop]), `"`+key+`"`, "%s has %s", prop, key)
+		}
+	}
+
+	assert.Equal(t, "scalar constant", property(t, s, "bar").Description)
+}

@@ -5,6 +5,15 @@ package pkg
 
 import (
 	"regexp"
+
+	"go.yaml.in/yaml/v4"
+)
+
+const (
+	constKeyword = "const"
+	yamlNullTag  = "!!null"
+	// yamlPairSize is the number of nodes per key/value pair in a mapping node's Content.
+	yamlPairSize = 2
 )
 
 // JsonSchema is an in-memory representation of a JSON Schema document,
@@ -17,31 +26,26 @@ type JsonSchema struct {
 	// encoded JSON.
 	Comment string `json:"$comment,omitempty" yaml:"$comment,omitempty"`
 
-	Location string `json:"location,omitempty" yaml:"location,omitempty"`
-
 	// Draft *Draft `json:"draft,omitempty"`
 	Schema string `json:"$schema,omitempty" yaml:"$schema,omitempty"`
 
 	Format string `json:"format,omitempty" yaml:"format,omitempty"`
 
-	Always          *bool  `json:"always,omitempty"          yaml:"always,omitempty"`
-	Ref             string `json:"$ref,omitempty"            yaml:"$ref,omitempty"`
-	RecursiveAnchor bool   `json:"recursiveAnchor,omitempty" yaml:"recursiveAnchor,omitempty"`
-	RecursiveRef    string `json:"recursiveRef,omitempty"    yaml:"recursiveRef,omitempty"`
-	DynamicAnchor   string `json:"dynamicAnchor,omitempty"   yaml:"dynamicAnchor,omitempty"`
-	DynamicRef      string `json:"dynamicRef,omitempty"      yaml:"dynamicRef,omitempty"`
+	Ref string `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 
-	Type     string `json:"type,omitempty"     yaml:"type,omitempty"`
-	Constant []any  `json:"constant,omitempty" yaml:"constant,omitempty"`
-	Enum     []any  `json:"enum,omitempty"     yaml:"enum,omitempty"`
+	Type string `json:"type,omitempty" yaml:"type,omitempty"`
+	// Const is the "const" keyword: the instance must equal *Const. nil means
+	// unset; a non-nil pointer to nil means `const: null`.
+	Const *any  `json:"const,omitempty" yaml:"const,omitempty"`
+	Enum  []any `json:"enum,omitempty"  yaml:"enum,omitempty"`
 
-	Not   *JsonSchema   `json:"not,omitempty"`
+	Not   *JsonSchema   `json:"not,omitempty"   yaml:"not,omitempty"`
 	AllOf []*JsonSchema `json:"allOf,omitempty" yaml:"allOf,omitempty"`
 	AnyOf []*JsonSchema `json:"anyOf,omitempty" yaml:"anyOf,omitempty"`
 	OneOf []*JsonSchema `json:"oneOf,omitempty" yaml:"oneOf,omitempty"`
-	If    *JsonSchema   `json:"if,omitempty"`
-	Then  *JsonSchema   `json:"then,omitempty"`
-	Else  *JsonSchema   `json:"else,omitempty"`
+	If    *JsonSchema   `json:"if,omitempty"    yaml:"if,omitempty"`
+	Then  *JsonSchema   `json:"then,omitempty"  yaml:"then,omitempty"`
+	Else  *JsonSchema   `json:"else,omitempty"  yaml:"else,omitempty"`
 
 	MinProperties         *int64                                    `json:"minProperties,omitempty"         yaml:"minProperties,omitempty"`
 	MaxProperties         *int64                                    `json:"maxProperties,omitempty"         yaml:"maxProperties,omitempty"`
@@ -93,21 +97,15 @@ type JsonSchema struct {
 // NewJsonSchema returns a JsonSchema with every field set to its zero value,
 // ready to have only the fields relevant to the caller overridden.
 //
-//nolint:revive,funlen // mirrors the JsonSchema type name; a flat zero-value field list, not complexity
+//nolint:revive // mirrors the JsonSchema type name
 func NewJsonSchema() *JsonSchema {
 	return &JsonSchema{
 		Comment:               "",
-		Location:              "",
 		Schema:                "",
 		Format:                "",
-		Always:                nil,
 		Ref:                   "",
-		RecursiveAnchor:       false,
-		RecursiveRef:          "",
-		DynamicAnchor:         "",
-		DynamicRef:            "",
 		Type:                  "",
-		Constant:              nil,
+		Const:                 nil,
 		Enum:                  nil,
 		Not:                   nil,
 		AllOf:                 nil,
@@ -156,6 +154,33 @@ func NewJsonSchema() *JsonSchema {
 		Examples:              nil,
 		Deprecated:            false,
 	}
+}
+
+// UnmarshalYAML decodes a schema node. yaml skips unmarshalers and pointer
+// allocation for null values, so `const: null` is detected on the node.
+func (s *JsonSchema) UnmarshalYAML(node *yaml.Node) error {
+	type plain JsonSchema
+
+	err := node.Decode((*plain)(s))
+	if err != nil {
+		return err //nolint:wrapcheck // keep yaml's LoadErrors unwrapped so line marks survive
+	}
+
+	if node.Kind == yaml.AliasNode {
+		node = node.Alias
+	}
+
+	if node.Kind != yaml.MappingNode {
+		return nil
+	}
+
+	for i := 0; i+1 < len(node.Content); i += yamlPairSize {
+		if node.Content[i].Value == constKeyword && node.Content[i+1].ShortTag() == yamlNullTag {
+			s.Const = new(any)
+		}
+	}
+
+	return nil
 }
 
 // NodeInspector is a callback invoked for each schema node visited by
