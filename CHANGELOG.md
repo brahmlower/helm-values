@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-11-25
+
+### Fixed
+
+- Separate a newly inserted modeline from content with a blank line
+- Ignore yaml-language-server modeline in doc comments
+- Process every chart and join generation errors
+- Don't print usage on generation errors
+- Encode const under its draft-07 keyword and drop non-standard schema fields
+
 ## [0.5.0] - 2026-11-25
 
 ### Added
@@ -226,6 +236,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removed unecessary fs for file ops
 
+[0.5.1]: https://github.com/brahmlower/helm-values/compare/0.5.0..0.5.1
 [0.5.0]: https://github.com/brahmlower/helm-values/compare/0.4.2..0.5.0
 [0.4.2]: https://github.com/brahmlower/helm-values/compare/0.4.1..0.4.2
 [0.4.1]: https://github.com/brahmlower/helm-values/compare/0.4.0..0.4.1
