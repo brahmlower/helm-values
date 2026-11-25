@@ -779,3 +779,48 @@ func TestParseIgnoresModelineInHeadComment(t *testing.T) {
 		})
 	}
 }
+
+// TestConstField checks the "const" keyword is decoded from a doc comment,
+// including the null forms (issue #41).
+func TestConstField(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		comment string
+		want    any
+	}{
+		{name: "scalar", comment: "# const: hello", want: "hello"},
+		{name: "list", comment: "# const: [a, b]", want: []any{"a", "b"}},
+		{name: "object", comment: "# const: {a: 1}", want: map[string]any{"a": 1}},
+		{name: "null", comment: "# const: null", want: nil},
+		{name: "tilde", comment: "# const: ~", want: nil},
+		{name: "empty", comment: "# const:", want: nil},
+		{name: "zero", comment: "# const: 0", want: 0},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			yamlNode := &yaml.Node{}
+			require.NoError(t, yaml.Unmarshal([]byte(tc.comment+"\nfoo: 1\n"), yamlNode))
+
+			s, err := comments.Parse(getCommentNode(yamlNode), nil)
+			require.NoError(t, err)
+			require.NotNil(t, s.Const)
+			assert.Equal(t, tc.want, *s.Const)
+		})
+	}
+
+	t.Run("unset", func(t *testing.T) {
+		t.Parallel()
+
+		yamlNode := &yaml.Node{}
+		require.NoError(t, yaml.Unmarshal([]byte("# a description\nfoo: 1\n"), yamlNode))
+
+		s, err := comments.Parse(getCommentNode(yamlNode), nil)
+		require.NoError(t, err)
+		assert.Nil(t, s.Const)
+	})
+}
