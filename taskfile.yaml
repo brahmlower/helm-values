@@ -50,6 +50,7 @@ tasks:
     cmds:
       - task: test:e2e:pre-commit
       - task: test:e2e:check
+      - task: test:e2e:strict
 
   test:e2e:pre-commit:
     desc: Run pre-commit hook tests
@@ -60,6 +61,12 @@ tasks:
   test:e2e:check:
     desc: Run schema/docs --check tests
     dir: ./tests/check
+    cmds:
+      - bats ./tests.bats
+
+  test:e2e:strict:
+    desc: Run schema/docs --strict exit code tests
+    dir: ./tests/strict
     cmds:
       - bats ./tests.bats
 
