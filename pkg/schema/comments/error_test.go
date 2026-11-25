@@ -12,6 +12,8 @@ import (
 	"go.yaml.in/yaml/v4"
 )
 
+const testValuesFile = "values.yaml"
+
 func TestNewCommentError(t *testing.T) {
 	t.Parallel()
 
@@ -93,7 +95,7 @@ func TestCommentError_Render(t *testing.T) {
 		},
 		{
 			name:     "error with multi-line comment",
-			filepath: "values.yaml",
+			filepath: testValuesFile,
 			node: &yaml.Node{
 				Line:        15,
 				Value:       "key",
@@ -103,7 +105,7 @@ func TestCommentError_Render(t *testing.T) {
 			expectedContent: []string{
 				"validation failed",
 				"",
-				"values.yaml",
+				testValuesFile,
 				"----|---------",
 				"12  | # line 1",
 				"13  | # line 2",
@@ -216,4 +218,35 @@ func TestCommentError_RenderToLog_MultipleLines(t *testing.T) {
 	assert.Contains(t, logOutput, "comment 2")
 	assert.Contains(t, logOutput, "comment 3")
 	assert.Contains(t, logOutput, "multi-line test")
+}
+
+// TestCommentError_Render_OutOfRangeMarkDoesNotPanic checks that Render
+// tolerates yaml error marks that fall outside the rendered comment lines.
+func TestCommentError_Render_OutOfRangeMarkDoesNotPanic(t *testing.T) {
+	t.Parallel()
+
+	node := &yaml.Node{
+		Line:        5,
+		Value:       "field",
+		HeadComment: "# minimum: abc",
+	}
+
+	yamlErr := &yaml.LoadErrors{
+		Errors: []*yaml.LoadError{
+			{Mark: yaml.Mark{Line: 10}, Message: "mark past the end"},
+			{Mark: yaml.Mark{Line: 0}, Message: "mark before the start"},
+		},
+	}
+
+	commentErr := &comments.CommentError{
+		Filepath: testValuesFile,
+		Node:     node,
+		Err:      yamlErr,
+	}
+
+	var result string
+
+	assert.NotPanics(t, func() { result = commentErr.Render() })
+	assert.Contains(t, result, "mark past the end")
+	assert.Contains(t, result, "5  | field: ...")
 }
