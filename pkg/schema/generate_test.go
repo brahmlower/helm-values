@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"helmvalues/pkg"
@@ -157,4 +158,22 @@ func TestGenerateNumberKeywordsAcceptYAMLForms(t *testing.T) {
 	assert.Equal(t, lo.ToPtr(pkg.Number(0.5)), property(t, s, "a").Minimum)
 	assert.Equal(t, lo.ToPtr(pkg.Number(16)), property(t, s, "b").Maximum)
 	assert.Equal(t, lo.ToPtr(pkg.Number(0.01)), property(t, s, "c").MultipleOf)
+}
+
+func TestGenerateSetsGeneratedComment(t *testing.T) {
+	t.Parallel()
+
+	s, err := generate(t, "# a value\nfoo: 1\n", false)
+	require.NoError(t, err)
+
+	assert.Equal(t, schema.GeneratedComment, s.SchemaComment)
+
+	content, err := json.MarshalIndent(s, "", "  ")
+	require.NoError(t, err)
+
+	// "$comment" is the first key, so it is the first thing a reader sees
+	assert.True(t, strings.HasPrefix(string(content), "{\n  \"$comment\": "), "got:\n%s", content)
+
+	// nested properties don't get the comment
+	assert.Empty(t, property(t, s, "foo").SchemaComment)
 }

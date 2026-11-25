@@ -12,6 +12,11 @@ import (
 //
 //nolint:revive // JsonSchema is public API referenced throughout the module; renaming is out of scope here
 type JsonSchema struct {
+	// SchemaComment is the "$comment" keyword: a note for schema maintainers
+	// that validators ignore. It is declared first so it is the first key in
+	// the encoded JSON.
+	SchemaComment string `json:"$comment,omitempty" yaml:"$comment,omitempty"`
+
 	Location string `json:"location,omitempty" yaml:"location,omitempty"`
 
 	// Draft *Draft `json:"draft,omitempty"`
@@ -92,6 +97,7 @@ type JsonSchema struct {
 //nolint:revive,funlen // mirrors the JsonSchema type name; a flat zero-value field list, not complexity
 func NewJsonSchema() *JsonSchema {
 	return &JsonSchema{
+		SchemaComment:         "",
 		Location:              "",
 		Schema:                "",
 		Format:                "",

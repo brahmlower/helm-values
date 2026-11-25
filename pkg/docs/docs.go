@@ -126,13 +126,23 @@ func generateChartDoc(logger *logrus.Logger, cfg *Config, staticPaths []string, 
 		return nil, fmt.Errorf("rendering template: %w", err)
 	}
 
+	disclaimer, err := plan.Disclaimer()
+	if err != nil {
+		return nil, err
+	}
+
+	// The disclaimer supplies the blank line after itself (required in RST
+	// so the next line isn't part of the comment), so drop the template's
+	// leading newlines.
+	content := disclaimer + strings.TrimLeft(buf.String(), "\n")
+
 	if plan.Check() {
-		return plan.CheckReadme(buf.String())
+		return plan.CheckReadme(content)
 	}
 
 	logger.Debugf("docs: %s: writing output", plan.Chart().Details.Name)
 
-	if err := plan.WriteReadme(logger, buf.String()); err != nil {
+	if err := plan.WriteReadme(logger, content); err != nil {
 		return nil, err
 	}
 
