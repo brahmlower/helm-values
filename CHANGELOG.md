@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-11-25
+
+### Added
+
+- Add a "generated, do not edit" disclaimer to generated files
+
+### Changed
+
+- Update orhun/git-cliff-action action to v4.9.1
+- Update dependency golangci/golangci-lint to v2.14.0
+- Update softprops/action-gh-release action to v3.0.3
+- Update actions/setup-go action to v7.1.0
+- Update softprops/action-gh-release action to v3.0.4
+- Update dependency golangci/golangci-lint to v2.15.0
+- Use Comment for $comment instead of a separate SchemaComment
+
+### Fixed
+
+- Update module github.com/sirupsen/logrus to v1.10.2
+- Update go dependencies (non-major)
+- Keep zero and fractional numeric schema keywords, don't panic on bad comments
+
 ## [0.4.2] - 2026-08-26
 
 ### Added
@@ -16,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Renumber stale Development Roadmap versions
+- Release 0.4.2
 
 ### Fixed
 
@@ -243,6 +266,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removed unecessary fs for file ops
 
+[0.5.0]: https://github.com/brahmlower/helm-values/compare/0.4.2..0.5.0
 [0.4.2]: https://github.com/brahmlower/helm-values/compare/0.4.1..0.4.2
 [0.4.1]: https://github.com/brahmlower/helm-values/compare/0.4.0..0.4.1
 [0.4.0]: https://github.com/brahmlower/helm-values/compare/0.3.0..0.4.0
