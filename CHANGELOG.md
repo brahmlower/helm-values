@@ -11,15 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add a "generated, do not edit" disclaimer to generated files
 
-### Changed
-
-- Use Comment for $comment instead of a separate SchemaComment
-
 ### Fixed
 
 - Update module github.com/sirupsen/logrus to v1.10.2
 - Update go dependencies (non-major)
 - Keep zero and fractional numeric schema keywords, don't panic on bad comments
+- Write the `comment` doc comment field as the standard `$comment` keyword (`comment` is still accepted)
 
 ## [0.4.2] - 2026-08-26
 

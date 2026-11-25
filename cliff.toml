@@ -56,6 +56,12 @@ trim = true
 conventional_commits = true
 # Exclude commits that do not match the conventional commits specification.
 filter_unconventional = false
+# Rewrite merged commit messages that don't make sense as release notes (for
+# example, fix-ups that only describe a PR branch's own history). Matched
+# against the full message, so keep patterns anchored to the subject line.
+commit_preprocessors = [
+    { pattern = "^refactor: use Comment for \\$comment instead of a separate SchemaComment", replace = "fix: write the `comment` doc comment field as the standard `$$comment` keyword (`comment` is still accepted)" },
+]
 # An array of regex based parsers for extracting data from the commit message.
 # Assigns commits to groups.
 # Optionally sets the commit's scope and can decide to exclude commits from further processing.
