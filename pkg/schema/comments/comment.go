@@ -45,6 +45,7 @@ func Parse(node *yaml.Node, extraNodes []*yaml.Node) (*pkg.JsonSchema, error) {
 	// the auto-derived extraNodes (e.g. inferred "type") when both set the same
 	// key, rather than producing a duplicate-key YAML error.
 	schemaMapNode.Content = dedupeMappingNodesKeepLast(schemaMapNode.Content)
+	renameLegacyCommentKey(schemaMapNode.Content)
 
 	// marshal to a string and subsequently unmarshal into the schema
 	fullSchema, err := yaml.Marshal(newDocumentNode(schemaMapNode))
@@ -103,6 +104,33 @@ func dedupeMappingNodesKeepLast(nodes []*yaml.Node) []*yaml.Node {
 	}
 
 	return deduped
+}
+
+// legacyCommentKey is the key earlier versions wrote out as a non-standard
+// "comment" field. It is still accepted as an alias for "$comment", so notes
+// authors already wrote aren't silently dropped.
+const legacyCommentKey = "comment"
+
+// renameLegacyCommentKey renames a top-level "comment" key in a flat
+// key/value node slice to "$comment". If "$comment" is also set, it wins and
+// "comment" is left as is (an unknown key, ignored on unmarshal).
+func renameLegacyCommentKey(nodes []*yaml.Node) {
+	legacyIdx := -1
+
+	for i := 0; i < len(nodes)-1; i += yamlKeyValuePairSizeComments {
+		switch nodes[i].Value {
+		case "$comment":
+			return
+		case legacyCommentKey:
+			legacyIdx = i
+		}
+	}
+
+	if legacyIdx < 0 {
+		return
+	}
+
+	nodes[legacyIdx].Value = "$comment"
 }
 
 // yamlKeyValuePairSizeComments is the number of yaml.Node entries that make up

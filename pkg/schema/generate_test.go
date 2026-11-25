@@ -166,7 +166,7 @@ func TestGenerateSetsGeneratedComment(t *testing.T) {
 	s, err := generate(t, "# a value\nfoo: 1\n", false)
 	require.NoError(t, err)
 
-	assert.Equal(t, schema.GeneratedComment, s.SchemaComment)
+	assert.Equal(t, schema.GeneratedComment, s.Comment)
 
 	content, err := json.MarshalIndent(s, "", "  ")
 	require.NoError(t, err)
@@ -175,5 +175,48 @@ func TestGenerateSetsGeneratedComment(t *testing.T) {
 	assert.True(t, strings.HasPrefix(string(content), "{\n  \"$comment\": "), "got:\n%s", content)
 
 	// nested properties don't get the comment
-	assert.Empty(t, property(t, s, "foo").SchemaComment)
+	assert.Empty(t, property(t, s, "foo").Comment)
+}
+
+func TestGenerateKeepsPropertyComments(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		values string
+		want   string
+	}{
+		{
+			name:   "$comment",
+			values: "# $comment: maintainer note\nfoo: 1\n",
+			want:   "maintainer note",
+		},
+		{
+			name:   "legacy comment key",
+			values: "# comment: old note\nfoo: 1\n",
+			want:   "old note",
+		},
+		{
+			name:   "$comment wins over legacy comment key",
+			values: "# comment: old note\n# $comment: new note\nfoo: 1\n",
+			want:   "new note",
+		},
+		{
+			name:   "$comment wins regardless of order",
+			values: "# $comment: new note\n# comment: old note\nfoo: 1\n",
+			want:   "new note",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			s, err := generate(t, tc.values, true)
+			require.NoError(t, err)
+
+			assert.Equal(t, schema.GeneratedComment, s.Comment)
+			assert.Equal(t, tc.want, property(t, s, "foo").Comment)
+		})
+	}
 }

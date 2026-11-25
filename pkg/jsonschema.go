@@ -12,10 +12,10 @@ import (
 //
 //nolint:revive // JsonSchema is public API referenced throughout the module; renaming is out of scope here
 type JsonSchema struct {
-	// SchemaComment is the "$comment" keyword: a note for schema maintainers
-	// that validators ignore. It is declared first so it is the first key in
-	// the encoded JSON.
-	SchemaComment string `json:"$comment,omitempty" yaml:"$comment,omitempty"`
+	// Comment is the "$comment" keyword: a note for schema maintainers that
+	// validators ignore. It is declared first so it is the first key in the
+	// encoded JSON.
+	Comment string `json:"$comment,omitempty" yaml:"$comment,omitempty"`
 
 	Location string `json:"location,omitempty" yaml:"location,omitempty"`
 
@@ -82,7 +82,6 @@ type JsonSchema struct {
 	Title       string `json:"title,omitempty"       yaml:"title,omitempty"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 	Default     any    `json:"default,omitempty"     yaml:"default,omitempty"`
-	Comment     string `json:"comment,omitempty"     yaml:"comment,omitempty"`
 	ReadOnly    bool   `json:"readOnly,omitempty"    yaml:"readOnly,omitempty"`
 	WriteOnly   bool   `json:"writeOnly,omitempty"   yaml:"writeOnly,omitempty"`
 	Examples    []any  `json:"examples,omitempty"    yaml:"examples,omitempty"`
@@ -97,7 +96,7 @@ type JsonSchema struct {
 //nolint:revive,funlen // mirrors the JsonSchema type name; a flat zero-value field list, not complexity
 func NewJsonSchema() *JsonSchema {
 	return &JsonSchema{
-		SchemaComment:         "",
+		Comment:               "",
 		Location:              "",
 		Schema:                "",
 		Format:                "",
@@ -152,7 +151,6 @@ func NewJsonSchema() *JsonSchema {
 		Title:                 "",
 		Description:           "",
 		Default:               nil,
-		Comment:               "",
 		ReadOnly:              false,
 		WriteOnly:             false,
 		Examples:              nil,
