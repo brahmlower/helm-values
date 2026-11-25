@@ -58,9 +58,16 @@ func (e *CommentError) Render() string {
 	// update yaml error with adjusted line number
 	yamlErr := &yaml.LoadErrors{}
 	if errors.As(e.Err, &yamlErr) {
+		lines := displayFile.Lines()
+
 		for _, unmarshalErr := range yamlErr.Errors {
 			// UnmarshalErrors report line number as 1-indexed
-			unmarshalErr.Mark.Line = displayFile.Lines()[unmarshalErr.Mark.Line-1].LineNum
+			idx := unmarshalErr.Mark.Line - 1
+			if idx < 0 || idx >= len(lines) {
+				continue
+			}
+
+			unmarshalErr.Mark.Line = lines[idx].LineNum
 		}
 	}
 

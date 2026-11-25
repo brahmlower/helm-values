@@ -4,6 +4,7 @@
 package comments
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -52,11 +53,30 @@ func Parse(node *yaml.Node, extraNodes []*yaml.Node) (*pkg.JsonSchema, error) {
 	}
 
 	s := pkg.NewJsonSchema()
-	if err := yaml.Unmarshal(fullSchema, s); err != nil {
-		return nil, fmt.Errorf("unmarshaling schema: %w", err)
+
+	err = yaml.Unmarshal(fullSchema, s)
+	if err != nil {
+		return nil, NewCommentError(node, fmt.Errorf("invalid schema field: %w", flattenLoadErrors(err)))
 	}
 
 	return s, nil
+}
+
+// flattenLoadErrors drops yaml line marks from err. They point into the
+// schema document synthesized by Parse, not the values file, so they would
+// mislead. The key's location is shown by CommentError.Render instead.
+func flattenLoadErrors(err error) error {
+	loadErrs := &yaml.LoadErrors{}
+	if !errors.As(err, &loadErrs) {
+		return err
+	}
+
+	msgs := make([]string, 0, len(loadErrs.Errors))
+	for _, e := range loadErrs.Errors {
+		msgs = append(msgs, e.Message)
+	}
+
+	return errors.New(strings.Join(msgs, "; "))
 }
 
 // dedupeMappingNodesKeepLast takes a flat key/value node slice (as found in a

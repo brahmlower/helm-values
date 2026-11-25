@@ -90,24 +90,39 @@ func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*pkg.Json
 	extraNodes = append(extraNodes, comments.KeyValueNodes("title", key.Value)...)
 	extraNodes = append(extraNodes, comments.KeyNodeValueNodes("default", value)...)
 
+	return g.parseDocComments(key, extraNodes)
+}
+
+// parseDocComments parses key's doc comments into a schema merged with
+// extraNodes. With strict comments off, a comment that fails to parse is
+// logged and ignored: the value gets only the schema fields derived from
+// extraNodes (type, title, default) instead of a nil schema.
+func (g *Generator) parseDocComments(key *yaml.Node, extraNodes []*yaml.Node) (*pkg.JsonSchema, error) {
 	s, err := comments.Parse(key, extraNodes)
+	if err == nil {
+		return s, nil
+	}
+
+	var cErr *comments.CommentError
+	if errors.As(err, &cErr) {
+		cErr.Filepath = g.plan.chart.ValuesFilePath()
+		cErr.RenderToLog(g.logger)
+	}
+
+	wrappedErr := fmt.Errorf("doc comment error: %s: %w", key.Value, err)
+	if g.plan.StrictComments() {
+		return nil, wrappedErr
+	}
+
+	g.logger.Warn(wrappedErr.Error())
+
+	bare := *key
+	bare.HeadComment = ""
+	bare.FootComment = ""
+
+	s, err = comments.Parse(&bare, extraNodes)
 	if err != nil {
-		cErr := &comments.CommentError{
-			Filepath: "",
-			Node:     nil,
-			Err:      nil,
-		}
-		if errors.As(err, &cErr) {
-			cErr.Filepath = g.plan.chart.ValuesFilePath()
-			cErr.RenderToLog(g.logger)
-		}
-
-		err := fmt.Errorf("doc comment error: %w", err)
-		if g.plan.StrictComments() {
-			return nil, err
-		}
-
-		g.logger.Warn(err.Error())
+		return nil, fmt.Errorf("building schema without doc comments: %s: %w", key.Value, err)
 	}
 
 	return s, nil
@@ -128,25 +143,7 @@ func (g *Generator) buildSequenceNode(key *yaml.Node, _ *yaml.Node) (*pkg.JsonSc
 
 	extraNodes = append(extraNodes, comments.KeyValueNodes("title", key.Value)...)
 
-	s, err := comments.Parse(key, extraNodes)
-	if err != nil {
-		cErr := &comments.CommentError{
-			Filepath: "",
-			Node:     nil,
-			Err:      nil,
-		}
-		if errors.As(err, &cErr) {
-			cErr.Filepath = g.plan.chart.ValuesFilePath()
-			cErr.RenderToLog(g.logger)
-		}
-
-		err := fmt.Errorf("doc comment error: %w", err)
-		if g.plan.StrictComments() {
-			return nil, err
-		}
-	}
-
-	return s, nil
+	return g.parseDocComments(key, extraNodes)
 }
 
 // buildMappingNodeTitledSchema parses the doc comments attached to key into a schema,
@@ -155,25 +152,7 @@ func (g *Generator) buildSequenceNode(key *yaml.Node, _ *yaml.Node) (*pkg.JsonSc
 func (g *Generator) buildMappingNodeTitledSchema(key *yaml.Node, extraNodes []*yaml.Node) (*pkg.JsonSchema, error) {
 	extraNodes = append(extraNodes, comments.KeyValueNodes("title", key.Value)...)
 
-	s, err := comments.Parse(key, extraNodes)
-	if err != nil {
-		cErr := &comments.CommentError{
-			Filepath: "",
-			Node:     nil,
-			Err:      nil,
-		}
-		if errors.As(err, &cErr) {
-			cErr.Filepath = g.plan.chart.ValuesFilePath()
-			cErr.RenderToLog(g.logger)
-		}
-
-		wrappedErr := fmt.Errorf("doc comment error: %w", err)
-		if g.plan.StrictComments() {
-			return nil, wrappedErr
-		}
-	}
-
-	return s, nil
+	return g.parseDocComments(key, extraNodes)
 }
 
 // buildChildNodeSchema builds the schema for a single key/value pair found in a

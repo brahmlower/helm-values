@@ -38,8 +38,8 @@ type JsonSchema struct {
 	Then  *JsonSchema   `json:"then,omitempty"`
 	Else  *JsonSchema   `json:"else,omitempty"`
 
-	MinProperties         int64                                     `json:"minProperties,omitempty"         yaml:"minProperties,omitempty"`
-	MaxProperties         int64                                     `json:"maxProperties,omitempty"         yaml:"maxProperties,omitempty"`
+	MinProperties         *int64                                    `json:"minProperties,omitempty"         yaml:"minProperties,omitempty"`
+	MaxProperties         *int64                                    `json:"maxProperties,omitempty"         yaml:"maxProperties,omitempty"`
 	Required              []string                                  `json:"required,omitempty"              yaml:"required,omitempty"`
 	Properties            *EncodableOrderedMap[string, *JsonSchema] `json:"properties,omitempty"            yaml:"properties,omitempty"`
 	PropertyNames         *JsonSchema                               `json:"propertyNames,omitempty"         yaml:"propertyNames,omitempty"`
@@ -50,29 +50,29 @@ type JsonSchema struct {
 	DependentSchemas      map[string]*JsonSchema                    `json:"dependentSchemas,omitempty"      yaml:"dependentSchemas,omitempty"`
 	UnevaluatedProperties *JsonSchema                               `json:"unevaluatedProperties,omitempty" yaml:"unevaluatedProperties,omitempty"` //nolint:lll // long aligned struct tag block, matches sibling fields
 
-	MinItems         int64         `json:"minItems,omitempty"         yaml:"minItems,omitempty"`
-	MaxItems         int64         `json:"maxItems,omitempty"         yaml:"maxItems,omitempty"`
+	MinItems         *int64        `json:"minItems,omitempty"         yaml:"minItems,omitempty"`
+	MaxItems         *int64        `json:"maxItems,omitempty"         yaml:"maxItems,omitempty"`
 	UniqueItems      bool          `json:"uniqueItems,omitempty"      yaml:"uniqueItems,omitempty"`
 	Items            any           `json:"items,omitempty"            yaml:"items,omitempty"`
 	AdditionalItems  any           `json:"additionalItems,omitempty"  yaml:"additionalItems,omitempty"`
 	PrefixItems      []*JsonSchema `json:"prefixItems,omitempty"      yaml:"prefixItems,omitempty"`
 	Contains         *JsonSchema   `json:"contains,omitempty"         yaml:"contains,omitempty"`
-	MinContains      int64         `json:"minContains,omitempty"      yaml:"minContains,omitempty"`
-	MaxContains      int64         `json:"maxContains,omitempty"      yaml:"maxContains,omitempty"`
+	MinContains      *int64        `json:"minContains,omitempty"      yaml:"minContains,omitempty"`
+	MaxContains      *int64        `json:"maxContains,omitempty"      yaml:"maxContains,omitempty"`
 	UnevaluatedItems *JsonSchema   `json:"unevaluatedItems,omitempty" yaml:"unevaluatedItems,omitempty"`
 
-	MinLength        int64          `json:"minLength,omitempty"        yaml:"minLength,omitempty"`
-	MaxLength        int64          `json:"maxLength,omitempty"        yaml:"maxLength,omitempty"`
+	MinLength        *int64         `json:"minLength,omitempty"        yaml:"minLength,omitempty"`
+	MaxLength        *int64         `json:"maxLength,omitempty"        yaml:"maxLength,omitempty"`
 	Pattern          *regexp.Regexp `json:"pattern,omitempty"          yaml:"pattern,omitempty"`
 	ContentEncoding  string         `json:"contentEncoding,omitempty"  yaml:"contentEncoding,omitempty"`
 	ContentMediaType string         `json:"contentMediaType,omitempty" yaml:"contentMediaType,omitempty"`
 	ContentSchema    *JsonSchema    `json:"contentSchema,omitempty"    yaml:"contentSchema,omitempty"`
 
-	Minimum          int64 `json:"minimum,omitempty"          yaml:"minimum,omitempty"`
-	ExclusiveMinimum int64 `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
-	Maximum          int64 `json:"maximum,omitempty"          yaml:"maximum,omitempty"`
-	ExclusiveMaximum int64 `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
-	MultipleOf       int64 `json:"multipleOf,omitempty"       yaml:"multipleOf,omitempty"`
+	Minimum          *Number `json:"minimum,omitempty"          yaml:"minimum,omitempty"`
+	ExclusiveMinimum *Number `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
+	Maximum          *Number `json:"maximum,omitempty"          yaml:"maximum,omitempty"`
+	ExclusiveMaximum *Number `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
+	MultipleOf       *Number `json:"multipleOf,omitempty"       yaml:"multipleOf,omitempty"`
 
 	Title       string `json:"title,omitempty"       yaml:"title,omitempty"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
@@ -111,8 +111,8 @@ func NewJsonSchema() *JsonSchema {
 		If:                    nil,
 		Then:                  nil,
 		Else:                  nil,
-		MinProperties:         0,
-		MaxProperties:         0,
+		MinProperties:         nil,
+		MaxProperties:         nil,
 		Required:              nil,
 		Properties:            nil,
 		PropertyNames:         nil,
@@ -122,27 +122,27 @@ func NewJsonSchema() *JsonSchema {
 		DependentRequired:     nil,
 		DependentSchemas:      nil,
 		UnevaluatedProperties: nil,
-		MinItems:              0,
-		MaxItems:              0,
+		MinItems:              nil,
+		MaxItems:              nil,
 		UniqueItems:           false,
 		Items:                 nil,
 		AdditionalItems:       nil,
 		PrefixItems:           nil,
 		Contains:              nil,
-		MinContains:           0,
-		MaxContains:           0,
+		MinContains:           nil,
+		MaxContains:           nil,
 		UnevaluatedItems:      nil,
-		MinLength:             0,
-		MaxLength:             0,
+		MinLength:             nil,
+		MaxLength:             nil,
 		Pattern:               nil,
 		ContentEncoding:       "",
 		ContentMediaType:      "",
 		ContentSchema:         nil,
-		Minimum:               0,
-		ExclusiveMinimum:      0,
-		Maximum:               0,
-		ExclusiveMaximum:      0,
-		MultipleOf:            0,
+		Minimum:               nil,
+		ExclusiveMinimum:      nil,
+		Maximum:               nil,
+		ExclusiveMaximum:      nil,
+		MultipleOf:            nil,
 		Title:                 "",
 		Description:           "",
 		Default:               nil,

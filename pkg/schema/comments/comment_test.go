@@ -9,6 +9,7 @@ import (
 
 	"regexp"
 
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v4"
@@ -66,6 +67,9 @@ foo: bar
 // testQux is the shared "qux" value referenced across the dependentRequired
 // and dependencies test cases below.
 const testQux = "qux"
+
+// fieldMaximum is the "maximum" keyword shared by several numeric test cases.
+const fieldMaximum = "maximum"
 
 func TestBasicCommentParsing(t *testing.T) {
 	t.Parallel()
@@ -340,7 +344,7 @@ func TestCommentFieldsSingleLine(t *testing.T) {
 		{
 			field:         "minLength",
 			commentValue:  "5",
-			expectedValue: int64(5),
+			expectedValue: lo.ToPtr(int64(5)),
 			validate: func(t *testing.T, tc testCase, s *pkg.JsonSchema) {
 				t.Helper()
 				assert.IsType(t, tc.expectedValue, s.MinLength)
@@ -368,9 +372,9 @@ func TestCommentFieldsSingleLine(t *testing.T) {
 			},
 		},
 		{
-			field:         "maximum",
+			field:         fieldMaximum,
 			commentValue:  "100",
-			expectedValue: int64(100),
+			expectedValue: lo.ToPtr(pkg.Number(100)),
 			validate: func(t *testing.T, tc testCase, s *pkg.JsonSchema) {
 				t.Helper()
 				assert.IsType(t, tc.expectedValue, s.Maximum)
@@ -522,4 +526,185 @@ func getCommentNode(node *yaml.Node) *yaml.Node {
 
 	// Get the first scalar node in the document
 	return node.Content[0].Content[0]
+}
+
+// TestNumericKeywordFields covers issue #36: numeric keywords set to 0 must
+// survive parsing, and number keywords must accept fractions and negatives.
+func TestNumericKeywordFields(t *testing.T) {
+	t.Parallel()
+
+	type testCase struct {
+		name         string
+		field        string
+		commentValue string
+		expected     any
+		actual       func(s *pkg.JsonSchema) any
+	}
+
+	tests := []testCase{
+		{
+			name:         "minLength zero",
+			field:        "minLength",
+			commentValue: "0",
+			expected:     lo.ToPtr(int64(0)),
+			actual:       func(s *pkg.JsonSchema) any { return s.MinLength },
+		},
+		{
+			name:         "maxLength zero",
+			field:        "maxLength",
+			commentValue: "0",
+			expected:     lo.ToPtr(int64(0)),
+			actual:       func(s *pkg.JsonSchema) any { return s.MaxLength },
+		},
+		{
+			name:         "minItems zero",
+			field:        "minItems",
+			commentValue: "0",
+			expected:     lo.ToPtr(int64(0)),
+			actual:       func(s *pkg.JsonSchema) any { return s.MinItems },
+		},
+		{
+			name:         "maxItems zero",
+			field:        "maxItems",
+			commentValue: "0",
+			expected:     lo.ToPtr(int64(0)),
+			actual:       func(s *pkg.JsonSchema) any { return s.MaxItems },
+		},
+		{
+			name:         "minContains zero",
+			field:        "minContains",
+			commentValue: "0",
+			expected:     lo.ToPtr(int64(0)),
+			actual:       func(s *pkg.JsonSchema) any { return s.MinContains },
+		},
+		{
+			name:         "maxContains zero",
+			field:        "maxContains",
+			commentValue: "0",
+			expected:     lo.ToPtr(int64(0)),
+			actual:       func(s *pkg.JsonSchema) any { return s.MaxContains },
+		},
+		{
+			name:         "minProperties zero",
+			field:        "minProperties",
+			commentValue: "0",
+			expected:     lo.ToPtr(int64(0)),
+			actual:       func(s *pkg.JsonSchema) any { return s.MinProperties },
+		},
+		{
+			name:         "maxProperties zero",
+			field:        "maxProperties",
+			commentValue: "0",
+			expected:     lo.ToPtr(int64(0)),
+			actual:       func(s *pkg.JsonSchema) any { return s.MaxProperties },
+		},
+		{
+			name:         "minimum zero",
+			field:        "minimum",
+			commentValue: "0",
+			expected:     lo.ToPtr(pkg.Number(0)),
+			actual:       func(s *pkg.JsonSchema) any { return s.Minimum },
+		},
+		{
+			name:         "exclusiveMinimum zero",
+			field:        "exclusiveMinimum",
+			commentValue: "0",
+			expected:     lo.ToPtr(pkg.Number(0)),
+			actual:       func(s *pkg.JsonSchema) any { return s.ExclusiveMinimum },
+		},
+		{
+			name:         "maximum zero",
+			field:        fieldMaximum,
+			commentValue: "0",
+			expected:     lo.ToPtr(pkg.Number(0)),
+			actual:       func(s *pkg.JsonSchema) any { return s.Maximum },
+		},
+		{
+			name:         "exclusiveMaximum zero",
+			field:        "exclusiveMaximum",
+			commentValue: "0",
+			expected:     lo.ToPtr(pkg.Number(0)),
+			actual:       func(s *pkg.JsonSchema) any { return s.ExclusiveMaximum },
+		},
+		{
+			name:         "multipleOf zero",
+			field:        "multipleOf",
+			commentValue: "0",
+			expected:     lo.ToPtr(pkg.Number(0)),
+			actual:       func(s *pkg.JsonSchema) any { return s.MultipleOf },
+		},
+		{
+			name:         "minimum fractional",
+			field:        "minimum",
+			commentValue: "0.5",
+			expected:     lo.ToPtr(pkg.Number(0.5)),
+			actual:       func(s *pkg.JsonSchema) any { return s.Minimum },
+		},
+		{
+			name:         "maximum negative",
+			field:        fieldMaximum,
+			commentValue: "-3",
+			expected:     lo.ToPtr(pkg.Number(-3)),
+			actual:       func(s *pkg.JsonSchema) any { return s.Maximum },
+		},
+		{
+			name:         "multipleOf fractional",
+			field:        "multipleOf",
+			commentValue: "0.01",
+			expected:     lo.ToPtr(pkg.Number(0.01)),
+			actual:       func(s *pkg.JsonSchema) any { return s.MultipleOf },
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			document := fmt.Sprintf("# %s: %s\nfoo: 1\n", tc.field, tc.commentValue)
+
+			yamlNode := &yaml.Node{}
+			require.NoError(t, yaml.Unmarshal([]byte(document), yamlNode))
+
+			s, err := comments.Parse(getCommentNode(yamlNode), nil)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.expected, tc.actual(s))
+		})
+	}
+}
+
+// TestParseInvalidNumberIsCommentError checks that an invalid number keyword
+// is reported as a CommentError on the key node, without the misleading line
+// number of the schema document Parse builds internally.
+func TestParseInvalidNumberIsCommentError(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		value       string
+		errContains string
+	}{
+		{value: "abc", errContains: "cannot construct !!str"},
+		{value: `"5"`, errContains: "cannot construct !!str"},
+		{value: ".inf", errContains: "not a finite number"},
+		{value: ".nan", errContains: "not a finite number"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.value, func(t *testing.T) {
+			t.Parallel()
+
+			document := fmt.Sprintf("# minimum: %s\nfoo: 1\n", tc.value)
+
+			yamlNode := &yaml.Node{}
+			require.NoError(t, yaml.Unmarshal([]byte(document), yamlNode))
+
+			_, err := comments.Parse(getCommentNode(yamlNode), nil)
+
+			var cErr *comments.CommentError
+			require.ErrorAs(t, err, &cErr)
+			assert.Equal(t, 2, cErr.Node.Line)
+			assert.Contains(t, err.Error(), tc.errContains)
+			assert.NotContains(t, err.Error(), "line ")
+		})
+	}
 }
