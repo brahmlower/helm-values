@@ -70,7 +70,7 @@ func (g *Generator) Generate() (*pkg.JsonSchema, error) {
 		return nil, err
 	}
 
-	s.SchemaComment = GeneratedComment
+	markGenerated(s)
 	s.Schema = JSONSchemaURI
 	g.logger.Tracef("schmea generator, properties: %+v", s.Properties)
 
@@ -80,6 +80,24 @@ func (g *Generator) Generate() (*pkg.JsonSchema, error) {
 	)
 
 	return s, err
+}
+
+// markGenerated sets the root schema's "$comment" to GeneratedComment. A
+// comment the author already set is kept after the disclaimer rather than
+// replaced. Only the root is marked; "$comment" on nested properties is
+// left as the author wrote it.
+func markGenerated(s *pkg.JsonSchema) {
+	if s.Comment == "" {
+		s.Comment = GeneratedComment
+
+		return
+	}
+
+	if strings.HasPrefix(s.Comment, GeneratedComment) {
+		return
+	}
+
+	s.Comment = GeneratedComment + "\n\n" + s.Comment
 }
 
 func (g *Generator) buildScalarNode(key *yaml.Node, value *yaml.Node) (*pkg.JsonSchema, error) {
