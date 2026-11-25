@@ -13,12 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Update orhun/git-cliff-action action to v4.9.1
-- Update dependency golangci/golangci-lint to v2.14.0
-- Update softprops/action-gh-release action to v3.0.3
-- Update actions/setup-go action to v7.1.0
-- Update softprops/action-gh-release action to v3.0.4
-- Update dependency golangci/golangci-lint to v2.15.0
 - Use Comment for $comment instead of a separate SchemaComment
 
 ### Fixed
@@ -32,24 +26,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add --check flag to schema and docs commands
-- Add e2e bats coverage for schema/docs --check
-- Add 0.4.1 roadmap entry for --check flag
-
-### Changed
-
-- Renumber stale Development Roadmap versions
-- Release 0.4.2
 
 ### Fixed
 
 - Rescue colon descriptions with a two-word phrase before the colon
-- Fix unused-parameter violation in fuzz test
 
 ## [0.4.1] - 2026-08-25
-
-### Changed
-
-- Include changelog in release description
 
 ### Fixed
 
@@ -60,17 +42,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added bats tests validating the pre-commit hooks
-- Add golangci-lint with a maximal ruleset
-
-### Changed
-
-- Rename pre-commit job to e2e, restructure e2e task hierarchy
-- Update actions/setup-go action to v7
-- Update actions/checkout action to v7
-- Update softprops/action-gh-release action to v3
-- Update golangci/golangci-lint-action action to v9
-- Update dependency golangci/golangci-lint to v2.13.1
-- Release 0.4.0
 
 ### Fixed
 
@@ -99,14 +70,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated deps
-- Renovate pins dependency versions
 - Grouped subcommands
 - Pre-commit support
-- Install includes pre-commit hooks, updated roadmap
 - Modeline support
-- Cleaned up chartref type
 - Small readme restructuring
-- Release 0.3.0
 
 ### Fixed
 
@@ -125,7 +92,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cleaned up comment errors rendering logic
 - Reduce clutter from internal package
 - Switch changelog to cliff
-- Release 0.2.0
 
 ### Fixed
 
@@ -161,11 +127,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set examples from footer comments
 - Wip reworking artifact installation and release process
 - Bump version to test release process
-- Ci release uses taskfile now
 - Set plugin value
 - Improved devex for building locally
 - Plugin version is based on git tag
-- Release 0.1.0
 
 ### Fixed
 
@@ -235,7 +199,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Try to fix artifacthub warning
 - Renamed ci workflow
 - And also rename the ci workflow
-- Ci badge
 - Some roadmap items i forgot to check off
 - Correctly name the artifacthub repo file
 - Huge docs cli improvements

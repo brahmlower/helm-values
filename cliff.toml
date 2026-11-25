@@ -60,6 +60,14 @@ filter_unconventional = false
 # Assigns commits to groups.
 # Optionally sets the commit's scope and can decide to exclude commits from further processing.
 commit_parsers = [
+    # Skip changes that don't affect what users install: CI, repo chores
+    # (including Renovate's GitHub Actions and dev-tool bumps), tests, lint
+    # fixes, release commits, and roadmap edits. Go module bumps (fix(deps))
+    # change the shipped binary, so they are kept.
+    { message = "^(ci|chore|test|lint|build)(\\(.*\\))?:", skip = true },
+    { message = "^ci ", skip = true },
+    { message = "^release \\d", skip = true },
+    { message = "^docs(\\(.*\\))?: .*[rR]oadmap", skip = true },
     { message = "^[a|A]dd", group = "Added" },
     { message = "^[s|S]upport", group = "Added" },
     { message = "^[r|R]emove", group = "Removed" },
@@ -79,3 +87,9 @@ topo_order = false
 # Order of commits in each group/release within the changelog.
 # Allowed values: newest, oldest
 sort_commits = "oldest"
+
+[remote.github]
+# Set explicitly so compare links work in CI, where git-cliff can't infer
+# the repo from the checkout.
+owner = "brahmlower"
+repo = "helm-values"
