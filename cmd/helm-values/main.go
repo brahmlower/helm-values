@@ -68,7 +68,7 @@ func CommandSchema(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "schema [flags] chart_dir [...chart_dir]",
 		Short: "Generate values schema",
-		RunE: func(_ *cobra.Command, args []string) error {
+		RunE: func(c *cobra.Command, args []string) error {
 			if err := cfg.UpdateLogger(logger); err != nil {
 				return fmt.Errorf("updating logger: %w", err)
 			}
@@ -77,6 +77,10 @@ func CommandSchema(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("building schema config: %w", err)
 			}
+
+			// Errors past this point are generation failures, not usage
+			// mistakes, so don't bury them under the usage block.
+			c.SilenceUsage = true
 
 			return schema.GenerateSchema(logger, schemaCfg, args)
 		},
@@ -97,7 +101,7 @@ func CommandDocs(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
 		Use:   "docs [flags] chart_dir [...chart_dir]",
 		Short: "Generate values docs",
 		Args:  cobra.MinimumNArgs(1),
-		RunE: func(_ *cobra.Command, args []string) error {
+		RunE: func(c *cobra.Command, args []string) error {
 			if err := cfg.UpdateLogger(logger); err != nil {
 				return fmt.Errorf("updating logger: %w", err)
 			}
@@ -106,6 +110,10 @@ func CommandDocs(logger *logrus.Logger, group *cobra.Group) *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("building docs config: %w", err)
 			}
+
+			// Errors past this point are generation failures, not usage
+			// mistakes, so don't bury them under the usage block.
+			c.SilenceUsage = true
 
 			return docs.GenerateDocs(logger, docsCfg, args)
 		},
