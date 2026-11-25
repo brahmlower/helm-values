@@ -3,6 +3,7 @@ package docs
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"slices"
@@ -20,6 +21,9 @@ import (
 
 // GenerateDocs generates README documentation for every chart discovered under chartDirs,
 // rendering the configured (or default) template with the chart's values schema.
+// A chart that fails doesn't stop the others: every chart is processed, and the
+// errors from failing charts are joined with any check problems into the
+// returned error.
 func GenerateDocs(logger *logrus.Logger, cfg *Config, chartDirs []string) error {
 	chartsFound, err := charts.Search(logger, chartDirs)
 	if err != nil {
@@ -36,19 +40,25 @@ func GenerateDocs(logger *logrus.Logger, cfg *Config, chartDirs []string) error 
 		return fmt.Errorf("collecting static templates: %w", err)
 	}
 
-	// Iterate through plans, generating the docs for each
-	var problems []string
+	// Iterate through plans, generating the docs for each. A failing chart
+	// doesn't stop the others; its error is collected and returned at the end.
+	var (
+		problems  []string
+		chartErrs []error
+	)
 
 	for _, plan := range plans {
 		chartProblems, err := generateChartDoc(logger, cfg, staticPaths, plan)
 		if err != nil {
-			return err
+			chartErrs = append(chartErrs, fmt.Errorf("docs: %s: %w", plan.Chart().Details.Name, err))
+
+			continue
 		}
 
 		problems = append(problems, chartProblems...)
 	}
 
-	return reportProblems(problems)
+	return errors.Join(append(chartErrs, reportProblems(problems))...)
 }
 
 // reportProblems prints every check problem found and, if any were found,
@@ -92,6 +102,7 @@ func collectPlans(logger *logrus.Logger, cfg *Config, chartsFound []*charts.Char
 // and cfg.ExtraTemplates as additional templates, then either writes or checks it
 // depending on the plan's configuration. The returned problems are non-empty only when
 // plan.Check() is set and the rendered content doesn't match what's on disk.
+// Returned errors aren't prefixed with the chart name; the caller adds it.
 func generateChartDoc(logger *logrus.Logger, cfg *Config, staticPaths []string, plan *Plan) ([]string, error) {
 	logger.Infof("docs: %s: starting generation", plan.Chart().Details.Name)
 
@@ -99,7 +110,7 @@ func generateChartDoc(logger *logrus.Logger, cfg *Config, staticPaths []string, 
 
 	jsonschema, err := schema.NewGenerator(logger, plan.SchemaPlan()).Generate()
 	if err != nil {
-		return nil, fmt.Errorf("docs: %s: %w", plan.Chart().Details.Name, err)
+		return nil, fmt.Errorf("generating schema: %w", err)
 	}
 
 	logger.Tracef("docs: %s: jsonschema properties: %+v", plan.Chart().Details.Name, jsonschema.Properties)
